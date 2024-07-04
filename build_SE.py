@@ -37,8 +37,6 @@ ro_bandwidth = 1/dwell_time
 ro_duration = np.ceil(n_read*dwell_time/system.grad_raster_time)*system.grad_raster_time
 rf_duration = 1e-3
 
-shot_length = 8 # Number of lines to read after each excitation pulse
-
 TE = 30e-3  # Echo time
 TR = 10  # Repetition time
 
