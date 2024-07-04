@@ -1,3 +1,10 @@
+# %% Description of the sequence: Single Shot Spin Echo sequence
+# Slice selective RF pulses
+# ADC
+# Readout (x) gradients with pre-phasor and spoiler (around refocusing pulse and after ADC)
+# Phase encode (y) gradients with rewinder and possible linear or center-out phase encode steps 
+# Slice (z) gradients for RF pulses and z-crusher around refocusing pulse
+
 # %% Import packages
 #import math
 #import warnings
