@@ -39,6 +39,9 @@ n_read, n_phase = 32, 32
 n_slices = 1
 slice_thickness = 10e-3
 
+shot_length = 8 # Number of lines to read after each excitation pulse
+
+
 dwell_time = 100e-6
 ro_bandwidth = 1/dwell_time
 ro_duration = np.ceil(n_read*dwell_time/system.grad_raster_time)*system.grad_raster_time
