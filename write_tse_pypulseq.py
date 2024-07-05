@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 
 import pypulseq as pp
-from console.utilities.sequences.system_settings import system
+#from console.utilities.sequences.system_settings import system
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     # ======
@@ -13,23 +13,26 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     dG = 200e-6
 
     # use system specs from console
-    system.rf_ringdown_time = 0
+    #system.rf_ringdown_time = 0
         
     # Set system limits
-    # system = pp.Opts(
-    #     max_grad=32,
-    #     grad_unit="mT/m",
-    #     max_slew=130,
-    #     slew_unit="T/m/s",
-    #     rf_ringdown_time=100e-6,
-    #     rf_dead_time=100e-6,
-    #     adc_dead_time=10e-6,
-    # )
+    system = pp.Opts(
+        max_grad=40,
+        grad_unit="mT/m",
+        max_slew=100,
+        slew_unit="T/m/s",
+        rf_ringdown_time=100e-6,
+        rf_dead_time=100e-6,
+        adc_dead_time=10e-6,
+    )
+
+    # system.max_grad = 32*system.gamma*1e-3
+    # system.max_slew = 130*system.gamma
 
     seq = pp.Sequence(system)  # Create a new sequence object
     fov = 220e-3  # Define FOV and resolution
-    Nx, Ny = 128, 128
-    n_echo = 7  # Number of echoes
+    Nx, Ny = 100, 100
+    n_echo = 16  # Number of echoes
     n_slices = 1
     rf_flip = 180  # Flip angle
     if isinstance(rf_flip, int):
@@ -318,7 +321,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     # WRITE .SEQ
     # =========
     if write_seq:
-        seq.write(seq_filename)
+        seq.write('./sequences/' + seq_filename)
 
 
 if __name__ == "__main__":

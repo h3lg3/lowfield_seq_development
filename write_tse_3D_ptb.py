@@ -23,8 +23,8 @@ class Trajectory(Enum):
     INOUT = 1
     LINEAR = 2
 
-echo_time = 15e-3
-repetition_time = 600e-3
+echo_time = 12e-3
+repetition_time = 2000e-3
 etl = 7
 dummies = 0
 rf_duration = 400e-6
@@ -41,8 +41,9 @@ channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
 
 # %% 
 fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
-n_enc_ro, n_enc_pe1, n_enc_pe2 = 16, 16, 32
+n_enc_ro, n_enc_pe1, n_enc_pe2 = 100, 100, 1
 system.rf_ringdown_time = 0
+system.max_slew = 100 * system.gamma
 seq = pp.Sequence(system)
 seq.set_definition("Name", "tse_3d")
 
@@ -109,31 +110,45 @@ acq_pos = []
 for train_pos in trains_pos:
     acq_pos.extend(train_pos)
     
-# Plot k-space acquisition order
-plt.ion()  # Turn on interactive mode
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+# # Plot k-space acquisition order
+# plt.ion()  # Turn on interactive mode
+# fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
 
-for array in trains_pos[0:10]:
-    #ax1.clear()
-    ax2.clear()
+# for array in trains_pos[0:10]:
+#     #ax1.clear()
+#     ax2.clear()
     
-    # Plot the whole array on the first subplot
-    ax1.scatter(array[:, 0], array[:, 1])
-    ax1.set_title('Array-wise Plot')
+#     # Plot the whole array on the first subplot
+#     ax1.scatter(array[:, 0], array[:, 1])
+#     ax1.set_title('Array-wise Plot')
     
-    ax1.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
-    ax1.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
-    ax2.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
-    ax2.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
-    # Plot each element of the array iteratively on the second subplot
-    for point in array:
-        ax2.scatter(point[0], point[1], color='r')
-        ax2.set_title('Element-wise Plot')
-        plt.draw()
-        plt.pause(0.2)  # Pause for half a second
+#     ax1.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
+#     ax1.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
+#     ax2.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
+#     ax2.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
+#     # Plot each element of the array iteratively on the second subplot
+#     for point in array:
+#         ax2.scatter(point[0], point[1], color='r')
+#         ax2.set_title('Element-wise Plot')
+#         plt.draw()
+#         plt.pause(0.2)  # Pause for half a second
 
-plt.ioff()  # Turn off interactive mode
-plt.show()    
+# plt.ioff()  # Turn off interactive mode
+# plt.show()    
+
+# plt.ion()  # Turn on interactive mode
+# fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+
+# plt.ion()  # Turn on interactive mode
+# fig, ax1= plt.subplots(figsize=(10, 10))
+# for array in trains_pos[0:10]:
+#     ax1.set_title('Array-wise Plot')
+#     # Plot the whole array on the first subplot
+#     ax1.plot(array[:, 0])
+#     plt.draw()
+#     plt.pause(0.5)  # Pause for half a second
+# plt.ioff()  # Turn off interactive mode
+# plt.show()          
 # %%
 
 # Definition of RF pulses
@@ -289,6 +304,19 @@ if ok:
 else:
     print("Timing check failed. Error listing follows:")
     [print(e) for e in error_report]
+
+## kspace trajectory
+# Plot k-space trajectory
+k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
+
+plt.figure()
+plt.plot(k_traj[0],k_traj[1], 'x')
+#plt.xlim(-238, -200)
+plt.xlim(-234.1, -233.9)
+plt.ylim(-226, -200)
+plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
+plt.show()
 
 ## Prepare the sequence output for the scanner
 seq.set_definition('Name', 'se_ptb')
