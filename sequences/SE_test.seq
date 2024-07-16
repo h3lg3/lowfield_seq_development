@@ -343,7 +343,7 @@ TotalDuration 320.00192
 # ..        Hz   ....     ....          ....    us   Hz   rad
 [RF]
 1      987.447 1 2 0 100 0 0
-2      1974.89 1 2 0 100 0 0
+2      1974.89 1 2 0 100 0 90
 
 # Format of trapezoid gradients:
 # id amplitude rise flat fall delay
@@ -393,7 +393,7 @@ TotalDuration 320.00192
 # id num dwell delay freq phase
 # ..  ..    ns    us   Hz   rad
 [ADC]
-1 32 100000 20 0 3.14159
+1 32 100000 20 0 0
 
 # Sequence Shapes
 [SHAPES]
@@ -1422,4 +1422,4 @@ num_samples 1000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be stripped away for recalculating/verification)
 Type md5
-Hash 352b48e89f3f8237bb9008909641314c
+Hash 28398a971efee107593ffbb2ef39f157

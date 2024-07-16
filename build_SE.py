@@ -70,7 +70,7 @@ rf_ref, gz_ref, _ = pp.make_sinc_pulse(
     slice_thickness=slice_thickness,
     apodization=0.5,
     time_bw_product=4,
-    phase_offset=0,
+    phase_offset=90,
     use="refocusing",
     return_gz=True,
 )
@@ -82,10 +82,6 @@ rf_ref, gz_ref, _ = pp.make_sinc_pulse(
 #     channel="z", system=system, area=gz_ex.area * 2
 # )
 
-######################## ADC ######################## 
-adc = pp.make_adc(
-    num_samples=n_read, duration=ro_duration, phase_offset=180*np.pi/180, delay=gx.rise_time, system=system
-    )
 
 ######################## X GRADIENTS ########################    
 ## Calculate readout gradient, define area or flat_area?
@@ -103,6 +99,13 @@ gx_sp = pp.make_trapezoid(
     channel='x', area=2*gx.area, duration=ro_duration, system=system
     )
 
+######################## ADC ######################## 
+adc = pp.make_adc(
+    num_samples=n_read, duration=ro_duration, delay=gx.rise_time, system=system
+    )
+# adc = pp.make_adc(
+#     num_samples=n_read, duration=ro_duration, phase_offset=180*np.pi/180, delay=gx.rise_time, system=system
+#     )
 ######################## Y GRADIENTS ######################## 
 ## Calculate phase encode gradient, define area or flat_area?
 max_gy = pp.make_trapezoid(
@@ -278,7 +281,7 @@ reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0
 # %% Reconstruct and plot phantom, sequence and signal
 plot_seq_zoom = True
 plot_phantom = False 
-plot_seq = False
+plot_seq = True
 plot_kspace = True 
 plot_reco = True
 
