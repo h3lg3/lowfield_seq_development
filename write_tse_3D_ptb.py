@@ -25,7 +25,7 @@ class Trajectory(Enum):
 
 echo_time = 12e-3
 repetition_time = 2000e-3
-etl = 7
+etl = 16
 dummies = 0
 rf_duration = 400e-6
 ramp_duration= 200e-6
@@ -305,7 +305,7 @@ else:
     print("Timing check failed. Error listing follows:")
     [print(e) for e in error_report]
 
-## kspace trajectory
+## kspace trajectory: PLOT true and calculated kspace locations
 # Plot k-space trajectory
 k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
 
@@ -316,6 +316,8 @@ plt.xlim(-234.1, -233.9)
 plt.ylim(-226, -200)
 plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
 plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
+plt.title('Precalculated vs actual locations')
+plt.legend(['actual loc', 'precalc loc'])
 plt.show()
 
 ## Prepare the sequence output for the scanner

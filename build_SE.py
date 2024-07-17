@@ -58,7 +58,7 @@ rf_ex, gz_ex, gzr_ex = pp.make_sinc_pulse(
     slice_thickness=slice_thickness,
     apodization=0.5,
     time_bw_product=4,
-    phase_offset=0,
+    phase_offset=np.pi/2, #0
     return_gz=True,
 )
 
@@ -70,7 +70,7 @@ rf_ref, gz_ref, _ = pp.make_sinc_pulse(
     slice_thickness=slice_thickness,
     apodization=0.5,
     time_bw_product=4,
-    phase_offset=90,
+    phase_offset=0, # np.pi/2
     use="refocusing",
     return_gz=True,
 )
