@@ -1,11 +1,3 @@
-"""Constructor for 3D TSE Imaging sequence.
-
-TODO: add sampling patterns (elliptical masks, partial fourier, CS)
-TODO: add optional inversion pulse
-TODO: add optional variable refocussing pulses (pass list rather than float)
-TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
-
-"""
 # %%
 from enum import Enum
 from math import pi
@@ -20,14 +12,16 @@ from matplotlib import pyplot as plt
 
 plot_animation = False
 plot_kspace = False
-write_seq = True
-seq_file = 'tse_3D_ptb_hh.seq'
+plot_seq = True
+write_seq = False
+seq_file = 'tse_3D_ptb_HH.seq'
 
 class Trajectory(Enum):
     """Trajectory type enum."""
 
     INOUT = 1
     LINEAR = 2
+    OUTIN = 3
 
 echo_time = 12e-3
 repetition_time = 2000e-3
@@ -66,8 +60,8 @@ pe_positions = np.stack([grid.flatten() for grid in np.meshgrid(pe0_pos, pe1_pos
 pe_mag = np.sum(np.square(pe_points), axis=-1)  # calculate magnitude of all gradient combinations
 pe_mag_sorted = np.argsort(pe_mag)
 
-# if trajectory is Trajectory.INOUT:
-#     pe_mag_sorted = np.flip(pe_mag_sorted)
+if trajectory is Trajectory.OUTIN:
+    pe_mag_sorted = np.flip(pe_mag_sorted)
 
 pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
 pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
@@ -214,6 +208,12 @@ grad_ro_pre = pp.make_trapezoid(
     duration=raster(ro_pre_duration, precision=system.grad_raster_time),
 )
 
+## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
+grad_ro_sp = pp.make_trapezoid(
+    channel='x', area=2*grad_ro.area, duration=grad_ro.duration, system=system
+    )
+
+
 adc = pp.make_adc(
     system=system,
     num_samples=int((adc_duration) / system.adc_raster_time),
@@ -225,7 +225,7 @@ adc = pp.make_adc(
 # Calculate delays
 # Note: RF dead-time is contained in RF delay
 # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration
+tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(gx_sp)
 # Delay duration between Gy, Gz prephaser and readout
 tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
     - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift
@@ -338,6 +338,8 @@ if plot_kspace:
     plt.legend(['actual loc', 'precalc loc'])
     plt.show()
 
+if plot_seq:
+    seq.plot()
 ## Prepare the sequence output for the scanner
 if write_seq:
     seq.set_definition('Name', 'se_ptb')

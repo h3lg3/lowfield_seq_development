@@ -94,7 +94,7 @@ gx_pre = pp.make_trapezoid(
     )
 #gx_pre = pp.make_trapezoid(channel='x', flat_area=delta_k*n_read/2, flat_time=ro_duration/2, system=system)
 
-## Spoiler gradient on x (used three times: before excitation, before refocusing, after refocusing) 
+## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
 gx_sp = pp.make_trapezoid(
     channel='x', area=2*gx.area, duration=ro_duration, system=system
     )
