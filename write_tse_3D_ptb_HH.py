@@ -233,7 +233,7 @@ tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pr
 tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
     - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift - pp.calc_duration(grad_ro_sp)
 # Delay duration between readout and Gy, Gz gradient rephaser
-tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre, grad_ro_sp) - echo_shift
+tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift
 
 for dummy in range(dummies):
     seq.add_block(rf_90)
@@ -302,15 +302,16 @@ for train in trains:
                 system=system,
                 rise_time=ramp_duration,
                 fall_time=ramp_duration
-            ),
-            grad_ro_sp
+            )
         )
 
         seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
-
+        
+    seq.add_block(grad_ro_sp) # add spoiler after last 180 pulse in echo train
+    
     # recalculate TR each train because train length is not guaranteed to be constant
     tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-        - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration
+        - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_ro_sp)
 
     seq.add_block(pp.make_delay(raster(
         val=tr_delay,
