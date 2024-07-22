@@ -12,8 +12,9 @@ from matplotlib import pyplot as plt
 
 plot_animation = False
 plot_kspace = False
-plot_seq = True
-write_seq = False
+plot_seq = False
+write_seq = True
+disable_pe = False
 seq_file = 'tse_3D_ptb_HH.seq'
 
 class Trajectory(Enum):
@@ -23,7 +24,7 @@ class Trajectory(Enum):
     LINEAR = 2
     OUTIN = 3
 
-echo_time = 12e-3
+echo_time = 24e-3
 repetition_time = 2000e-3
 etl = 16
 dummies = 0
@@ -210,7 +211,7 @@ grad_ro_pre = pp.make_trapezoid(
 
 ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
 grad_ro_sp = pp.make_trapezoid(
-    channel='x', area=2*grad_ro.area, duration=grad_ro.duration, system=system
+    channel='x', area=2*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
     )
 
 
@@ -225,12 +226,14 @@ adc = pp.make_adc(
 # Calculate delays
 # Note: RF dead-time is contained in RF delay
 # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(gx_sp)
+
+# Muss hier die rf-duration nicht durch 2 geteilt werden? 
+tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_ro_sp)
 # Delay duration between Gy, Gz prephaser and readout
 tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-    - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift
+    - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift - pp.calc_duration(grad_ro_sp)
 # Delay duration between readout and Gy, Gz gradient rephaser
-tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - ro_pre_duration - echo_shift
+tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre, grad_ro_sp) - echo_shift
 
 for dummy in range(dummies):
     seq.add_block(rf_90)
@@ -253,14 +256,17 @@ for train in trains:
 
     for echo in train:
         pe_1, pe_2 = echo
-
+        if disable_pe:
+            pe_1 = 0
+            pe_2 = 0
+        seq.add_block(grad_ro_sp)
         seq.add_block(rf_180)
 
         seq.add_block(
             pp.make_trapezoid(
                 channel=channel_pe1,
                 area=-pe_1,
-                duration=ro_pre_duration,
+                duration=ro_pre_duration, # warum werden diese nicht auf Rasterzeit angepasst? 
                 system=system,
                 rise_time=ramp_duration,
                 fall_time=ramp_duration
@@ -272,7 +278,8 @@ for train in trains:
                 system=system,
                 rise_time=ramp_duration,
                 fall_time=ramp_duration
-            )
+            ),
+            grad_ro_sp
         )
 
         seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
@@ -295,7 +302,8 @@ for train in trains:
                 system=system,
                 rise_time=ramp_duration,
                 fall_time=ramp_duration
-            )
+            ),
+            grad_ro_sp
         )
 
         seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
