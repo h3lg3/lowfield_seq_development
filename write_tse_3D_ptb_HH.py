@@ -12,10 +12,12 @@ from matplotlib import pyplot as plt
 
 plot_animation = False
 plot_kspace = False
-plot_seq = False
-write_seq = True
+plot_seq = True
+
 disable_pe = False
-seq_file = 'tse_3D_ptb_HH.seq'
+
+write_seq = True
+seq_file = 'tse_3D_ptb_HH_dummies.seq'
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -24,14 +26,14 @@ class Trajectory(Enum):
     LINEAR = 2
     OUTIN = 3
 
-echo_time = 24e-3
+echo_time = 28e-3   # 12
 repetition_time = 2000e-3
-etl = 16
-dummies = 0
+etl = 8             # 16
+dummies = 5
 rf_duration = 400e-6
 ramp_duration= 200e-6
 gradient_correction = 0.
-ro_bandwidth = 20e3
+ro_bandwidth = 10e3
 echo_shift= 0.0
 trajectory: Trajectory = Trajectory.INOUT
 excitation_angle = pi / 2
@@ -42,7 +44,7 @@ channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
 
 # %% 
 fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
-n_enc_ro, n_enc_pe1, n_enc_pe2 = 100, 100, 1
+n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1
 system.rf_ringdown_time = 0
 system.max_slew = 100 * system.gamma
 seq = pp.Sequence(system)
@@ -227,7 +229,7 @@ adc = pp.make_adc(
 # Note: RF dead-time is contained in RF delay
 # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
 
-# Muss hier die rf-duration nicht durch 2 geteilt werden? 
+# Muss hier die rf-duration nicht durch 2 geteilt werden?  Vielleicht weil 180 genauso lang wie 90 ist.
 tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_ro_sp)
 # Delay duration between Gy, Gz prephaser and readout
 tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
@@ -244,10 +246,10 @@ for dummy in range(dummies):
             val=echo_time - rf_duration,
             precision=system.grad_raster_time
         )))
-        seq.add_block(pp.make_delay(raster(
-            val=repetition_time - (etl + 0.5) * echo_time - rf_duration,
-            precision=system.grad_raster_time
-        )))
+    seq.add_block(pp.make_delay(raster(
+        val=repetition_time - (etl + 0.5) * echo_time - rf_duration,
+        precision=system.grad_raster_time
+    )))
 
 for train in trains:
     seq.add_block(rf_90)
