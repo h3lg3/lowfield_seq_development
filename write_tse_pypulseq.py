@@ -5,6 +5,7 @@ import numpy as np
 
 import pypulseq as pp
 #from console.utilities.sequences.system_settings import system
+from matplotlib import pyplot as plt
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     # ======
@@ -38,7 +39,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     if isinstance(rf_flip, int):
         rf_flip = np.zeros(n_echo) + rf_flip
     slice_thickness = 5e-3
-    TE = 24e-3  # Echo time
+    TE = 28e-3  # Echo time
     TR = 2000e-3  # Repetition time
 
     sampling_time = 6.4e-3
@@ -315,6 +316,13 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     # VISUALIZATION
     # ======
     if plot:
+        
+        k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
+        plt.figure()
+        plt.plot(k_traj[0],k_traj[1])
+        plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+        plt.show()
+    
         seq.plot()
 
     # =========
@@ -325,4 +333,4 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
 
 
 if __name__ == "__main__":
-    main(plot=False, write_seq=True)
+    main(plot=True, write_seq=False)

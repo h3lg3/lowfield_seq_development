@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 plot_animation = False
 plot_kspace = False
-plot_seq = True
+plot_seq = False
 
 disable_pe = False
 
@@ -26,16 +26,16 @@ class Trajectory(Enum):
     LINEAR = 2
     OUTIN = 3
 
-echo_time = 28e-3   # 12
+echo_time = 28e-3   # 12, 28
 repetition_time = 2000e-3
-etl = 8             # 16
+etl = 8             # 16, 8
 dummies = 5
 rf_duration = 400e-6
 ramp_duration= 200e-6
 gradient_correction = 0.
 ro_bandwidth = 10e3
 echo_shift= 0.0
-trajectory: Trajectory = Trajectory.INOUT
+trajectory: Trajectory = Trajectory.LINEAR
 excitation_angle = pi / 2
 excitation_phase = 0.
 refocussing_angle = pi
@@ -44,7 +44,7 @@ channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
 
 # %% 
 fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
-n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1
+n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1 / 64, 64, 1
 system.rf_ringdown_time = 0
 system.max_slew = 100 * system.gamma
 seq = pp.Sequence(system)
@@ -213,7 +213,7 @@ grad_ro_pre = pp.make_trapezoid(
 
 ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
 grad_ro_sp = pp.make_trapezoid(
-    channel='x', area=2*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
+    channel='x', area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
     )
 
 
@@ -337,23 +337,24 @@ if plot_kspace:
     plt.plot(k_traj[0],k_traj[1])
     plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
     plt.show()
-
-    plt.figure()
-    plt.plot(k_traj[0],k_traj[1], 'x')
-    #plt.xlim(-238, -200)
-    plt.xlim(-234.1, -233.9)
-    plt.ylim(-226, -200)
-    plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
-    plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
-    plt.title('Precalculated vs actual locations')
-    plt.legend(['actual loc', 'precalc loc'])
-    plt.show()
+    
+    # plot acquired and true k space locations
+    # plt.figure()
+    # plt.plot(k_traj[0],k_traj[1], 'x')
+    # #plt.xlim(-238, -200)
+    # plt.xlim(-234.1, -233.9)
+    # plt.ylim(-226, -200)
+    # plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+    # plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
+    # plt.title('Precalculated vs actual locations')
+    # plt.legend(['actual loc', 'precalc loc'])
+    # plt.show()
 
 if plot_seq:
     seq.plot()
 ## Prepare the sequence output for the scanner
 if write_seq:
-    seq.set_definition('Name', 'se_ptb')
+    #seq.set_definition('Name', 'se_ptb')
     seq.write('./sequences/' + seq_file)
 
 # %%
