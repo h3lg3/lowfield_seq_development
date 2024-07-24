@@ -47,8 +47,17 @@ fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
 n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1 / 64, 64, 1
 system.rf_ringdown_time = 0
 system.max_slew = 100 * system.gamma
+
+# adjust system to siemens scanner
+system.adc_raster_time=1e-7
+system.block_duration_raster=1e-5
+system.grad_raster_time=1e-5
+system.rf_raster_time=1e-6
+system.rf_ringdown_time=100e-6
+system.rf_dead_time=100e-6
+system.adc_dead_time=10e-6
+
 seq = pp.Sequence(system)
-seq.set_definition("Name", "tse_3d")
 
 # Calculate center out trajectory
 pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
@@ -219,7 +228,8 @@ grad_ro_sp = pp.make_trapezoid(
 
 adc = pp.make_adc(
     system=system,
-    num_samples=int((adc_duration) / system.adc_raster_time),
+    num_samples = n_enc_ro,
+    #num_samples=int((adc_duration) / system.adc_raster_time), 64000 ADC samples?
     duration=raster(val=adc_duration, precision=system.adc_raster_time),
     # Add gradient correction time and ADC correction time
     delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
@@ -354,7 +364,7 @@ if plot_seq:
     seq.plot()
 ## Prepare the sequence output for the scanner
 if write_seq:
-    #seq.set_definition('Name', 'se_ptb')
+    seq.set_definition('Name', 'se_ptb')
     seq.write('./sequences/' + seq_file)
 
 # %%
