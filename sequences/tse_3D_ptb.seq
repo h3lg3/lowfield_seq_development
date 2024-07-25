@@ -647,7 +647,7 @@ TotalDuration 87.663
 # id num dwell delay freq phase
 # ..  ..    ns    us   Hz   rad
 [ADC]
-1 64 50000 200 0 0
+1 320 10000 200 0 0
 
 # Sequence Shapes
 [SHAPES]
@@ -673,4 +673,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be stripped away for recalculating/verification)
 Type md5
-Hash 88c4f5e7196de55c822d07ce7b580648
+Hash 2a0d7117631b837562e3642363ac8d81
