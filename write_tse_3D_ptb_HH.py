@@ -11,12 +11,12 @@ from console.utilities.sequences.system_settings import raster, system
 from matplotlib import pyplot as plt
 
 write_seq = True
-seq_file = 'tse_3D_ptb_HH.seq'
+seq_file = 'tse_3D_ptb_HH_test.seq'
 
 plot_animation = False
 plot_kspace = False
 plot_seq = False
-disable_pe = False
+disable_pe = True
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -365,5 +365,6 @@ if plot_seq:
 if write_seq:
     seq.set_definition('Name', 'se_ptb')
     seq.write('./sequences/' + seq_file)
+    seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 # %%

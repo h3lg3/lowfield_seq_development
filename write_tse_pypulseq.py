@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 
 import pypulseq as pp
-#from console.utilities.sequences.system_settings import system
 from matplotlib import pyplot as plt
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
@@ -333,4 +332,4 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
 
 
 if __name__ == "__main__":
-    main(plot=True, write_seq=False)
+    main(plot=True, write_seq=True)

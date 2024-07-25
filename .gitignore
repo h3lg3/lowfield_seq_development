@@ -2,4 +2,5 @@
 *.pkl
 *.npy
 *.mat
+*.pyc
 ~*
