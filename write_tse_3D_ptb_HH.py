@@ -10,14 +10,13 @@ from console.utilities.sequences.system_settings import raster, system
 
 from matplotlib import pyplot as plt
 
+write_seq = True
+seq_file = 'tse_3D_ptb_HH.seq'
+
 plot_animation = False
 plot_kspace = False
 plot_seq = True
-
 disable_pe = False
-
-write_seq = False
-seq_file = 'tse_3D_ptb_HH_dummies.seq'
 
 class Trajectory(Enum):
     """Trajectory type enum."""

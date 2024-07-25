@@ -23,7 +23,7 @@ class Trajectory(Enum):
     INOUT = 1
     LINEAR = 2
 
-echo_time = 12e-3
+echo_time = 28e-3
 repetition_time = 2000e-3
 etl = 8
 dummies = 5
@@ -31,6 +31,7 @@ rf_duration = 400e-6
 ramp_duration= 200e-6
 gradient_correction = 0.
 ro_bandwidth = 20e3
+freq_oversampling = 5
 echo_shift= 0.0
 trajectory: Trajectory = Trajectory.LINEAR
 excitation_angle = pi / 2
@@ -213,7 +214,7 @@ grad_ro_pre = pp.make_trapezoid(
 
 adc = pp.make_adc(
     system=system,
-    num_samples=n_enc_ro,       # int((adc_duration) / system.adc_raster_time); change RO samples from 64k to 64
+    num_samples=int(n_enc_ro*freq_oversampling),     # int((adc_duration) / system.adc_raster_time); change RO samples from 64k to 64
     duration=raster(val=adc_duration, precision=system.adc_raster_time),
     # Add gradient correction time and ADC correction time
     delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
@@ -318,16 +319,16 @@ else:
 # Plot k-space trajectory
 k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
 
-plt.figure()
-plt.plot(k_traj[0],k_traj[1], 'x')
-#plt.xlim(-238, -200)
-plt.xlim(-234.1, -233.9)
-plt.ylim(-226, -200)
-plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
-plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
-plt.title('Precalculated vs actual locations')
-plt.legend(['actual loc', 'precalc loc'])
-plt.show()
+# plt.figure()
+# plt.plot(k_traj[0],k_traj[1], 'x')
+# #plt.xlim(-238, -200)
+# plt.xlim(-234.1, -233.9)
+# plt.ylim(-226, -200)
+# plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+# plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
+# plt.title('Precalculated vs actual locations')
+# plt.legend(['actual loc', 'precalc loc'])
+# plt.show()
 
 ## Prepare the sequence output for the scanner
 seq.set_definition('Name', 'se_ptb')
