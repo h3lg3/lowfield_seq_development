@@ -15,7 +15,7 @@ seq_file = 'tse_3D_ptb_HH.seq'
 
 plot_animation = False
 plot_kspace = False
-plot_seq = True
+plot_seq = False
 disable_pe = False
 
 class Trajectory(Enum):
@@ -33,6 +33,7 @@ rf_duration = 400e-6
 ramp_duration= 200e-6
 gradient_correction = 0.
 ro_bandwidth = 10e3
+freq_oversampling = 5
 echo_shift= 0.0
 trajectory: Trajectory = Trajectory.LINEAR
 excitation_angle = pi / 2
@@ -227,7 +228,7 @@ grad_ro_sp = pp.make_trapezoid(
 
 adc = pp.make_adc(
     system=system,
-    num_samples = n_enc_ro,
+    num_samples = int(n_enc_ro*freq_oversampling),
     #num_samples=int((adc_duration) / system.adc_raster_time), 64000 ADC samples?
     duration=raster(val=adc_duration, precision=system.adc_raster_time),
     # Add gradient correction time and ADC correction time
@@ -243,7 +244,7 @@ tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
     - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_ro_sp)) + echo_shift
 # max(ro_pre_duration, pp.calc_duration(grad_ro_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
 # Delay duration between readout and Gy, Gz gradient rephaser
-tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift
+tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_ro_sp)
 
 for dummy in range(dummies):
     seq.add_block(rf_90)
@@ -269,8 +270,8 @@ for train in trains:
         if disable_pe:
             pe_1 = 0
             pe_2 = 0
-        seq.add_block(grad_ro_sp)
-        seq.add_block(rf_180)
+        seq.add_block(grad_ro_sp) # move this grad_ro_sp behind delay_tau1 and add extra grad_ro_sp before delay_tau3, combine extra grad_ro_sp with pe-rephase and adjust delay_tau3 calculation
+        seq.add_block(rf_180)   
 
         seq.add_block(
             pp.make_trapezoid(
