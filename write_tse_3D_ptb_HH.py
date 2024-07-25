@@ -12,11 +12,11 @@ from matplotlib import pyplot as plt
 
 plot_animation = False
 plot_kspace = False
-plot_seq = False
+plot_seq = True
 
 disable_pe = False
 
-write_seq = True
+write_seq = False
 seq_file = 'tse_3D_ptb_HH_dummies.seq'
 
 class Trajectory(Enum):
@@ -238,12 +238,11 @@ adc = pp.make_adc(
 # Calculate delays
 # Note: RF dead-time is contained in RF delay
 # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-
-# Muss hier die rf-duration nicht durch 2 geteilt werden?  Vielleicht weil 180 genauso lang wie 90 ist.
 tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_ro_sp)
 # Delay duration between Gy, Gz prephaser and readout
 tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-    - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift - pp.calc_duration(grad_ro_sp)
+    - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_ro_sp)) + echo_shift
+# max(ro_pre_duration, pp.calc_duration(grad_ro_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
 # Delay duration between readout and Gy, Gz gradient rephaser
 tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift
 
@@ -278,7 +277,7 @@ for train in trains:
             pp.make_trapezoid(
                 channel=channel_pe1,
                 area=-pe_1,
-                duration=ro_pre_duration, # warum werden diese nicht auf Rasterzeit angepasst? 
+                duration=ro_pre_duration,
                 system=system,
                 rise_time=ramp_duration,
                 fall_time=ramp_duration
