@@ -25,14 +25,14 @@ class Trajectory(Enum):
 
 echo_time = 12e-3
 repetition_time = 2000e-3
-etl = 16
-dummies = 0
+etl = 8
+dummies = 5
 rf_duration = 400e-6
 ramp_duration= 200e-6
 gradient_correction = 0.
 ro_bandwidth = 20e3
 echo_shift= 0.0
-trajectory: Trajectory = Trajectory.INOUT
+trajectory: Trajectory = Trajectory.LINEAR
 excitation_angle = pi / 2
 excitation_phase = 0.
 refocussing_angle = pi
@@ -41,11 +41,20 @@ channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
 
 # %% 
 fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
-n_enc_ro, n_enc_pe1, n_enc_pe2 = 100, 100, 1
+n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1
 system.rf_ringdown_time = 0
 system.max_slew = 100 * system.gamma
+
+# adjust system to siemens scanner
+system.adc_raster_time=1e-7
+system.block_duration_raster=1e-5
+system.grad_raster_time=1e-5
+system.rf_raster_time=1e-6
+system.rf_ringdown_time=100e-6
+system.rf_dead_time=100e-6
+system.adc_dead_time=10e-6
+
 seq = pp.Sequence(system)
-seq.set_definition("Name", "tse_3d")
 
 # Calculate center out trajectory
 pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
@@ -204,7 +213,7 @@ grad_ro_pre = pp.make_trapezoid(
 
 adc = pp.make_adc(
     system=system,
-    num_samples=int((adc_duration) / system.adc_raster_time),
+    num_samples=n_enc_ro,       # int((adc_duration) / system.adc_raster_time); change RO samples from 64k to 64
     duration=raster(val=adc_duration, precision=system.adc_raster_time),
     # Add gradient correction time and ADC correction time
     delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
