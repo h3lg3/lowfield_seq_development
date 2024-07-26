@@ -29,7 +29,12 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
             sp_adc, t_adc = mr0.util.pulseq_plot(seq=seq,signal=signal)
         except:
             seq.plot()
-        plt.plot(signal)
+            
+        plt.plot(np.real(signal))
+        plt.title('real part of RF signal')
+        plt.xlabel('sampling points')
+        plt.ylabel('RF signal')
+        plt.show()
         
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
