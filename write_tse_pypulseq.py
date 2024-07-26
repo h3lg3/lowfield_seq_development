@@ -6,7 +6,7 @@ import numpy as np
 import pypulseq as pp
 from matplotlib import pyplot as plt
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
+def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq"):
     # ======
     # SETUP
     # ======
@@ -315,7 +315,6 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq.seq"):
     # VISUALIZATION
     # ======
     if plot:
-        
         k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
         plt.figure()
         plt.plot(k_traj[0],k_traj[1])

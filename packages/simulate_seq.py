@@ -6,10 +6,10 @@ import pickle
 
 # %% Create phantom, simulate sequence, reconstruct image
 def simulate_seq(save: bool, seq_filename: str):
-    sim_name = 'sim_' + seq_filename
+    sim_name = "sim_" + seq_filename
     
     seq_file = r"E:\Python\pypulseq_development\sequences"
-    seq_file = seq_file + '\\' + seq_filename
+    seq_file = seq_file + "\\" + seq_filename + ".seq"
 
 
     seq = pp.Sequence()
@@ -17,7 +17,7 @@ def simulate_seq(save: bool, seq_filename: str):
     seq0 = mr0.Sequence.import_file(seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = 'simbrain' # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
     reso = (64, 64, 1)
 
     print('load phantom')
@@ -66,4 +66,4 @@ def simulate_seq(save: bool, seq_filename: str):
             pickle.dump(seq0, file)
 
 if __name__ == "__main__":
-    simulate_seq(save=True, seq_filename='tse_pypulseq_phaseArea0.seq')
+    simulate_seq(save=True, seq_filename='tse_pypulseq')

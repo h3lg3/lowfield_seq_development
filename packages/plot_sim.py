@@ -54,5 +54,5 @@ if __name__ == "__main__":
         "kspace": True,
         "reco": True
         },
-        seq_filename='tse_3D_ptb')        
+        seq_filename='tse_pypulseq')        
 # %%
