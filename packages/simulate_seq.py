@@ -5,12 +5,9 @@ import MRzeroCore as mr0
 import pickle
 
 # %% Create phantom, simulate sequence, reconstruct image
-def simulate_seq(save: bool, seq_filename: str):
+def simulate_seq(save: bool, seq_filename: str, seq_path: str = "./sequences/", sim_path: str = "./simulation/"):
     sim_name = "sim_" + seq_filename
-    
-    seq_file = r"E:\Python\pypulseq_development\sequences"
-    seq_file = seq_file + "\\" + seq_filename + ".seq"
-
+    seq_file = seq_path + seq_filename + ".seq"
 
     seq = pp.Sequence()
     seq.read(seq_file)
@@ -51,18 +48,18 @@ def simulate_seq(save: bool, seq_filename: str):
     reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0.22, 1))
     # %% save results
     if save:
-        with open('./simulation/' + sim_name + '_obj_p.pkl', 'wb') as file:
+        with open(sim_path+ sim_name + '_obj_p.pkl', 'wb') as file:
             pickle.dump(obj_p, file)
 
-        np.save('./simulation/' + sim_name + '_signal.npy', signal)
+        np.save(sim_path + sim_name + '_signal.npy', signal)
 
-        with open('./simulation/' + sim_name + '_reco.pkl', 'wb') as file:
+        with open(sim_path + sim_name + '_reco.pkl', 'wb') as file:
             pickle.dump(reco, file)
             
         seq_file = sim_name + '_seq.seq'
-        seq.write('./simulation/' + seq_file)
+        seq.write(sim_path + seq_file)
 
-        with open('./simulation/' + sim_name + '_seq0.pkl', 'wb') as file:
+        with open(sim_path + sim_name + '_seq0.pkl', 'wb') as file:
             pickle.dump(seq0, file)
 
 if __name__ == "__main__":

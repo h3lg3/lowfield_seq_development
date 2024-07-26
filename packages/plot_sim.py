@@ -5,22 +5,20 @@ import pypulseq as pp
 from matplotlib import pyplot as plt
 import MRzeroCore as mr0
 
-def plot_sim(plot: dict, seq_filename: str):
+def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
     sim_name = 'sim_' + seq_filename
-    path2sim = r"E:\Python\pypulseq_development\simulation"
+    signal = np.load(sim_path + sim_name + '_signal.npy')
 
-    signal = np.load(path2sim + '/' + sim_name + '_signal.npy')
-
-    with open(path2sim + '/' + sim_name + '_obj_p.pkl', 'rb') as file:
+    with open(sim_path + sim_name + '_obj_p.pkl', 'rb') as file:
         obj_p = pickle.load(file)
         
-    with open(path2sim + '/' + sim_name + '_reco.pkl', 'rb') as file:
+    with open(sim_path + sim_name + '_reco.pkl', 'rb') as file:
         reco = pickle.load(file)
         
     seq = pp.Sequence()
-    seq.read(path2sim + '/' + sim_name + '_seq.seq')
+    seq.read(sim_path + sim_name + '_seq.seq')
 
-    with open(path2sim + '/' + sim_name + '_seq0.pkl', 'rb') as file:
+    with open(sim_path + sim_name + '_seq0.pkl', 'rb') as file:
         seq0 = pickle.load(file)
     # %%
     if plot["phantom"]:

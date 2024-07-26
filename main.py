@@ -4,10 +4,10 @@ from packages.plot_sim import plot_sim
 from packages.analyze_seq import analyze_seq
 
 seq_name = "tse_pypulseq"
-write_sequence = False
+write_sequence = True
 analyze_sequence = True
-simulate_sequence = False
-plot_simulation = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     write_seq(plot=False, write_seq=True, seq_filename=seq_name)
