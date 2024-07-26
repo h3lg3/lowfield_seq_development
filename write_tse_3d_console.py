@@ -1,7 +1,7 @@
 """Constructor for 3D TSE Imaging sequence.
 
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
-TODO: add optional inversion pulse
+TODO: add optional inversion pulse -> 3D IRSE takes too much time, usually multi-slice 2D IRSE is used
 TODO: add optional variable refocussing pulses (pass list rather than float)
 TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
 
@@ -20,7 +20,7 @@ from console.utilities.sequences.system_settings import raster, system
 class Trajectory(Enum):
     """Trajectory type enum."""
 
-    INOUT = 1
+    OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
     LINEAR = 2
 
 
@@ -40,7 +40,7 @@ def constructor(
     fov: Dimensions = default_fov,
     n_enc: Dimensions = default_encoding,
     echo_shift: float = 0.0,
-    trajectory: Trajectory = Trajectory.INOUT,
+    trajectory: Trajectory = Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
     excitation_phase: float = 0.,
     refocussing_angle: float = pi,
@@ -179,7 +179,7 @@ def constructor(
     pe_mag = np.sum(np.square(pe_points), axis=-1)  # calculate magnitude of all gradient combinations
     pe_mag_sorted = np.argsort(pe_mag)
 
-    if trajectory is Trajectory.INOUT:
+    if trajectory is Trajectory.OUTIN:
         pe_mag_sorted = np.flip(pe_mag_sorted)
 
     pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
