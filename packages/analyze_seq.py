@@ -55,7 +55,7 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     plt.plot(wf['t_gz'],wf['gz'], '.-', c='b')
     plt.xlabel("time in s")
     plt.ylabel("gradient amplitude in Hz/m")
-    plt.xlim(0.04, 0.05)
+    plt.legend(["x", "y", "z"])
     plt.show()
     # Gradient amplitudes
     plt.figure()
@@ -66,7 +66,6 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     plt.xlabel("time [s]")
     plt.ylabel("gradient amplitude [mT/m]")
     plt.legend(["x", "y", "z", "norm"])
-    plt.xlim(0.04, 0.05)
     plt.show()
     # Slew rates
     plt.figure()
@@ -77,7 +76,6 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     plt.xlabel("time [s]")
     plt.ylabel("slew rate [T/m/s]")
     plt.legend(["x", "y", "z", "norm"])
-    plt.xlim(0.04, 0.05)
     plt.show()
     # %% Sequence test report
     # For the real TE, TR or for staying within slew-rate limits
