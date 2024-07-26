@@ -11,11 +11,14 @@ from matplotlib import pyplot as plt
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     if plot:
-        plot_animation = False
         plot_kspace = True
         plot_seq = True
+    else:
+        plot_kspace = False
+        plot_seq = False
         
-    disable_pe = False
+    plot_animation = False
+    disable_pe = False       
 
     class Trajectory(Enum):
         """Trajectory type enum."""
@@ -36,9 +39,9 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     echo_shift= 0.0
     trajectory: Trajectory = Trajectory.LINEAR
     excitation_angle = pi / 2
-    excitation_phase = 0.
+    excitation_phase = pi / 2
     refocussing_angle = pi
-    refocussing_phase = pi / 2
+    refocussing_phase = 0.
     channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
 
     # %% 
