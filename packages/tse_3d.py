@@ -98,6 +98,8 @@ def constructor(
     system.rf_ringdown_time = 0
     
     # adjust system to siemens scanner
+    system.max_slew = 100 * system.gamma
+    
     system.adc_raster_time=1e-7
     system.block_duration_raster=1e-5
     system.grad_raster_time=1e-5

@@ -35,7 +35,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     ramp_duration= 200e-6
     gradient_correction = 0.
     ro_bandwidth = 10e3
-    freq_oversampling = 5
+    ro_oversampling = 5
     echo_shift= 0.0
     trajectory: Trajectory = Trajectory.LINEAR
     excitation_angle = pi / 2
@@ -47,7 +47,6 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     # %% 
     fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
     n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1 / 64, 64, 1
-    system.rf_ringdown_time = 0
     system.max_slew = 100 * system.gamma
 
     # adjust system to siemens scanner
@@ -230,7 +229,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
 
     adc = pp.make_adc(
         system=system,
-        num_samples = int(n_enc_ro*freq_oversampling),
+        num_samples = int(n_enc_ro*ro_oversampling),
         #num_samples=int((adc_duration) / system.adc_raster_time), 64000 ADC samples?
         duration=raster(val=adc_duration, precision=system.adc_raster_time),
         # Add gradient correction time and ADC correction time
