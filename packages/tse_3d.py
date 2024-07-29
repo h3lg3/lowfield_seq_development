@@ -38,6 +38,7 @@ def constructor(
     ramp_duration: float = 200e-6,
     gradient_correction: float = 0.,
     ro_bandwidth: float = 20e3,
+    ro_oversampling: int = 5,
     fov: Dimensions = default_fov,
     n_enc: Dimensions = default_encoding,
     echo_shift: float = 0.0,
@@ -301,7 +302,7 @@ def constructor(
 
     adc = pp.make_adc(
         system=system,
-        num_samples=int((adc_duration) / system.adc_raster_time),
+        num_samples=int(n_enc_ro*ro_oversampling),
         duration=raster(val=adc_duration, precision=system.adc_raster_time),
         # Add gradient correction time and ADC correction time
         delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
