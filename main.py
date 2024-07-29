@@ -5,14 +5,14 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_pypulseq import main as write_seq
 # seq_name = "tse_pypulseq"
 
-from write_tse_3D_console import main as write_seq
+from write_tse_3d_console import main as write_seq
 seq_name = "tse_3D_console"
 
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = False
-plot_simulation = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     write_seq(plot=True, write_seq=True, seq_filename=seq_name)

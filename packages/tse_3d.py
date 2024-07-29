@@ -304,7 +304,7 @@ def constructor(
 
     ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
     grad_ro_sp = pp.make_trapezoid(
-        channel='x', area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
+        channel=channel_ro, area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
         )
     
     adc = pp.make_adc(
@@ -429,11 +429,11 @@ def constructor(
     train_duration_tr = (seq.duration()[0]) / len(trains)
     train_duration = train_duration_tr - tr_delay
 
-    # Add measures to sequence definition
-    seq.set_definition("n_total_trains", len(trains))
-    seq.set_definition("train_duration", train_duration)
-    seq.set_definition("train_duration_tr", train_duration_tr)
-    seq.set_definition("tr_delay", tr_delay)
+    # # Add measures to sequence definition
+    # seq.set_definition("n_total_trains", len(trains))
+    # seq.set_definition("train_duration", train_duration)
+    # seq.set_definition("train_duration_tr", train_duration_tr)
+    # seq.set_definition("tr_delay", tr_delay)
 
     return (seq, acq_pos, [n_enc_ro, n_enc_pe1, n_enc_pe2])
 
