@@ -411,6 +411,8 @@ def constructor(
 
             seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
 
+        seq.add_block(grad_ro_sp) # add spoiler after last 180 pulse in echo train
+
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
             - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_ro_sp)
