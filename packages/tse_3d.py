@@ -1,3 +1,11 @@
+"""Constructor for 3D TSE Imaging sequence.
+
+TODO: add sampling patterns (elliptical masks, partial fourier, CS)
+TODO: add optional inversion pulse -> 3D IRSE takes too much time, usually multi-slice 2D IRSE is used
+TODO: add optional variable refocussing pulses (pass list rather than float)
+TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
+
+"""
 # %%
 from enum import Enum
 from math import pi
@@ -5,51 +13,93 @@ from math import pi
 import numpy as np
 import pypulseq as pp
 
+from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster, system
 
-from matplotlib import pyplot as plt
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
-    if plot:
-        plot_kspace = True
-        plot_seq = True
-    else:
-        plot_kspace = False
-        plot_seq = False
-        
-    plot_animation = False
-    disable_pe = False       
+class Trajectory(Enum):
+    """Trajectory type enum."""
 
-    class Trajectory(Enum):
-        """Trajectory type enum."""
+    OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
+    LINEAR = 2
+    INOUT = 3
 
-        INOUT = 1
-        LINEAR = 2
-        OUTIN = 3
 
-    echo_time = 28e-3   # 12, 28
-    repetition_time = 2000e-3
-    etl = 8             # 16, 8
-    dummies = 5
-    rf_duration = 400e-6
-    ramp_duration= 200e-6
-    gradient_correction = 0.
-    ro_bandwidth = 10e3
-    ro_oversampling = 5
-    echo_shift= 0.0
-    trajectory: Trajectory = Trajectory.LINEAR
-    excitation_angle = pi / 2
-    excitation_phase = pi / 2
-    refocussing_angle = pi
-    refocussing_phase = 0.
-    channel_ro, channel_pe1, channel_pe2 = 'x', 'y', 'z'
+default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
+default_encoding = Dimensions(x=70, y=70, z=49)
 
-    # %% 
-    fov_ro, fov_pe1, fov_pe2 = 220e-3, 220e-3, 220e-3
-    n_enc_ro, n_enc_pe1, n_enc_pe2 = 64, 64, 1  # 100, 100, 1 / 64, 64, 1
-    system.max_slew = 100 * system.gamma
 
+def constructor(
+    echo_time: float = 15e-3,
+    repetition_time: float = 600e-3,
+    etl: int = 7,
+    dummies: int = 0,
+    rf_duration: float = 400e-6,
+    ramp_duration: float = 200e-6,
+    gradient_correction: float = 0.,
+    ro_bandwidth: float = 20e3,
+    ro_oversampling: int = 5,
+    fov: Dimensions = default_fov,
+    n_enc: Dimensions = default_encoding,
+    echo_shift: float = 0.0,
+    trajectory: Trajectory = Trajectory.OUTIN,
+    excitation_angle: float = pi / 2,
+    excitation_phase: float = 0.,
+    refocussing_angle: float = pi,
+    refocussing_phase: float = pi / 2,
+    inversion_pulse: bool = False,
+    inversion_time: float = 50e-3,
+    inversion_angle: float = pi,
+    channel_ro: str = "y",
+    channel_pe1: str = "z",
+    channel_pe2: str = "x",
+) -> tuple[pp.Sequence, list, list]:
+    """Construct 3D turbo spin echo sequence.
+
+    Parameters
+    ----------
+    echo_time, optional
+        Time constant between center of 90 degree pulse and center of ADC, by default 15e-3
+    repetition_time, optional
+        Time constant between two subsequent 90 degree pulses (echo trains), by default 600e-3
+    etl, optional
+        Echo train length, by default 7
+    dummies, optional
+        Number of dummy shots to acquire, default is 0
+    rf_duration, optional
+        Duration of the RF pulses (90 and 180 degree), by default 400e-6
+    gradient_correction, optional
+        Time constant to center ADC event, by default 510e-6
+    adc_correction, optional
+        Time constant which is added at the end of the ADC and readout gradient.
+        This value is not taken into account for the prephaser calculation.
+    ro_bandwidth, optional
+        Readout bandwidth in Hz, by default 20e3
+    fov, optional
+        Field of view per dimension, by default default_fov
+    n_enc, optional
+        Number of encoding steps per dimension, by default default_encoding = Dimensions(x=70, y=70, z=49).
+        If an encoding dimension is set to 1, the TSE sequence becomes a 2D sequence.
+    trajectroy, optional
+        The k-space trajectory, by default set to in-out, other currently implemented options are...
+    excitation_angle, excitation_phase, optional
+        set the flip angle and phase of the excitation pulse in radians, defaults to 90 degree flip angle, 0 phase
+    refocussing_angle, refocussing_phase, optional
+        Set the flip angle and phase of the refocussing pulse in radians,
+        defaults to 180 degree flip angle, 90 degree phase
+        TODO: allow this to be a list/array to vary flip angle along echo train.
+    channel_ro, channel_pe1, channel_pe2, optional
+        set the readout, phase1 and phase2 encoding directions, default to y, z and x.
+
+    Returns
+    -------
+        Pulseq sequence and a list which describes the trajectory
+    """
+    system.rf_ringdown_time = 0
+    
     # adjust system to siemens scanner
+    system.max_slew = 100 * system.gamma
+    
     system.adc_raster_time=1e-7
     system.block_duration_raster=1e-5
     system.grad_raster_time=1e-5
@@ -57,8 +107,78 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     system.rf_ringdown_time=100e-6
     system.rf_dead_time=100e-6
     system.adc_dead_time=10e-6
-
+        
     seq = pp.Sequence(system)
+    seq.set_definition("Name", "tse_3d")
+
+    # check if channel labels are valid
+    channel_valid = True
+    if len(channel_ro) > 1 or len(channel_ro) == 0:
+        channel_valid = False
+        print("Invalid readout channel: %s" % (channel_ro))
+    if len(channel_pe1) > 1 or len(channel_pe1) == 0:
+        channel_valid = False
+        print("Invalid pe1 channel: %s" % (channel_pe1))
+    if len(channel_pe2) > 1 or len(channel_pe2) == 0:
+        channel_valid = False
+        print("Invalid pe2 channel: %s" % (channel_pe2))
+
+    channel_ro = channel_ro.lower()
+    channel_pe1 = channel_pe1.lower()
+    channel_pe2 = channel_pe2.lower()  # set all channels to lower case
+
+    if channel_ro not in ("x", "y", "z") or channel_pe1 not in ("x", "y", "z") or channel_pe2 not in ("x", "y", "z"):
+        channel_valid = False
+        print("Invalid axis orientation")
+    if channel_ro == channel_pe1 or channel_ro == channel_pe2 or channel_pe1 == channel_pe2:
+        channel_valid = False
+        print("Error, multiple channels have the same gradient")
+        print("Readout channel: %s, pe1 channel: %s, pe2 channel: %s" % (channel_ro, channel_pe1, channel_pe2))
+    if not channel_valid:
+        print("Defaulting to readout in y, pe1 in z, pe2 in x")
+        channel_ro = "y"
+        channel_pe1 = "z"
+        channel_pe2 = "x"
+
+    if (channel_ro == "x"):
+        n_enc_ro = n_enc.x
+        fov_ro = fov.x
+        if channel_pe1 == "y":
+            n_enc_pe1 = n_enc.y
+            fov_pe1 = fov.y
+            n_enc_pe2 = n_enc.z
+            fov_pe2 = fov.z
+        else:
+            n_enc_pe1 = n_enc.z
+            fov_pe1 = fov.z
+            n_enc_pe2 = n_enc.y
+            fov_pe2 = fov.y
+    elif (channel_ro == "y"):
+        n_enc_ro = n_enc.y
+        fov_ro = fov.y
+        if channel_pe1 == "x":
+            n_enc_pe1 = n_enc.x
+            fov_pe1 = fov.x
+            n_enc_pe2 = n_enc.z
+            fov_pe2 = fov.z
+        else:
+            n_enc_pe1 = n_enc.z
+            fov_pe1 = fov.z
+            n_enc_pe2 = n_enc.x
+            fov_pe2 = fov.x
+    else:
+        n_enc_ro = n_enc.z
+        fov_ro = fov.z
+        if channel_pe1 == "y":
+            n_enc_pe1 = n_enc.y
+            fov_pe1 = fov.y
+            n_enc_pe2 = n_enc.x
+            fov_pe2 = fov.x
+        else:
+            n_enc_pe1 = n_enc.x
+            fov_pe1 = fov.x
+            n_enc_pe2 = n_enc.y
+            fov_pe2 = fov.y
 
     # Calculate center out trajectory
     pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
@@ -122,53 +242,6 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     acq_pos = []
     for train_pos in trains_pos:
         acq_pos.extend(train_pos)
-        
-    # # # Plot k-space acquisition order
-    if plot_animation:
-        plt.ion()  # Turn on interactive mode
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
-
-        for array in trains_pos[0:10]:
-            #ax1.clear()
-            ax2.clear()
-            
-            # Plot the whole array on the first subplot
-            ax1.scatter(array[:, 0], array[:, 1])
-            ax1.set_title('Array wise Phase Encode Steps ky per Echotrain')
-            ax1.set_xlabel('ky')
-            ax1.set_xlabel('kz')
-            ax1.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
-            ax1.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
-            ax2.set_xlim(min(pe_traj[:, 0]), max(pe_traj[:, 0]))
-            ax2.set_ylim(min(pe_traj[:, 1]), max(pe_traj[:, 1]))
-            # Plot each element of the array iteratively on the second subplot
-            for point in array:
-                ax2.scatter(point[0], point[1], color='r')
-                ax2.set_title('Element-wise Phase Encode Steps ky per Echotrain')
-                ax1.set_xlabel('ky')
-                ax1.set_xlabel('kz')
-                plt.draw()
-                plt.pause(0.2)  # Pause for half a second
-
-        plt.ioff()  # Turn off interactive mode
-        plt.show()    
-
-        plt.ion()  # Turn on interactive mode
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
-
-        plt.ion()  # Turn on interactive mode
-        fig, ax1= plt.subplots(figsize=(10, 10))
-        for array in trains_pos[0:10]:
-            ax1.set_title('Array wise Phase Encode Steps ky per Echotrain')
-            ax1.set_xlabel('# PE')
-            ax1.set_xlabel('ky')
-            # Plot the whole array on the first subplot
-            ax1.plot(array[:, 0])
-            plt.draw()
-            plt.pause(0.5)  # Pause for half a second
-        plt.ioff()  # Turn off interactive mode
-        plt.show()          
-    # %%
 
     # Definition of RF pulses
     rf_90 = pp.make_block_pulse(
@@ -185,6 +258,14 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
         duration=rf_duration,
         use="refocusing"
     )
+    if inversion_pulse:
+        rf_inversion = pp.make_block_pulse(
+            system=system,
+            flip_angle=inversion_angle,
+            phase_offset=refocussing_phase,
+            duration=rf_duration,
+            use="refocusing"
+        )
 
     # ADC duration
     adc_duration = n_enc_ro / ro_bandwidth
@@ -223,14 +304,12 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
 
     ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
     grad_ro_sp = pp.make_trapezoid(
-        channel='x', area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
+        channel=channel_ro, area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
         )
-
-
+    
     adc = pp.make_adc(
         system=system,
-        num_samples = int(n_enc_ro*ro_oversampling),
-        #num_samples=int((adc_duration) / system.adc_raster_time), 64000 ADC samples?
+        num_samples=int(n_enc_ro*ro_oversampling),
         duration=raster(val=adc_duration, precision=system.adc_raster_time),
         # Add gradient correction time and ADC correction time
         delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
@@ -248,6 +327,9 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
     tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_ro_sp)
 
     for dummy in range(dummies):
+        if inversion_pulse:
+            seq.add_block(rf_inversion)
+            seq.add_block(pp.make_delay(raster(val=inversion_time - rf_duration, precision=system.grad_raster_time)))
         seq.add_block(rf_90)
         seq.add_block(pp.make_delay(raster(val=echo_time / 2 - rf_duration, precision=system.grad_raster_time)))
         for idx in range(etl):
@@ -256,23 +338,33 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
                 val=echo_time - rf_duration,
                 precision=system.grad_raster_time
             )))
-        seq.add_block(pp.make_delay(raster(
-            val=repetition_time - (etl + 0.5) * echo_time - rf_duration,
-            precision=system.grad_raster_time
-        )))
+        if inversion_pulse:
+            seq.add_block(pp.make_delay(raster(
+                val=repetition_time - (etl + 0.5) * echo_time - rf_duration - inversion_time,
+                precision=system.grad_raster_time
+            )))
+        else:
+            seq.add_block(pp.make_delay(raster(
+                val=repetition_time - (etl + 0.5) * echo_time - rf_duration,
+                precision=system.grad_raster_time
+            )))
 
     for train in trains:
+        if inversion_pulse:
+            seq.add_block(rf_inversion)
+            seq.add_block(pp.make_delay(raster(
+                val=inversion_time - rf_duration,
+                precision=system.grad_raster_time
+            )))
         seq.add_block(rf_90)
         seq.add_block(grad_ro_pre)
         seq.add_block(pp.make_delay(raster(val=tau_1, precision=system.grad_raster_time)))
 
         for echo in train:
             pe_1, pe_2 = echo
-            if disable_pe:
-                pe_1 = 0
-                pe_2 = 0
+            
             seq.add_block(grad_ro_sp) # move this grad_ro_sp behind delay_tau1 and add extra grad_ro_sp before delay_tau3, combine extra grad_ro_sp with pe-rephase and adjust delay_tau3 calculation
-            seq.add_block(rf_180)   
+            seq.add_block(rf_180)
 
             seq.add_block(
                 pp.make_trapezoid(
@@ -318,59 +410,51 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_HH.seq"):
             )
 
             seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
-            
+
         seq.add_block(grad_ro_sp) # add spoiler after last 180 pulse in echo train
-        
+
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
             - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_ro_sp)
+
+        if inversion_pulse:
+            tr_delay -= inversion_time
 
         seq.add_block(pp.make_delay(raster(
             val=tr_delay,
             precision=system.block_duration_raster
         )))
 
-    ## Check whether the timing of the sequence is compatible with the scanner
-    (ok,error_report,) = seq.check_timing()  # Check whether the timing of the sequence is correct
-    if ok:
-        print("Timing check passed successfully")
-    else:
-        print("Timing check failed. Error listing follows:")
-        [print(e) for e in error_report]
+    # Calculate some sequence measures
+    train_duration_tr = (seq.duration()[0]) / len(trains)
+    train_duration = train_duration_tr - tr_delay
 
-    ## kspace trajectory: PLOT true and calculated kspace locations
-    # Plot k-space trajectory
-    if plot_kspace:
-        k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
+    # # Add measures to sequence definition
+    # seq.set_definition("n_total_trains", len(trains))
+    # seq.set_definition("train_duration", train_duration)
+    # seq.set_definition("train_duration_tr", train_duration_tr)
+    # seq.set_definition("tr_delay", tr_delay)
 
-        plt.figure()
-        plt.plot(k_traj[0],k_traj[1])
-        plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
-        plt.show()
-        
-        # plot acquired and true k space locations
-        # plt.figure()
-        # plt.plot(k_traj[0],k_traj[1], 'x')
-        # #plt.xlim(-238, -200)
-        # plt.xlim(-234.1, -233.9)
-        # plt.ylim(-226, -200)
-        # plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
-        # plt.plot(np.ones(len(pe_traj[:, 0]))*-234,pe_traj[:, 0], 'o')
-        # plt.title('Precalculated vs actual locations')
-        # plt.legend(['actual loc', 'precalc loc'])
-        # plt.show()
+    return (seq, acq_pos, [n_enc_ro, n_enc_pe1, n_enc_pe2])
 
-    if plot_seq:
-        seq.plot()
-        
-    # =========
-    # WRITE .SEQ
-    # =========    
-    if write_seq:
-        seq.set_definition('Name', 'se_ptb_HH')
-        seq.write('./sequences/' + seq_filename)
-        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
-    
-if __name__ == "__main__":
-    main(plot=True, write_seq=True)
+
+def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np.ndarray:
+    """
+    Sort acquired k-space lines.
+
+    Parameters
+    ----------
+    kspace
+        Acquired k-space data in the format (averages, coils, pe, ro)
+    trajectory
+        k-Space trajectory returned by TSE constructor with dimension (pe, 2)
+    dim
+        dimensions of kspace
+    """
+    n_avg, n_coil, _, _ = raw_data.shape
+    ksp = np.zeros((n_avg, n_coil, kdims[2], kdims[1], kdims[0]), dtype=complex)
+    for idx, kpt in enumerate(trajectory):
+        ksp[..., kpt[1], kpt[0], :] = raw_data[:, :, idx, :]
+    return ksp
+
 # %%
