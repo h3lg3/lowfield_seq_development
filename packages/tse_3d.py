@@ -302,6 +302,11 @@ def constructor(
         duration=raster(ro_pre_duration, precision=system.grad_raster_time),
     )
 
+    ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
+    grad_ro_sp = pp.make_trapezoid(
+        channel='x', area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
+        )
+    
     adc = pp.make_adc(
         system=system,
         num_samples=int(n_enc_ro*ro_oversampling),
@@ -313,12 +318,13 @@ def constructor(
     # Calculate delays
     # Note: RF dead-time is contained in RF delay
     # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-    tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration
+    tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_ro_sp)
     # Delay duration between Gy, Gz prephaser and readout
     tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-        - ramp_duration - rf_180.ringdown_time - ro_pre_duration + echo_shift
+        - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_ro_sp)) + echo_shift
+    # max(ro_pre_duration, pp.calc_duration(grad_ro_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
     # Delay duration between readout and Gy, Gz gradient rephaser
-    tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - ro_pre_duration - echo_shift
+    tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_ro_sp)
 
     for dummy in range(dummies):
         if inversion_pulse:
@@ -356,7 +362,8 @@ def constructor(
 
         for echo in train:
             pe_1, pe_2 = echo
-
+            
+            seq.add_block(grad_ro_sp) # move this grad_ro_sp behind delay_tau1 and add extra grad_ro_sp before delay_tau3, combine extra grad_ro_sp with pe-rephase and adjust delay_tau3 calculation
             seq.add_block(rf_180)
 
             seq.add_block(
@@ -375,7 +382,8 @@ def constructor(
                     system=system,
                     rise_time=ramp_duration,
                     fall_time=ramp_duration
-                )
+                ),
+                grad_ro_sp
             )
 
             seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
@@ -405,7 +413,7 @@ def constructor(
 
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration
+            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_ro_sp)
 
         if inversion_pulse:
             tr_delay -= inversion_time
