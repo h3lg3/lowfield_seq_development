@@ -15,7 +15,10 @@ simulate_sequence = True
 plot_simulation = True
 
 if write_sequence:
-    write_seq(plot=True, write_seq=True, seq_filename=seq_name)
+    if plot_simulation:
+        write_seq(plot=False, write_seq=True, seq_filename=seq_name)
+    else:
+        write_seq(plot=True, write_seq=True, seq_filename=seq_name)
     
 if analyze_sequence:
     analyze_seq(seq_filename=seq_name)
@@ -25,7 +28,7 @@ if simulate_sequence:
     
 if plot_simulation:
     plot_sim(plot={
-        "phantom": True,
+        "phantom": False,
         "seq": True,
         "kspace": True,
         "reco": True

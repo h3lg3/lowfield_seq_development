@@ -9,6 +9,7 @@ TODO: move trajectory calculation to seperate file to sharew with other imaging 
 # %%
 from enum import Enum
 from math import pi
+import math
 
 import numpy as np
 import pypulseq as pp
@@ -23,6 +24,7 @@ class Trajectory(Enum):
     OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
     LINEAR = 2
     INOUT = 3
+    SYMMETRIC = 4
 
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
@@ -193,13 +195,14 @@ def constructor(
     pe_mag = np.sum(np.square(pe_points), axis=-1)  # calculate magnitude of all gradient combinations
     pe_mag_sorted = np.argsort(pe_mag)
 
-    if trajectory is Trajectory.OUTIN:
+    if trajectory is Trajectory.INOUT:
+        pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
+        pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
+    elif trajectory is Trajectory.OUTIN:
         pe_mag_sorted = np.flip(pe_mag_sorted)
-
-    pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
-    pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
-
-    if trajectory is Trajectory.LINEAR:
+        pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
+        pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
+    elif trajectory is Trajectory.LINEAR:
         center_pos = 1 / 2  # where the center of kspace should be in the echo train
         num_points = np.size(pe_mag_sorted)
         linear_pos = np.zeros(num_points, dtype=int) - 10
@@ -228,7 +231,16 @@ def constructor(
 
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
         pe_order = pe_positions[linear_pos, :]  # kspace position for each of the gradients
-
+    elif trajectory is Trajectory.SYMMETRIC:    # just example for symmetric encoding given n_pe2 = 1
+        # PE dir 1
+        n_ex = math.floor(n_enc_pe1 / etl)
+        pe_steps = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
+        if divmod(etl, 2)[1] == 0:
+            pe_steps = np.roll(pe_steps, [0, int(-np.round(n_ex / 2))])
+        pe_traj = np.array([[pe_steps[i],0.0] for i in np.arange(etl * n_ex)])      
+    # num_trains = int(np.ceil(pe_traj.shape[0] / etl))   
+    # [pe_traj[k::num_trains, 0] for k in range(num_trains)]
+    
     # calculate the required gradient area for each k-point
     pe_traj[:, 0] /= fov_pe1
     pe_traj[:, 1] /= fov_pe2
@@ -238,10 +250,11 @@ def constructor(
     trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]
 
     # Create a list with the kspace location of every line of kspace acquired, in the order it is acquired
-    trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]
+    # trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]
+    # acq_pos = []
+    # for train_pos in trains_pos:
+    #     acq_pos.extend(train_pos)
     acq_pos = []
-    for train_pos in trains_pos:
-        acq_pos.extend(train_pos)
 
     # Definition of RF pulses
     rf_90 = pp.make_block_pulse(
