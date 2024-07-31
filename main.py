@@ -11,8 +11,8 @@ seq_name = "tse_3D_console"
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation:

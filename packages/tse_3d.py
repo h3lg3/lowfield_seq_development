@@ -15,8 +15,12 @@ import numpy as np
 import pypulseq as pp
 
 from console.interfaces.interface_acquisition_parameter import Dimensions
-from console.utilities.sequences.system_settings import raster, system
+from console.utilities.sequences.system_settings import raster
 
+# low field system
+# from console.utilities.sequences.system_settings import system
+# Siemens system
+from packages.siemens_system import system
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -97,19 +101,8 @@ def constructor(
     -------
         Pulseq sequence and a list which describes the trajectory
     """
-    system.rf_ringdown_time = 0
+    # system.rf_ringdown_time = 0 # used for lowfield system?
     
-    # adjust system to siemens scanner
-    system.max_slew = 100 * system.gamma
-    
-    system.adc_raster_time=1e-7
-    system.block_duration_raster=1e-5
-    system.grad_raster_time=1e-5
-    system.rf_raster_time=1e-6
-    system.rf_ringdown_time=100e-6
-    system.rf_dead_time=100e-6
-    system.adc_dead_time=10e-6
-        
     seq = pp.Sequence(system)
     seq.set_definition("Name", "tse_3d")
 
