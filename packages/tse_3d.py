@@ -4,6 +4,7 @@ TODO: add sampling patterns (elliptical masks, partial fourier, CS)
 TODO: add optional inversion pulse -> 3D IRSE takes too much time, usually multi-slice 2D IRSE is used
 TODO: add optional variable refocussing pulses (pass list rather than float)
 TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
+TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)?
 
 """
 # %%
@@ -36,9 +37,9 @@ default_encoding = Dimensions(x=70, y=70, z=49)
 
 
 def constructor(
-    echo_time: float = 15e-3,
+    echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
     repetition_time: float = 600e-3,
-    etl: int = 7,
+    etl: int = 7,   # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
     ramp_duration: float = 200e-6,
@@ -174,7 +175,8 @@ def constructor(
             fov_pe1 = fov.x
             n_enc_pe2 = n_enc.y
             fov_pe2 = fov.y
-
+    # Define trajectories corresponding to https://colab.research.google.com/github/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/03_k_space_sampling/notebooks/01_cartesian_ordering_and_undersampling_solution.ipynb#scrollTo=zYC6t2eOCt_L
+    
     # Calculate center out trajectory
     pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
     pe2 = np.arange(n_enc_pe2) - (n_enc_pe2 - 1) / 2
@@ -224,7 +226,7 @@ def constructor(
 
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
         pe_order = pe_positions[linear_pos, :]  # kspace position for each of the gradients
-    elif trajectory is Trajectory.SYMMETRIC:    # just example for symmetric encoding given n_pe2 = 1
+    elif trajectory is Trajectory.SYMMETRIC:    # just example for symmetric encoding given n_pe2 = 1, why is scheme so different from linear?
         # PE dir 1
         n_ex = math.floor(n_enc_pe1 / etl)
         pe_steps = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
