@@ -7,8 +7,8 @@ TODO: move trajectory calculation to seperate file to sharew with other imaging 
 TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)?
 
 """
-# %%
 from math import pi
+import math
 import numpy as np
 import pypulseq as pp
 
@@ -273,14 +273,28 @@ def constructor(
     
     # Calculate delays
     # Note: RF dead-time is contained in RF delay
-    # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-    tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp)
-    # Delay duration between Gy, Gz prephaser and readout
-    tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-        - ramp_duration - rf_180.ringdown_time - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) + echo_shift
+    # Delay duration center excitation (90 degree) and center refocussing (180 degree) RF pulse
+    tau_1 = echo_time/2 - rf_90.shape_dur/2 - rf_90.ringdown_time - rf_180.shape_dur/2 - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp)
+    
+    # Delay duration between center refocussing (180 degree) RF pulse and center readout
+    tau_2 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.ringdown_time - 2*gradient_correction \
+        - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) + echo_shift
 
-    # Delay duration between readout and Gy, Gz gradient rephaser
-    tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_pe2_sp)
+    # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
+    tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) - echo_shift 
+
+    # min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   # minimum echo spacing to accomodate gradients
+    # min_esp = np.ceil(min_esp*1e3)*1e-3                     # round to 1 ms -> new echo time
+    # T2 = 100
+    # max_sampling = -math.log(0.2)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
+    # max_etl = np.floor(max_sampling/min_esp)                # maximum numbers of 180° echoes
+    
+    # # ETL that is multiple of n_enc_pe1 and closest to max_etl
+    # cc = [(i, n_enc_pe1%i, np.abs(max_etl-i)) for i in np.arange(21)]
+    # # Filter the list to find tuples where the second element is zero
+    # filtered_cc = [item for item in cc if item[1] == 0]
+    # # Find the tuple with the minimal value in the third element
+    # result = min(filtered_cc, key=lambda x: x[2])           # closest ETL value that is multiple of n_enc_pe1 -> new ETL
 
     for dummy in range(dummies):
         if inversion_pulse:
@@ -411,5 +425,3 @@ def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np
     for idx, kpt in enumerate(trajectory):
         ksp[..., kpt[1], kpt[0], :] = raw_data[:, :, idx, :]
     return ksp
-
-# %%
