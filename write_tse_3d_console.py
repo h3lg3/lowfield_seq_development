@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from packages import tse_3d
+from packages.def_trajectory import Trajectory
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 
@@ -15,7 +16,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.se
                              ro_bandwidth=10e3, 
                              fov=select_fov, 
                              n_enc=select_encoding,
-                             trajectory=tse_3d.Trajectory.LINEAR,
+                             trajectory=Trajectory.LINEAR,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
                              channel_ro="x",
