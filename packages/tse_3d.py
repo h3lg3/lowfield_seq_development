@@ -171,14 +171,24 @@ def constructor(
                             etl = etl,
                             trajectory = trajectory,
                             )[0]
-    
-    # calculate the required gradient area for each k-point
-    pe_traj[:, 0] /= fov_pe1
-    pe_traj[:, 1] /= fov_pe2
 
     # Divide all PE steps into echo trains
-    num_trains = int(np.ceil(pe_traj.shape[0] / etl))
-    trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]
+    if trajectory.name == 'SYMMETRIC':
+        num_trains = int(np.ceil(n_enc_pe1 / etl))
+        temp = [pe_traj[k::num_trains] for k in range(num_trains)]
+        trains = []
+        for k in np.arange(n_enc_pe2):
+            for i in np.arange(num_trains):
+                for j in np.arange(etl):
+                    trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
+                    
+        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]      
+    else:
+        # # calculate the required gradient area for each k-point
+        pe_traj[:, 0] /= fov_pe1
+        pe_traj[:, 1] /= fov_pe2
+        num_trains = int(np.ceil(pe_traj.shape[0] / etl))
+        trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]
 
     # Create a list with the kspace location of every line of kspace acquired, in the order it is acquired
     # trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]

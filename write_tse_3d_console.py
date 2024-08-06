@@ -6,7 +6,7 @@ from math import pi
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
     select_fov = Dimensions(x=220e-3, y=220e-3, z=220e-3)
-    select_encoding = Dimensions(x=64, y=64, z=2)
+    select_encoding = Dimensions(x=64, y=64, z=1)
 
     seq = tse_3d.constructor(
                              echo_time=28e-3,
@@ -16,7 +16,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.se
                              ro_bandwidth=10e3, 
                              fov=select_fov, 
                              n_enc=select_encoding,
-                             trajectory=Trajectory.LINEAR,
+                             trajectory=Trajectory.SYMMETRIC,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
                              channel_ro="x",

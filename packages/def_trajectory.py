@@ -70,12 +70,11 @@ def constructor(
 
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
         pe_order = pe_positions[linear_pos, :]  # kspace position for each of the gradients
-    elif trajectory is Trajectory.SYMMETRIC:    # just example for symmetric encoding given n_pe2 = 1, why is scheme so different from linear?
+    elif trajectory is Trajectory.SYMMETRIC:    # symmetric encoding, why is scheme so different from linear?
+        assert n_enc_pe1 % etl == 0
+        pe_order = []
         # PE dir 1
         n_ex = math.floor(n_enc_pe1 / etl)
-        pe_steps = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
-        if divmod(etl, 2)[1] == 0:
-            pe_steps = np.roll(pe_steps, [0, int(-np.round(n_ex / 2))])
-        pe_traj = np.array([[pe_steps[i],0.0] for i in np.arange(etl * n_ex)])      
-        
+        pe_traj = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
+                
     return (pe_traj, pe_order)
