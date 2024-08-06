@@ -1,7 +1,7 @@
 """Constructor for 3D TSE Imaging sequence.
 
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
-TODO: add optional inversion pulse -> 3D IRSE takes too much time, usually multi-slice 2D IRSE is used
+TODO: add optional inversion pulse
 TODO: add optional variable refocussing pulses (pass list rather than float)
 TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
 TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)?
@@ -39,7 +39,7 @@ default_encoding = Dimensions(x=70, y=70, z=49)
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
     repetition_time: float = 600e-3,
-    etl: int = 7,   # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
+    etl: int = 7,               # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
     ramp_duration: float = 200e-6,
@@ -309,11 +309,6 @@ def constructor(
         fall_time=ramp_duration,
         duration=raster(ro_pre_duration, precision=system.grad_raster_time),
     )
-
-    ## Spoiler gradient on x (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
-    grad_ro_sp = pp.make_trapezoid(
-        channel=channel_ro, area=1*grad_ro.area, duration=pp.calc_duration(grad_ro), system=system
-        )
     
     adc = pp.make_adc(
         system=system,
@@ -323,14 +318,21 @@ def constructor(
         delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
     )
 
+    # ## Spoiler gradient on PE2 (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
+    area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
+    area_pe2_sp = area_pe2_sp*1e-6*system.gamma # unit area: 1/m
+    grad_pe2_sp = pp.make_trapezoid(
+        channel=channel_pe2, area=area_pe2_sp, system=system
+        )
+    
     # Calculate delays
     # Note: RF dead-time is contained in RF delay
     # Delay duration between RO prephaser after initial 90 degree RF and 180 degree RF pulse
-    tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_ro_sp)
+    tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp)
     # Delay duration between Gy, Gz prephaser and readout
     tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-        - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_ro_sp)) + echo_shift
-    # max(ro_pre_duration, pp.calc_duration(grad_ro_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
+        - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_pe2_sp)) + echo_shift
+    # max(ro_pre_duration, pp.calc_duration(grad_pe2_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
     # Delay duration between readout and Gy, Gz gradient rephaser
     tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_ro_sp)
 
@@ -371,7 +373,7 @@ def constructor(
         for echo in train:
             pe_1, pe_2 = echo
             
-            seq.add_block(grad_ro_sp) # move this grad_ro_sp behind delay_tau1 and add extra grad_ro_sp before delay_tau3, combine extra grad_ro_sp with pe-rephase and adjust delay_tau3 calculation
+            seq.add_block(grad_pe2_sp) # move this grad_pe2_sp behind delay_tau1 and add extra grad_pe2_sp before delay_tau3, combine extra grad_pe2_sp with pe-rephase and adjust delay_tau3 calculation
             seq.add_block(rf_180)
 
             seq.add_block(
@@ -391,7 +393,7 @@ def constructor(
                     rise_time=ramp_duration,
                     fall_time=ramp_duration
                 ),
-                grad_ro_sp
+                grad_pe2_sp
             )
 
             seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
@@ -419,11 +421,11 @@ def constructor(
 
             seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
 
-        seq.add_block(grad_ro_sp) # add spoiler after last 180 pulse in echo train
+        seq.add_block(grad_pe2_sp) # add spoiler after last 180 pulse in echo train
 
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_ro_sp)
+            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_pe2_sp)
 
         if inversion_pulse:
             tr_delay -= inversion_time

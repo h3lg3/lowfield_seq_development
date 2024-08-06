@@ -19,6 +19,6 @@ system = Opts(
     adc_dead_time=10e-6,
 
     # Set maximum slew rate
-    max_slew=100,
+    max_slew=50,
     slew_unit="T/m/s",
 )
