@@ -17,20 +17,12 @@ import pypulseq as pp
 
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster
+from console.utilities.sequences import define_trajectory
 
 # low field system
 # from console.utilities.sequences.system_settings import system
 # Siemens system
 from packages.siemens_system import system
-
-class Trajectory(Enum):
-    """Trajectory type enum."""
-
-    OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
-    LINEAR = 2
-    INOUT = 3
-    SYMMETRIC = 4
-
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -331,10 +323,10 @@ def constructor(
     tau_1 = echo_time / 2 - rf_duration - rf_90.ringdown_time - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp)
     # Delay duration between Gy, Gz prephaser and readout
     tau_2 = (echo_time - rf_duration - adc_duration) / 2 - 2 * gradient_correction \
-        - ramp_duration - rf_180.ringdown_time - max(ro_pre_duration, pp.calc_duration(grad_pe2_sp)) + echo_shift
-    # max(ro_pre_duration, pp.calc_duration(grad_pe2_sp)): ro_pre_duration is also duration for phase-encode-prephasor and is used here to confuse people
+        - ramp_duration - rf_180.ringdown_time - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) + echo_shift
+
     # Delay duration between readout and Gy, Gz gradient rephaser
-    tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_ro_sp)
+    tau_3 = (echo_time - rf_duration - adc_duration) / 2 - ramp_duration - rf_180.delay - pp.calc_duration(grad_ro_pre) - echo_shift - pp.calc_duration(grad_pe2_sp)
 
     for dummy in range(dummies):
         if inversion_pulse:
@@ -373,9 +365,9 @@ def constructor(
         for echo in train:
             pe_1, pe_2 = echo
             
-            seq.add_block(grad_pe2_sp) # move this grad_pe2_sp behind delay_tau1 and add extra grad_pe2_sp before delay_tau3, combine extra grad_pe2_sp with pe-rephase and adjust delay_tau3 calculation
+            seq.add_block(grad_pe2_sp) 
             seq.add_block(rf_180)
-
+            seq.add_block(grad_pe2_sp)
             seq.add_block(
                 pp.make_trapezoid(
                     channel=channel_pe1,
@@ -392,8 +384,7 @@ def constructor(
                     system=system,
                     rise_time=ramp_duration,
                     fall_time=ramp_duration
-                ),
-                grad_pe2_sp
+                )
             )
 
             seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
