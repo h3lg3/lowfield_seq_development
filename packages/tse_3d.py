@@ -286,7 +286,7 @@ def constructor(
     # min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   # minimum echo spacing to accomodate gradients
     # min_esp = np.ceil(min_esp*1e3)*1e-3                     # round to 1 ms -> new echo time
     # T2 = 100
-    # max_sampling = -math.log(0.2)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
+    # max_sampling = -math.log(0.1)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
     # max_etl = np.floor(max_sampling/min_esp)                # maximum numbers of 180° echoes
     
     # # ETL that is multiple of n_enc_pe1 and closest to max_etl

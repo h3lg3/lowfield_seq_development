@@ -5,8 +5,11 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_pypulseq import main as write_seq
 # seq_name = "tse_pypulseq"
 
-from write_tse_3d_console import main as write_seq
-seq_name = "tse_3D_console"
+# from write_tse_3d_console import main as write_seq
+# seq_name = "tse_3D_console"
+
+from write_MPRAGE import main as write_seq
+seq_name = "mprage_pypulseq"
 
 
 write_sequence = True
