@@ -26,17 +26,17 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     ro_dur = 5017.6e-6
     ro_os = 1  # Readout oversampling
     ro_spoil = 3  # Additional k-max excursion for RO spoiling
-    TI = 1.1
-    TR_out = 2.5
+    TI = 1.1    # dt inversion_180-first_90
+    TR_out = 2.5 # dt inversion_180-inversion_180
 
     rf_spoiling_inc = 117
     rf_len = 100e-6
     ax = SimpleNamespace()  # Encoding axes
 
-    fov = np.array([192, 240, 256]) * 1e-3  # Define FOV and resolution
-    N = [192, 240, 256]
-    ax.d1 = "z"  # Fastest dimension (readout)
-    ax.d2 = "x"  # Second-fastest dimension (inner phase-encoding loop)
+    fov = np.array([220, 220, 220]) * 1e-3  # Define FOV and resolution
+    N = [64, 64, 16]
+    ax.d1 = "x"  # Fastest dimension (readout)
+    ax.d2 = "y"  # Second-fastest dimension (inner phase-encoding loop)
     xyz = ["x", "y", "z"]
     ax.d3 = np.setdiff1d(xyz, [ax.d1, ax.d2])[0]
     ax.n1 = xyz.index(ax.d1)
