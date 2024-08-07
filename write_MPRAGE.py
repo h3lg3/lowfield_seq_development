@@ -189,7 +189,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     # WRITE .SEQ
     # =========
     if write_seq:
-        seq.write(seq_filename)
+        seq.write('./sequences/' + seq_filename)
 
 
 if __name__ == "__main__":
