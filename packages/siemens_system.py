@@ -3,6 +3,10 @@
 from pypulseq.opts import Opts
 
 system = Opts(
+    # standard max grad is 40 mT/m
+    # max_grad=24,
+    # grad_unit="mT/m",
+    
     # time delay at the end of RF event, SETS RF DELAY!
     rf_dead_time=100e-6,
 

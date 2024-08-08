@@ -16,12 +16,10 @@ from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster
 from packages import def_trajectory
 
-# pulseq system
+# low field system
 # from console.utilities.sequences.system_settings import system
-# # Siemens system
-# from packages.siemens_system import system
-# # lowfield system
-# from packages.lf_system import system
+# Siemens system
+from packages.siemens_system import system
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -95,8 +93,11 @@ def constructor(
     """
     # system.rf_ringdown_time = 0 # used for lowfield system?
     
+    system.max_grad=24*1e-3*system.gamma
+    system.max_slew=100*system.gamma
+    
     seq = pp.Sequence(system)
-    seq.set_definition("Name", "tse_3d")
+    seq.set_definition("Name", "tse_3d_lumina")
 
     # check if channel labels are valid
     channel_valid = True
@@ -285,18 +286,18 @@ def constructor(
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
     tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) - echo_shift 
 
-    # min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   # minimum echo spacing to accomodate gradients
-    # min_esp = np.ceil(min_esp*1e3)*1e-3                     # round to 1 ms -> new echo time
-    # T2 = 100
-    # max_sampling = -math.log(0.1)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
-    # max_etl = np.floor(max_sampling/min_esp)                # maximum numbers of 180° echoes
+    min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   # minimum echo spacing to accomodate gradients
+    min_esp = np.ceil(min_esp*1e3)*1e-3                     # round to 1 ms -> new echo time
+    T2 = 80
+    max_sampling = -math.log(0.1)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
+    max_etl = np.floor(max_sampling/min_esp)                # maximum numbers of 180° echoes
     
-    # # ETL that is multiple of n_enc_pe1 and closest to max_etl
-    # cc = [(i, n_enc_pe1%i, np.abs(max_etl-i)) for i in np.arange(21)]
-    # # Filter the list to find tuples where the second element is zero
-    # filtered_cc = [item for item in cc if item[1] == 0]
-    # # Find the tuple with the minimal value in the third element
-    # result = min(filtered_cc, key=lambda x: x[2])           # closest ETL value that is multiple of n_enc_pe1 -> new ETL
+    # ETL that is multiple of n_enc_pe1 and closest to max_etl
+    cc = [(i, n_enc_pe1%i, np.abs(max_etl-i)) for i in np.arange(50)]
+    # Filter the list to find tuples where the second element is zero
+    filtered_cc = [item for item in cc if item[1] == 0]
+    # Find the tuple with the minimal value in the third element
+    result = min(filtered_cc, key=lambda x: x[2])           # closest ETL value that is multiple of n_enc_pe1 -> new ETL
 
     for dummy in range(dummies):
         if inversion_pulse:

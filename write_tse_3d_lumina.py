@@ -1,27 +1,29 @@
 from matplotlib import pyplot as plt
-from packages import tse_3d
+from packages import tse_3d_lumina
 from packages.def_trajectory import Trajectory
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
-    select_fov = Dimensions(x=140e-3, y=140e-3, z=140e-3)
-    select_encoding = Dimensions(x=1, y=120, z=120) # x along bore (HF), y bottom to top(AP), z along B0 (LR)
+def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3d_lumina.seq"):
+    select_fov = Dimensions(x=220e-3, y=220e-3, z=80e-3)
+    select_encoding = Dimensions(x=64, y=64, z=10)
 
-    seq = tse_3d.constructor(
+    seq = tse_3d_lumina.constructor(
                              echo_time=28e-3,
                              repetition_time=2000e-3, 
                              etl=8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                              dummies=2, 
-                             ro_bandwidth=20e3, 
+                             rf_duration=500e-6,
+                             ro_bandwidth=30e3, 
+                             ro_oversampling=1,
                              fov=select_fov, 
                              n_enc=select_encoding,
                              trajectory=Trajectory.SYMMETRIC,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
-                             channel_ro="z",
+                             channel_ro="x",
                              channel_pe1="y",
-                             channel_pe2="x"
+                             channel_pe2="z"
                              )[0]
     
     if plot:
@@ -55,39 +57,10 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.se
     # WRITE .SEQ
     # =========    
     if write_seq:
-        seq.set_definition('Name', 'se_ptb_console')
+        seq.set_definition('Name', 'tse_3d_lumina')
         seq.write('./sequences/' + seq_filename)
-        # seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        
     
-    
-# k-space order for 32 phase enc steps
-# # PYPULSEQ
-# array([[-14., -13., -12., -11.],
-#        [-10.,  -9.,  -8.,  -7.],
-#        [ -6.,  -5.,  -4.,  -3.],
-#        [ -2.,  -1.,   0.,   1.],
-#        [  2.,   3.,   4.,   5.],
-#        [  6.,   7.,   8.,   9.],
-#        [ 10.,  11.,  12.,  13.],
-#        [ 14.,  15., -16., -15.]])
-
-# # LINEAR ORDER
-# [array([ 15.5,  11.5,   7.5,   3.5,  -0.5,   4.5,  -8.5, -12.5]), 
-# array([-14.5, -10.5,   6.5,  -2.5,   1.5,   5.5,  -9.5, -13.5]), 
-# array([13.5,  9.5, -5.5, -1.5,  2.5, -6.5, 10.5, 14.5]), 
-# array([ 12.5,   8.5,  -4.5,   0.5,  -3.5,  -7.5, -11.5, -15.5])]
-
-# # OUTIN
-# [array([15.5, 13.5, 11.5,  9.5,  7.5, -5.5,  3.5, -1.5]), 
-# array([-15.5, -13.5, -11.5,  -9.5,  -7.5,   5.5,  -3.5,   1.5]),
-#  array([-14.5,  12.5, -10.5,   8.5,   6.5,  -4.5,  -2.5,   0.5]), 
-# array([ 14.5, -12.5,  10.5,  -8.5,  -6.5,   4.5,   2.5,  -0.5])]
-
-# #INOUT
-# [array([ -0.5,   2.5,   4.5,  -6.5,  -8.5,  10.5, -12.5,  14.5]), 
-# array([  0.5,  -2.5,  -4.5,   6.5,   8.5, -10.5,  12.5, -14.5]), 
-# array([  1.5,  -3.5,   5.5,  -7.5,  -9.5, -11.5, -13.5, -15.5]), 
-# array([-1.5,  3.5, -5.5,  7.5,  9.5, 11.5, 13.5, 15.5])]

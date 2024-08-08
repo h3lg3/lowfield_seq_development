@@ -4,6 +4,11 @@ import numpy as np
 
 import pypulseq as pp
 
+# low field system
+# from console.utilities.sequences.system_settings import system
+# Siemens system
+# from packages.siemens_system import system
+
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq"):
     # ======
@@ -11,7 +16,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     # ======
     seq = pp.Sequence()  # Create a new sequence object
 
-    # Set system limits
+    # # Set system limits
     system = pp.Opts(
         max_grad=24,
         grad_unit="mT/m",
@@ -36,7 +41,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     fov = np.array([220, 220, 220]) * 1e-3  # Define FOV and resolution
     N = [64, 64, 16]
     ax.d1 = "x"  # Fastest dimension (readout)
-    ax.d2 = "y"  # Second-fastest dimension (inner phase-encoding loop)
+    ax.d2 = "z"  # Second-fastest dimension (inner phase-encoding loop)
     xyz = ["x", "y", "z"]
     ax.d3 = np.setdiff1d(xyz, [ax.d1, ax.d2])[0]
     ax.n1 = xyz.index(ax.d1)
