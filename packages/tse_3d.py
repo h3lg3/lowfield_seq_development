@@ -21,7 +21,7 @@ from packages import def_trajectory
 # # Siemens system
 # from packages.siemens_system import system
 # # lowfield system
-# from packages.lf_system import system
+from packages.lf_system import system
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
