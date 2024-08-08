@@ -4,6 +4,7 @@ import numpy as np
 import pypulseq as pp
 from matplotlib import pyplot as plt
 import MRzeroCore as mr0
+import torch
 
 def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
     sim_name = 'sim_' + seq_filename
@@ -44,10 +45,12 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
         plt.subplot(121)
         plt.title("Magnitude")
         plt.imshow(reco[:, :, 0].T.abs(), origin="lower")
+        # plt.imshow(torch.squeeze(reco).T.abs(), origin="lower")
         plt.colorbar()
         plt.subplot(122)
         plt.title("Phase")
         plt.imshow(reco[:, :, 0].T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
+        # plt.imshow(torch.squeeze(reco).T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)        
         plt.colorbar()
         plt.show()
 if __name__ == "__main__":

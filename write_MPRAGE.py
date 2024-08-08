@@ -4,28 +4,32 @@ import numpy as np
 
 import pypulseq as pp
 
-# low field system
+# pulseq system
 # from console.utilities.sequences.system_settings import system
 # Siemens system
 # from packages.siemens_system import system
+# # lowfield system
+from packages.lf_system import system
 
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq"):
     # ======
     # SETUP
     # ======
-    seq = pp.Sequence()  # Create a new sequence object
-
+    
     # # Set system limits
-    system = pp.Opts(
-        max_grad=24,
-        grad_unit="mT/m",
-        max_slew=100,
-        slew_unit="T/m/s",
-        rf_ringdown_time=20e-6,
-        rf_dead_time=100e-6,
-        adc_dead_time=10e-6,
-    )
+    # system = pp.Opts(
+    #     max_grad=24,
+    #     grad_unit="mT/m",
+    #     max_slew=100,
+    #     slew_unit="T/m/s",
+    #     rf_ringdown_time=20e-6,
+    #     rf_dead_time=100e-6,
+    #     adc_dead_time=10e-6,
+    # )
+    
+    seq = pp.Sequence(system)  # Create a new sequence object
+
 
     alpha = 7  # Flip angle
     ro_dur = 5017.6e-6
@@ -39,9 +43,9 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     ax = SimpleNamespace()  # Encoding axes
 
     fov = np.array([220, 220, 220]) * 1e-3  # Define FOV and resolution
-    N = [64, 64, 16]
-    ax.d1 = "x"  # Fastest dimension (readout)
-    ax.d2 = "z"  # Second-fastest dimension (inner phase-encoding loop)
+    N = [1, 64, 64] # [x y z]
+    ax.d1 = "z"  # Fastest dimension (readout)
+    ax.d2 = "y"  # Second-fastest dimension (inner phase-encoding loop)
     xyz = ["x", "y", "z"]
     ax.d3 = np.setdiff1d(xyz, [ax.d1, ax.d2])[0]
     ax.n1 = xyz.index(ax.d1)

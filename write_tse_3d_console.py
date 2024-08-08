@@ -6,11 +6,11 @@ from math import pi
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
     select_fov = Dimensions(x=140e-3, y=140e-3, z=140e-3)
-    select_encoding = Dimensions(x=1, y=120, z=120) # x along bore (HF), y bottom to top(AP), z along B0 (LR)
+    select_encoding = Dimensions(x=1, y=120, z=120) # x along bore (HF, PE2), y bottom to top(AP, PE1), z along B0 (LR, readout)
 
     seq = tse_3d.constructor(
-                             echo_time=25e-3,
-                             repetition_time=1000e-3, 
+                             echo_time=28e-3,
+                             repetition_time=2000e-3, 
                              etl=8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                              dummies=2, 
                              ro_bandwidth=20e3, 

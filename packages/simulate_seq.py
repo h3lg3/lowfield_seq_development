@@ -45,7 +45,7 @@ def simulate_seq(save: bool, seq_filename: str, seq_path: str = "./sequences/", 
     # SIMULATE the external.seq file and add acquired signal to ADC plot
     graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
     signal=mr0.execute_graph(graph, seq0, obj_sim)
-    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0.22, 1))
+    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0.22, 0.22))
     # %% save results
     if save:
         with open(sim_path+ sim_name + '_obj_p.pkl', 'wb') as file:
