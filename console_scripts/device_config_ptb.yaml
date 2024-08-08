@@ -56,8 +56,8 @@ SequenceProvider: !SequenceProvider
   rf_to_mvolt: 5.e-3
 
   system: !Opts
-    max_grad: 300.e+3
-    max_slew: 3000.e+3
+    max_grad: 250.e+3
+    max_slew: 250.e+3
     rise_time: 100.e-6
     rf_dead_time: 20.e-6
     rf_ringdown_time: 0.

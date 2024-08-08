@@ -3,8 +3,8 @@
 from pypulseq.opts import Opts
 
 system = Opts(
-    max_grad=300.e3,
-    max_slew=3.e6,
+    max_grad=250.e3,
+    max_slew=500.e3,
     rise_time=100.e-6,   # redundant with max_slew
 
     # time delay at the end of RF event, SETS RF DELAY!
