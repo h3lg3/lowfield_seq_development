@@ -1,0 +1,69 @@
+# ===============================================
+# Configuration file for OSI²One pypulseq-console
+# ===============================================
+
+# >> TX DEVICE: M2p.6546-x4 -> /dev/spcm1 (AWG)
+# Total number of (analog) transmit channels: 4
+TxCard: !TxCard
+  path: "/dev/spcm1"
+  # Max. output amplitude per channel
+  max_amplitude: [200, 6000, 6000, 6000]
+  # Filter configuration of each transmit channel
+  filter_type: [0, 2, 2, 2]
+  # Device sampling rate in MHz
+  sample_rate: 20
+  # Notify size is defined by as fraction of total buffer size (optional)
+  notify_rate: 16
+
+# >> RX DEVICE: M2p.5933-x4 -> /dev/spcm0 (Digitizer)
+# Total number of receive channels: 8
+RxCard: !RxCard
+  path: "/dev/spcm0"
+  # Enable the receive channels
+  channel_enable: [1, 0, 0, 0, 0, 0, 0, 0]
+  # channel_enable: [1, 1, 1, 1, 0, 0, 0, 0]
+  # Set the max. amplitude per channel, list length must at least match the number of enabled channels
+  max_amplitude: [200, 200, 200, 200, 200, 1000, 1000, 1000]
+  # Set the impedance to 50 ohms (1) or 1 Mohm (0), list length must at least match the number of enabled channels
+  # ATTENTION: At the moment only 1 or 2 channels are possible.
+  # > Driver complains if more than 2 channels are enabled.
+  impedance_50_ohms: [1, 1, 1, 1, 1, 0, 0, 0]
+  # Device sampling rate in MHz
+  sample_rate: 20
+
+# >> Sequence provider configuration
+SequenceProvider: !SequenceProvider
+  # Set the transmit card sampling rate, 5e-8 => 20 MHz
+  spcm_dwell_time: 5.e-8
+
+  # Calculate grad_to_volt per gradient channel:
+  # Gradient efficiency in T/m
+  gradient_efficiency: [0.37e-3, 0.451e-3, 0.4e-3]  # Leiden values
+  # Gradient power amplifier in V/A
+  # gpa_gain: [7.10, 7.10, 7.10]
+  gpa_gain: [1.5, 1.5, 1.5]
+
+  # Per channel specification of the transmit RF and gradient impedances
+  # (!) If an analog output is terminated into high impedance load, the output is doubled
+  high_impedance: [False, True, True, True]
+
+  # Gradient correction time in us, adds to trapezoidal gradients flat time and shifts ADC
+  # How to correct this properly, independent of the pulseq sequence?
+  # Or should this be done in pulseq? to be discussed.
+  # gradient_correction_time: 0 # 570 
+
+  # Scales RF in Hz (pulseq) to mV
+  rf_to_mvolt: 5.e-3
+
+  system: !Opts
+    max_grad: 300.e+3
+    max_slew: 3000.e+3
+    rise_time: 100.e-6
+    rf_dead_time: 20.e-6
+    rf_ringdown_time: 0.
+    adc_dead_time: 0.
+    block_duration_raster: 5.e-8
+    rf_raster_time: 5.e-8
+    grad_raster_time: 5.e-8
+    adc_raster_time: 5.e-8
+    B0: 50.e-3
