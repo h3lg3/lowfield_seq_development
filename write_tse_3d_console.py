@@ -6,15 +6,16 @@ from math import pi
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
     seq = tse_3d.constructor(
-                             echo_time=28e-3,
-                             repetition_time=2000e-3, 
-                             etl=8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                             echo_time=14e-3,
+                             repetition_time=600e-3, 
+                             etl=10, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                              dummies=2, 
                              ro_bandwidth=20e3,
                              ro_oversampling = 2, 
-                             fov=Dimensions(x=140e-3, y=140e-3, z=140e-3),  # (x=220e-3, y=220e-3, z=140e-3)
-                             n_enc=Dimensions(x=120, y=120, z=1),             # (x=64, y=64, z=1)
-                             trajectory=Trajectory.LINEAR,
+                             rf_duration = 100e-6,
+                             fov=Dimensions(x=220e-3, y=220e-3, z=220e-3),  
+                             n_enc=Dimensions(x=120, y=120, z=1),           
+                             trajectory=Trajectory.SYMMETRIC,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
                              channel_ro="x", 

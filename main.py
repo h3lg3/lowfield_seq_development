@@ -37,7 +37,7 @@ if simulate_sequence:
 if plot_simulation:
     plot_sim(plot={
         "phantom": False,
-        "seq": True,
-        "kspace": True,
+        "seq": False,
+        "kspace": False,
         "reco": True
         }, seq_filename=seq_name) 

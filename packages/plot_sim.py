@@ -40,7 +40,7 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
             
-    if len(reco.squeeze().size()) == len(reco.size()):
+    if plot["reco"]:
         plt.figure()
         plt.subplot(121)
         plt.title("Magnitude")

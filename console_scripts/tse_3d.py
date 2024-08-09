@@ -13,7 +13,7 @@ import console.spcm_control.globals as glob
 from console.interfaces.interface_acquisition_data import AcquisitionData
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.spcm_control.acquisition_control import AcquisitionControl
-from packages.def_trajectory import Trajectory
+from packages.tse_trajectory import Trajectory
 from packages import tse_3d
 
 # %%

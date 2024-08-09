@@ -16,11 +16,13 @@ from console.utilities.sequences.system_settings import raster
 from packages import tse_trajectory
 from packages import tse_esp_etl
 
-# pulseq system
+# Pulseq system
 # from console.utilities.sequences.system_settings import system
-# # Siemens system
+
+# Siemens system
 # from packages.siemens_system import system
-# # lowfield system
+
+# Lowfield system
 from packages.lf_system import system
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
@@ -266,10 +268,16 @@ def constructor(
     )
 
     # ## Spoiler gradient on PE2 (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
-    area_pe2_sp = 2*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
+    area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
     area_pe2_sp = area_pe2_sp*1e-6*system.gamma # unit area: 1/m
+    area_pe2_sp = np.round(area_pe2_sp*1e3)/1e3
     grad_pe2_sp = pp.make_trapezoid(
-        channel=channel_pe2, area=area_pe2_sp, system=system
+        channel=channel_pe2, 
+        area=area_pe2_sp,
+        rise_time=200.e-6,
+        fall_time=200.e-6,
+        duration=.5e-3, 
+        system=system
         )
     
     # Calculate delays
@@ -286,6 +294,7 @@ def constructor(
 
     recommended_timing = tse_esp_etl.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
     print(recommended_timing)
+    
     for dummy in range(dummies):
         if inversion_pulse:
             seq.add_block(rf_inversion)
