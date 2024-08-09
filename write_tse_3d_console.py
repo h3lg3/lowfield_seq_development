@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 from packages import tse_3d
-from packages.def_trajectory import Trajectory
+from packages.tse_trajectory import Trajectory
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 

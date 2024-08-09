@@ -13,7 +13,7 @@ class Trajectory(Enum):
     # Define trajectories corresponding to https://colab.research.google.com/github/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/03_k_space_sampling/notebooks/01_cartesian_ordering_and_undersampling_solution.ipynb#scrollTo=zYC6t2eOCt_L
 
 
-def constructor(
+def get_traj(
     n_enc_pe1: int = 128,
     n_enc_pe2: int = 128,
     etl: int = 8,

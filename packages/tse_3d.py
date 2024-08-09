@@ -8,13 +8,13 @@ TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (accelerati
 
 """
 from math import pi
-import math
 import numpy as np
 import pypulseq as pp
 
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster
-from packages import def_trajectory
+from packages import tse_trajectory
+from packages import tse_esp_etl
 
 # pulseq system
 # from console.utilities.sequences.system_settings import system
@@ -40,7 +40,7 @@ def constructor(
     fov: Dimensions = default_fov,
     n_enc: Dimensions = default_encoding,
     echo_shift: float = 0.0,
-    trajectory: def_trajectory.Trajectory = def_trajectory.Trajectory.OUTIN,
+    trajectory: tse_trajectory.Trajectory = tse_trajectory.Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
     excitation_phase: float = 0.,
     refocussing_angle: float = pi,
@@ -167,7 +167,7 @@ def constructor(
             n_enc_pe2 = n_enc.y
             fov_pe2 = fov.y
     
-    pe_traj, pe_order = def_trajectory.constructor(
+    pe_traj, pe_order = tse_trajectory.get_traj(
                             n_enc_pe1 = n_enc_pe1,
                             n_enc_pe2 = n_enc_pe2,
                             etl = etl,
@@ -284,19 +284,8 @@ def constructor(
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
     tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) - echo_shift 
 
-    # min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   # minimum echo spacing to accomodate gradients
-    # min_esp = np.ceil(min_esp*1e3)*1e-3                     # round to 1 ms -> new echo time
-    # T2 = 100
-    # max_sampling = -math.log(0.1)*T2*1e-3                   # sampling duration [ms] till signal drops to 20%
-    # max_etl = np.floor(max_sampling/min_esp)                # maximum numbers of 180° echoes
-    
-    # # ETL that is multiple of n_enc_pe1 and closest to max_etl
-    # cc = [(i, n_enc_pe1%i, np.abs(max_etl-i)) for i in np.arange(21)]
-    # # Filter the list to find tuples where the second element is zero
-    # filtered_cc = [item for item in cc if item[1] == 0]
-    # # Find the tuple with the minimal value in the third element
-    # result = min(filtered_cc, key=lambda x: x[2])           # closest ETL value that is multiple of n_enc_pe1 -> new ETL
-
+    recommended_timing = tse_esp_etl.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
+    print(recommended_timing)
     for dummy in range(dummies):
         if inversion_pulse:
             seq.add_block(rf_inversion)
