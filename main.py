@@ -17,7 +17,7 @@ seq_name = "tse_3D_console"
 # from write_3Dt1_mprage import main as write_seq
 # seq_name = "3Dt1_mprage_pypulseq"
 
-write_sequence = False
+write_sequence = True
 analyze_sequence = False
 simulate_sequence = True
 plot_simulation = True
@@ -37,7 +37,7 @@ if simulate_sequence:
 if plot_simulation:
     plot_sim(plot={
         "phantom": False,
-        "seq": False,
-        "kspace": False,
+        "seq": True,
+        "kspace": True,
         "reco": True
         }, seq_filename=seq_name) 

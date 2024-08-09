@@ -39,20 +39,19 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
         
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
-
-    if plot["reco"]:
+            
+    if len(reco.squeeze().size()) == len(reco.size()):
         plt.figure()
         plt.subplot(121)
         plt.title("Magnitude")
         plt.imshow(reco[:, :, 0].T.abs(), origin="lower")
-        # plt.imshow(torch.squeeze(reco).T.abs(), origin="lower")
         plt.colorbar()
         plt.subplot(122)
         plt.title("Phase")
         plt.imshow(reco[:, :, 0].T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
-        # plt.imshow(torch.squeeze(reco).T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)        
         plt.colorbar()
         plt.show()
+    
 if __name__ == "__main__":
     plot_sim(plot={
         "phantom": True,
@@ -61,4 +60,40 @@ if __name__ == "__main__":
         "reco": True
         },
         seq_filename='tse_pypulseq')        
-# %%
+# %% 3D plots for reco
+
+# # Determine the shortest dimension
+#     shortest_dim = torch.argmin(torch.tensor(reco.shape)).item()
+
+#     # Slice the tensor along the shortest dimension and plot each 2D slice
+#     num_slices = reco.shape[shortest_dim]
+
+#     # Prepare subplots
+#     fig, axes = plt.subplots(2, num_slices, figsize=(15, 5))
+#     # Handle case where there's only one subplot (axes is not an array)
+#     if num_slices == 1:
+#         axes = [axes]
+        
+#     for i in range(num_slices):
+#         if shortest_dim == 0:
+#             slice_2d = reco[i, :, :].T.abs()
+#         elif shortest_dim == 1:
+#             slice_2d = reco[:, i, :].T.abs()
+#         else:
+#             slice_2d = reco[:, :, i].T.abs()
+            
+#         # Plot the 2D slice
+#         im1 = axes[i][0].imshow(slice_2d, cmap='viridis', origin="lower")
+#         axes[i][0].set_title(f'Magnitude Slice {i+1}')
+#         axes[i][0].axis('off')  # Hide axes
+#         im2 = axes[i][1].imshow(slice_2d, cmap='viridis', origin="lower")
+#         axes[i][1].set_title(f'Magnitude Slice {i+1}')
+#         axes[i][1].axis('off')  # Hide axes
+        
+#     fig.colorbar(im1, ax=axes[i][0])
+#     fig.colorbar(im2, ax=axes[i][1])
+
+#     # Adjust layout to prevent overlap
+#     plt.tight_layout()
+#     plt.show()  
+

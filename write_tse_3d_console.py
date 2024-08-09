@@ -5,25 +5,29 @@ from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
-    select_fov = Dimensions(x=140e-3, y=140e-3, z=140e-3)
-    select_encoding = Dimensions(x=1, y=120, z=120) # x along bore (HF, PE2), y bottom to top(AP, PE1), z along B0 (LR, readout)
-
     seq = tse_3d.constructor(
                              echo_time=28e-3,
                              repetition_time=2000e-3, 
                              etl=8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                              dummies=2, 
-                             ro_bandwidth=20e3, 
-                             fov=select_fov, 
-                             n_enc=select_encoding,
-                             trajectory=Trajectory.SYMMETRIC,
+                             ro_bandwidth=20e3,
+                             ro_oversampling = 2, 
+                             fov=Dimensions(x=140e-3, y=140e-3, z=140e-3),  # (x=220e-3, y=220e-3, z=140e-3)
+                             n_enc=Dimensions(x=120, y=120, z=1),             # (x=64, y=64, z=1)
+                             trajectory=Trajectory.LINEAR,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
-                             channel_ro="z",
+                             channel_ro="x", 
                              channel_pe1="y",
-                             channel_pe2="x"
+                             channel_pe2="z" 
                              )[0]
-    
+    # LF setting
+    # fov=Dimensions(x=140e-3, y=140e-3, z=140e-3), 
+    # n_enc=Dimensions(x=1, y=120, z=120) # x along bore (HF, PE2), y bottom to top(AP, PE1), z along B0 (LR, readout),
+    # channel_ro="z", 
+    # channel_pe1="y",
+    # channel_pe2="x"   
+
     if plot:
         plot_kspace = True
         plot_seq = True

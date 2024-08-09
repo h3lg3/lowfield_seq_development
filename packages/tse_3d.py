@@ -184,20 +184,19 @@ def constructor(
                 for j in np.arange(etl):
                     trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
                     
-        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]      
+        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
+        acq_pos = []    
     else:
         # # calculate the required gradient area for each k-point
         pe_traj[:, 0] /= fov_pe1
         pe_traj[:, 1] /= fov_pe2
         num_trains = int(np.ceil(pe_traj.shape[0] / etl))
         trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]
-
-    # Create a list with the kspace location of every line of kspace acquired, in the order it is acquired
-    trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]
-    acq_pos = []
-    for train_pos in trains_pos:
-        acq_pos.extend(train_pos)
-    # acq_pos = []
+        # Create a list with the kspace location of every line of kspace acquired, in the order it is acquired
+        trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]
+        acq_pos = []
+        for train_pos in trains_pos:
+            acq_pos.extend(train_pos)
 
     # Definition of RF pulses
     rf_90 = pp.make_block_pulse(
@@ -267,9 +266,8 @@ def constructor(
     )
 
     # ## Spoiler gradient on PE2 (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
-    area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
+    area_pe2_sp = 2*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
     area_pe2_sp = area_pe2_sp*1e-6*system.gamma # unit area: 1/m
-    area_pe2_sp = 0   
     grad_pe2_sp = pp.make_trapezoid(
         channel=channel_pe2, area=area_pe2_sp, system=system
         )

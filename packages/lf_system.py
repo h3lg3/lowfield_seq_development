@@ -22,5 +22,4 @@ system = Opts(
     # Time delay at the beginning of ADC event
     adc_dead_time=0.,
     B0=50.e-3
-
 )

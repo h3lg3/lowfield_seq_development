@@ -14,8 +14,8 @@ def simulate_seq(save: bool, seq_filename: str, seq_path: str = "./sequences/", 
     seq0 = mr0.Sequence.import_file(seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
-    reso = (64, 64, 1)
+    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    reso = (64, 64, 1)  # Recommended: Same as Sequence
 
     print('load phantom')
     if sel_phantom == 'pixel':
@@ -31,13 +31,14 @@ def simulate_seq(save: bool, seq_filename: str, seq_path: str = "./sequences/", 
             voxel_shape="box"
         )
     elif sel_phantom == 'simbrain':
-        obj_p = mr0.VoxelGridPhantom.load_mat('./data/numerical_brain_cropped.mat')
-        obj_p = obj_p.interpolate(reso[0], reso[1], reso[2])
+        obj_p = mr0.VoxelGridPhantom.load_mat('./data/numerical_brain_cropped.mat') # has only 1 slice
+        obj_p = obj_p.interpolate(reso[0], reso[1], 1)  
         obj_p.B0[:] = 0
         obj_p.D[:] = 0
     elif sel_phantom == 'invivo':
         obj_p = mr0.VoxelGridPhantom.brainweb("./data/subject05.npz")
-        obj_p = obj_p.interpolate(reso[0], reso[1], 32).slices([16])
+        obj_p = obj_p.interpolate(reso[0], reso[1], 32).slices([16])    # select center slice
+        # obj_p = obj_p.interpolate(reso[0], reso[1], reso[2])          # can be used for 3D simulation
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
@@ -45,7 +46,7 @@ def simulate_seq(save: bool, seq_filename: str, seq_path: str = "./sequences/", 
     # SIMULATE the external.seq file and add acquired signal to ADC plot
     graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
     signal=mr0.execute_graph(graph, seq0, obj_sim)
-    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0.22, 0.22))
+    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=reso, FOV=(0.22, 0.22, 0.22)) # Recommended: RECO has same Reso and FOV as sequence
     # %% save results
     if save:
         with open(sim_path+ sim_name + '_obj_p.pkl', 'wb') as file:
