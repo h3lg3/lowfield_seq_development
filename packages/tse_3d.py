@@ -96,7 +96,7 @@ def constructor(
         Pulseq sequence and a list which describes the trajectory
     """
     # system.rf_ringdown_time = 0 # used for lowfield system?
-    
+    disable_pe = False
     seq = pp.Sequence(system)
     seq.set_definition("Name", "tse_3d")
 
@@ -331,6 +331,9 @@ def constructor(
 
         for echo in train:
             pe_1, pe_2 = echo
+            if disable_pe:
+                pe_1 = 0
+                pe_2 = 0
             
             seq.add_block(grad_pe2_sp) 
             seq.add_block(rf_180)

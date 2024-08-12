@@ -2,14 +2,11 @@ from packages.simulate_seq import simulate_seq
 from packages.plot_sim import plot_sim
 from packages.analyze_seq import analyze_seq
 
-# from write_tse_3d_lumina import main as write_seq
-# seq_name = "tse_3d_lumina"
-
 # from write_tse_pypulseq import main as write_seq
 # seq_name = "tse_pypulseq"
 
-from write_tse_3d_console import main as write_seq
-seq_name = "tse_3D_console"
+from write_tse_3d_ptb import main as write_seq
+seq_name = "tse_3d_ptb"
 
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage_pypulseq"
@@ -37,7 +34,7 @@ if simulate_sequence:
 if plot_simulation:
     plot_sim(plot={
         "phantom": False,
-        "seq": False,
+        "seq": True,
         "kspace": False,
         "reco": True
         }, seq_filename=seq_name) 

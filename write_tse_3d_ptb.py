@@ -4,18 +4,19 @@ from packages.tse_trajectory import Trajectory
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.seq"):
+def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3d_ptb.seq"):
     seq = tse_3d.constructor(
                              echo_time=14e-3,
-                             repetition_time=600e-3, 
+                             repetition_time=1000e-3, 
                              etl=10, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                             dummies=2, 
+                             dummies=10, 
                              ro_bandwidth=20e3,
                              ro_oversampling = 2, 
                              rf_duration = 100e-6,
                              fov=Dimensions(x=220e-3, y=220e-3, z=220e-3),  
                              n_enc=Dimensions(x=120, y=120, z=1),           
                              trajectory=Trajectory.SYMMETRIC,
+                             refocussing_angle=pi/3,
                              excitation_phase=pi/2,
                              refocussing_phase=0,
                              channel_ro="x", 
@@ -60,7 +61,7 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_3D_ptb_console.se
     # WRITE .SEQ
     # =========    
     if write_seq:
-        seq.set_definition('Name', 'se_ptb_console')
+        seq.set_definition('Name', 'se_3d_ptb')
         seq.write('./sequences/' + seq_filename)
         # seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
