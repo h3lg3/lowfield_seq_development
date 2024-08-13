@@ -8,8 +8,8 @@ from packages.lf_system import system as default_system
 
 def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb.seq",
          system:Opts = default_system, 
-         fov:tuple = (256e-3, 256e-3, 0), 
-         nk:tuple =(64, 64, 4)
+         fov:tuple = (256e-3, 256e-3, 256e-3), 
+         nk:tuple =(64, 64, 64)
          ):
     seq = tse_3d.constructor(
                             echo_time=16e-3,
@@ -22,7 +22,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb.seq",
                             fov=Dimensions(x=fov[0], y=fov[1], z=fov[2]),  
                             n_enc=Dimensions(x=nk[0], y=nk[1], z=nk[2]),           
                             trajectory=Trajectory.SYMMETRIC,
-                            refocussing_angle=60/180*pi,    # pi
+                            refocussing_angle=180/180 * pi,    # pi
                             excitation_phase=pi/2,
                             refocussing_phase=0,
                             channel_ro="x", 

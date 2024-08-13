@@ -47,16 +47,16 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     wf_interp['slew_y'] = np.diff(wf_interp['gy'])/dt*1e-3
     wf_interp['slew_z'] = np.diff(wf_interp['gz'])/dt*1e-3
     wf_interp['slew_norm'] = np.sqrt(pow(wf_interp['slew_x'], 2.0) + pow(wf_interp['slew_y'], 2.0) + pow(wf_interp['slew_z'], 2.0))
-    # Gradient defined by vertices
-    plt.figure()
-    plt.title('gradients')
-    plt.plot(wf['t_gx'],wf['gx'], '.-', c='r')
-    plt.plot(wf['t_gy'],wf['gy'], '.-', c='g')
-    plt.plot(wf['t_gz'],wf['gz'], '.-', c='b')
-    plt.xlabel("time in s")
-    plt.ylabel("gradient amplitude in Hz/m")
-    plt.legend(["x", "y", "z"])
-    plt.show()
+    # # Gradient defined by vertices
+    # plt.figure()
+    # plt.title('gradients')
+    # plt.plot(wf['t_gx'],wf['gx'], '.-', c='r')
+    # plt.plot(wf['t_gy'],wf['gy'], '.-', c='g')
+    # plt.plot(wf['t_gz'],wf['gz'], '.-', c='b')
+    # plt.xlabel("time in s")
+    # plt.ylabel("gradient amplitude in Hz/m")
+    # plt.legend(["x", "y", "z"])
+    # plt.show()
     # Gradient amplitudes
     plt.figure()
     plt.plot(wf_interp['t'],wf_interp['gx'], c='r')

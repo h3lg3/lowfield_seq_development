@@ -10,7 +10,7 @@ def simulate_seq(save: bool,
                 seq_path: str = "./sequences/",
                 sim_path: str = "./simulation/",
                 fov:tuple = (256e-3, 256e-3, 256e-3), 
-                nk:tuple =(64, 64, 4)
+                nk:tuple =(64, 64, 1)
                 ):
     sim_name = "sim_" + seq_filename
     seq_file = seq_path + seq_filename + ".seq"
@@ -20,7 +20,7 @@ def simulate_seq(save: bool,
     seq0 = mr0.Sequence.import_file(seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
 
     print('load phantom')
     if sel_phantom == 'pixel':

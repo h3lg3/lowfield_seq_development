@@ -12,8 +12,8 @@ def main(plot: bool,
         write_seq: bool,
         seq_filename: str = "mprage_pypulseq.seq", 
         system:Opts = default_system, 
-        fov:tuple = (256e-3, 256e-3, 0), 
-        nk:tuple =(64, 64, 4)
+        fov:tuple = (256e-3, 256e-3, 256e-3), 
+        nk:tuple =(64, 64, 64)
         ):
     # ======
     # SETUP
