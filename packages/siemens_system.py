@@ -18,5 +18,5 @@ system = Opts(
     adc_raster_time=1e-7,
     adc_dead_time=10e-6, # Time delay at the beginning of ADC event
 
-    B0=3
+    B0=3.0
 )
