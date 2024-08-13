@@ -6,46 +6,40 @@ import numpy as np
 import pypulseq as pp
 from matplotlib import pyplot as plt
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq"):
+from pypulseq.opts import Opts
+from packages.lf_system import system as default_system
+
+def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq", 
+        system:Opts = default_system, 
+        fov:tuple = (256e-3, 256e-3, 0), 
+        nk:tuple =(64, 64, 4)
+        ):
     # ======
     # SETUP
     # ======
     dG = 200e-6
 
-    # use system specs from console
-    #system.rf_ringdown_time = 0
-        
-    # Set system limits
-    system = pp.Opts(
-        max_grad=40,
-        grad_unit="mT/m",
-        max_slew=100,
-        slew_unit="T/m/s",
-        rf_ringdown_time=100e-6,
-        rf_dead_time=100e-6,
-        adc_dead_time=10e-6,
-    )
-
-    # system.max_grad = 32*system.gamma*1e-3
-    # system.max_slew = 130*system.gamma
-
     seq = pp.Sequence(system)  # Create a new sequence object
-    fov = 220e-3  # Define FOV and resolution
-    Nx, Ny = 64, 64
+    if fov[0] != fov[1]:
+        warnings.warn("Inplane FOV not rectangular, using first FOV dimension.")
+
+    fov = fov[0]  # Define FOV and resolution
+    Nx, Ny = nk[0], nk[1]
     n_echo = 8  # Number of echoes
-    n_slices = 1
+    n_slices = nk[2]
     rf_flip = 180  # Flip angle
     if isinstance(rf_flip, int):
         rf_flip = np.zeros(n_echo) + rf_flip
     slice_thickness = 5e-3
+    warnings.warn("Using fixed slice thickness. FOV in slice dir: thickness*nk[2]")
     TE = 28e-3  # Echo time
     TR = 2000e-3  # Repetition time
 
     sampling_time = 6.4e-3
     readout_time = sampling_time + 2 * system.adc_dead_time
-    t_ex = 2.5e-3
+    t_ex = 3e-3
     t_exwd = t_ex + system.rf_ringdown_time + system.rf_dead_time
-    t_ref = 2e-3
+    t_ref = 3e-3
     t_refwd = t_ref + system.rf_ringdown_time + system.rf_dead_time
     t_sp = 0.5 * (TE - readout_time - t_refwd)
     t_spex = 0.5 * (TE - t_exwd - t_refwd)

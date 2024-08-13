@@ -4,32 +4,21 @@ import numpy as np
 
 import pypulseq as pp
 
-# pulseq system
-# from console.utilities.sequences.system_settings import system
-# Siemens system
-# from packages.siemens_system import system
-# # lowfield system
-from packages.lf_system import system
+from pypulseq.opts import Opts
+from packages.lf_system import system as default_system
 
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq"):
+def main(plot: bool,
+        write_seq: bool,
+        seq_filename: str = "mprage_pypulseq.seq", 
+        system:Opts = default_system, 
+        fov:tuple = (256e-3, 256e-3, 0), 
+        nk:tuple =(64, 64, 4)
+        ):
     # ======
     # SETUP
     # ======
-    
-    # # Set system limits
-    # system = pp.Opts(
-    #     max_grad=24,
-    #     grad_unit="mT/m",
-    #     max_slew=100,
-    #     slew_unit="T/m/s",
-    #     rf_ringdown_time=20e-6,
-    #     rf_dead_time=100e-6,
-    #     adc_dead_time=10e-6,
-    # )
-    
     seq = pp.Sequence(system)  # Create a new sequence object
-
 
     alpha = 7  # Flip angle
     ro_dur = 5017.6e-6
@@ -42,8 +31,8 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "mprage_pypulseq.seq")
     rf_len = 100e-6
     ax = SimpleNamespace()  # Encoding axes
 
-    fov = np.array([220, 220, 220]) * 1e-3  # Define FOV and resolution
-    N = [1, 64, 64] # [x y z]
+    fov = np.array([fov[0], fov[1], fov[2]])  # Define FOV and resolution
+    N = [nk[0], nk[1], nk[2]] # [x y z]
     ax.d1 = "z"  # Fastest dimension (readout)
     ax.d2 = "y"  # Second-fastest dimension (inner phase-encoding loop)
     xyz = ["x", "y", "z"]

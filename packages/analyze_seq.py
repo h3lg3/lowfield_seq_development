@@ -86,13 +86,13 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     
     # # REQUIRES SEQUENCES COMPILED WITH PYPULSEQ Version > 1.4.0
     # # %% Calculate SAR only possible if sequence has certain length (>2s?)
-    # if pp.Sequence.duration(seq)[0] > 2:
-    #     pp.SAR.SAR_calc.calc_SAR(seq)
+    if pp.Sequence.duration(seq)[0] > 2:
+        pp.SAR.SAR_calc.calc_SAR(seq)
     # %% Calculate PNS
     # use example specs
-    seq.calculate_pns(pp.utils.safe_pns_prediction.safe_example_hw(), do_plots=True) 
+    # seq.calculate_pns(pp.utils.safe_pns_prediction.safe_example_hw(), do_plots=True) 
     # use PRISMA specs
-    # seq.calculate_pns('E:\Python\MP_GPA_K2309_2250V_951A_AS82.asc', do_plots=True)  
+    seq.calculate_pns('E:\Python\MP_GPA_K2309_2250V_951A_AS82.asc', do_plots=True)  
     # %% Calculate mechanical resonances
     asc_dict = siemens.readasc.readasc('E:\Python\MP_GPA_K2309_2250V_951A_AS82.asc')
     resonances = siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])

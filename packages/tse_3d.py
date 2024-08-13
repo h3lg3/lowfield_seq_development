@@ -15,15 +15,8 @@ from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster
 from packages import tse_trajectory
 from packages import tse_esp_etl
-
-# Pulseq system
-# from console.utilities.sequences.system_settings import system
-
-# Siemens system
-# from packages.siemens_system import system
-
-# Lowfield system
-from packages.lf_system import system
+from pypulseq.opts import Opts
+from packages.lf_system import system as default_system
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -53,6 +46,7 @@ def constructor(
     channel_ro: str = "y",
     channel_pe1: str = "z",
     channel_pe2: str = "x",
+    system:Opts = default_system,
 ) -> tuple[pp.Sequence, list, list]:
     """Construct 3D turbo spin echo sequence.
 
@@ -95,7 +89,6 @@ def constructor(
     -------
         Pulseq sequence and a list which describes the trajectory
     """
-    # system.rf_ringdown_time = 0 # used for lowfield system?
     disable_pe = False
     seq = pp.Sequence(system)
     seq.set_definition("Name", "tse_3d")
