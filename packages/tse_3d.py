@@ -392,7 +392,12 @@ def constructor(
     # Calculate some sequence measures
     train_duration_tr = (seq.duration()[0]) / len(trains)
     train_duration = train_duration_tr - tr_delay
-
+    k_traj_adc = seq.calculate_kspacePP()[0]
+    
+    a = np.round(k_traj_adc[1][0::64]*220e-3*-1*10)/10+15.5 # PE1 lines
+    b = np.round(k_traj_adc[2][0::64]*220e-3*-1*10)/10      # PE2 lines
+    c = [list([int(x), int(y)]) for x,y in zip(a, b)]   # if already integer: [list(x) for x in zip(a, b)]
+        
     # # Add measures to sequence definition
     # seq.set_definition("n_total_trains", len(trains))
     # seq.set_definition("train_duration", train_duration)

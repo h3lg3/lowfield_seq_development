@@ -27,7 +27,7 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (220e-3, 220e-3, 220e-3)
-nk = (120, 120, 1)
+nk = (32, 32, 1)
 
 write_sequence = True
 analyze_sequence = False
