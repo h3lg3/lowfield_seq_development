@@ -17,6 +17,7 @@ from packages import tse_trajectory
 from packages import tse_esp_etl
 from pypulseq.opts import Opts
 from packages.lf_system import system as default_system
+from packages.validate_inputs import validate_inputs
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -94,33 +95,7 @@ def constructor(
     seq.set_definition("Name", "tse_3d")
 
     # check if channel labels are valid
-    channel_valid = True
-    if len(channel_ro) > 1 or len(channel_ro) == 0:
-        channel_valid = False
-        print("Invalid readout channel: %s" % (channel_ro))
-    if len(channel_pe1) > 1 or len(channel_pe1) == 0:
-        channel_valid = False
-        print("Invalid pe1 channel: %s" % (channel_pe1))
-    if len(channel_pe2) > 1 or len(channel_pe2) == 0:
-        channel_valid = False
-        print("Invalid pe2 channel: %s" % (channel_pe2))
-
-    channel_ro = channel_ro.lower()
-    channel_pe1 = channel_pe1.lower()
-    channel_pe2 = channel_pe2.lower()  # set all channels to lower case
-
-    if channel_ro not in ("x", "y", "z") or channel_pe1 not in ("x", "y", "z") or channel_pe2 not in ("x", "y", "z"):
-        channel_valid = False
-        print("Invalid axis orientation")
-    if channel_ro == channel_pe1 or channel_ro == channel_pe2 or channel_pe1 == channel_pe2:
-        channel_valid = False
-        print("Error, multiple channels have the same gradient")
-        print("Readout channel: %s, pe1 channel: %s, pe2 channel: %s" % (channel_ro, channel_pe1, channel_pe2))
-    if not channel_valid:
-        print("Defaulting to readout in y, pe1 in z, pe2 in x")
-        channel_ro = "y"
-        channel_pe1 = "z"
-        channel_pe2 = "x"
+    channel_ro, channel_pe1, channel_pe2 = validate_inputs(channel_ro, channel_pe1, channel_pe2)
 
     if (channel_ro == "x"):
         n_enc_ro = n_enc.x
