@@ -78,3 +78,86 @@ def get_traj(
         pe_traj = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
                 
     return (pe_traj, pe_order)
+
+# Print min_esp (echo spacing) and max_etl (echo train length) and recommended etl for given PE steps
+def get_esp_etl(
+    tau_1: float = 3e-3,
+    tau_2: float = 4e-3,
+    tau_3: float = 5e-3,
+    echo_time: float = 25e-3,
+    T2: int = 100,              # T2 value of main tissue of interest
+    n_enc_pe1: int = 64,
+) -> dict:
+    
+    # minimum echo spacing to accomodate gradients
+    min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   
+    min_esp = np.ceil(min_esp*1e3)*1e-3    # round to 1 ms -> new echo time
+    
+    # sampling duration [ms] till signal drops to 20%
+    max_sampling = -math.log(0.2)*T2*1e-3  
+               
+    # maximum numbers of 180° echoes fitting in sampling duration     
+    max_etl = int(np.floor(max_sampling/min_esp))
+    
+    # ETL that is multiple of n_enc_pe1 and closest to max_etl
+    cc = [(i, n_enc_pe1%i, np.abs(max_etl-i)) for i in np.arange(1, 2*max_etl)]
+    # Filter the list to find tuples where the second element is zero
+    filtered_cc = [item for item in cc if item[1] == 0]
+    # Closest ETL value that is multiple of n_enc_pe1
+    rec_etl = int(min(filtered_cc, key=lambda x: x[2])[0])     
+
+    return dict({'min_esp':min_esp, 'max_etl':max_etl, 'rec_etl':rec_etl})
+
+def validate_inputs(x, y, z)-> tuple[str, str, str]:
+    # Convert each input to lowercase
+    x = x.lower()
+    y = y.lower()
+    z = z.lower()
+        
+    # Ensure each variable is of length one
+    assert len(x) == 1, "x must be of length 1"
+    assert len(y) == 1, "y must be of length 1"
+    assert len(z) == 1, "z must be of length 1"
+    
+    # Ensure each variable is one of 'a', 'b', or 'c'
+    allowed_values = {"x", "y", "z"}
+    assert x in allowed_values, "x must be one of 'x', 'y', or 'z'"
+    assert y in allowed_values, "y must be one of 'x', 'y', or 'z'"
+    assert z in allowed_values, "z must be one of 'x', 'y', or 'z'"
+    
+    # Ensure all variables are unique
+    assert len({x, y, z}) == 3, "x, y, and z must be unique"
+
+    print("All inputs are valid.")
+    
+    return x, y, z
+
+    # # Example usage:
+    # validate_inputs("x", "y", "z")  # This will pass validation.
+    # validate_inputs("x", "y", "y")  # This will raise an AssertionError.
+    
+def calculate_enc_fov_order(channel_ro, channel_pe1, n_enc, fov):
+    # Dynamically access the n_enc and fov attributes using getattr
+    n_enc_ro = getattr(n_enc, channel_ro)
+    fov_ro = getattr(fov, channel_ro)
+
+    # Determine the remaining channel for pe2
+    remaining_channels = {"x", "y", "z"} - {channel_ro, channel_pe1}
+    channel_pe2 = remaining_channels.pop()
+
+    # Assign the values for pe1 and pe2
+    n_enc_pe1 = getattr(n_enc, channel_pe1)
+    fov_pe1 = getattr(fov, channel_pe1)
+    n_enc_pe2 = getattr(n_enc, channel_pe2)
+    fov_pe2 = getattr(fov, channel_pe2)
+
+    return n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2
+
+# # Example usage:
+# n_enc = Dimensions(x=64, y=80, z=100)
+# fov = Dimensions(x=200, y=220, z=240)
+
+# channel_ro = "x"
+# channel_pe1 = "y"
+# n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = calculate_enc_fov(channel_ro, channel_pe1, n_enc, fov)
+# print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    

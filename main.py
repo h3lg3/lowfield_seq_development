@@ -17,10 +17,10 @@ seq_name = "tse_3d"
 # ======
 # SCANNER
 # ======
-from packages.siemens_system import system
+from packages.mr_systems import lumina as system
 seq_name = seq_name + '_lumina'
 
-# from packages.lf_system import system
+# from packages.mr_systems import low_field as system
 # seq_name = seq_name + '_ptb'
 
 # ======

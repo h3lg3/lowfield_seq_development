@@ -1,10 +1,10 @@
 from matplotlib import pyplot as plt
 from packages import tse_3d
-from packages.tse_trajectory import Trajectory
+from packages.seq_utils import Trajectory
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from math import pi
 from pypulseq.opts import Opts
-from packages.lf_system import system as default_system
+from packages.mr_systems import low_field as default_system
 
 def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb.seq",
          system:Opts = default_system, 

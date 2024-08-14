@@ -3,9 +3,8 @@
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
 TODO: add optional inversion pulse
 TODO: add optional variable refocussing pulses (pass list rather than float)
-TODO: move trajectory calculation to seperate file to sharew with other imaging experiments (needed?)
 TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)?
-
+TODO: Alternate phase of 180 refocussing pulse by 180° each time to compensate imperfect excitaion (!=180 degree)
 """
 from math import pi
 import numpy as np
@@ -13,11 +12,9 @@ import pypulseq as pp
 
 from console.interfaces.interface_acquisition_parameter import Dimensions
 from console.utilities.sequences.system_settings import raster
-from packages import tse_trajectory
-from packages import tse_esp_etl
 from pypulseq.opts import Opts
-from packages.lf_system import system as default_system
-from packages.validate_inputs import validate_inputs
+from packages.mr_systems import low_field as default_system
+from packages import seq_utils
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -36,7 +33,7 @@ def constructor(
     fov: Dimensions = default_fov,
     n_enc: Dimensions = default_encoding,
     echo_shift: float = 0.0,
-    trajectory: tse_trajectory.Trajectory = tse_trajectory.Trajectory.OUTIN,
+    trajectory: seq_utils.Trajectory = seq_utils.Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
     excitation_phase: float = 0.,
     refocussing_angle: float = pi,
@@ -95,49 +92,13 @@ def constructor(
     seq.set_definition("Name", "tse_3d")
 
     # check if channel labels are valid
-    channel_ro, channel_pe1, channel_pe2 = validate_inputs(channel_ro, channel_pe1, channel_pe2)
+    channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
 
-    if (channel_ro == "x"):
-        n_enc_ro = n_enc.x
-        fov_ro = fov.x
-        if channel_pe1 == "y":
-            n_enc_pe1 = n_enc.y
-            fov_pe1 = fov.y
-            n_enc_pe2 = n_enc.z
-            fov_pe2 = fov.z
-        else:
-            n_enc_pe1 = n_enc.z
-            fov_pe1 = fov.z
-            n_enc_pe2 = n_enc.y
-            fov_pe2 = fov.y
-    elif (channel_ro == "y"):
-        n_enc_ro = n_enc.y
-        fov_ro = fov.y
-        if channel_pe1 == "x":
-            n_enc_pe1 = n_enc.x
-            fov_pe1 = fov.x
-            n_enc_pe2 = n_enc.z
-            fov_pe2 = fov.z
-        else:
-            n_enc_pe1 = n_enc.z
-            fov_pe1 = fov.z
-            n_enc_pe2 = n_enc.x
-            fov_pe2 = fov.x
-    else:
-        n_enc_ro = n_enc.z
-        fov_ro = fov.z
-        if channel_pe1 == "y":
-            n_enc_pe1 = n_enc.y
-            fov_pe1 = fov.y
-            n_enc_pe2 = n_enc.x
-            fov_pe2 = fov.x
-        else:
-            n_enc_pe1 = n_enc.x
-            fov_pe1 = fov.x
-            n_enc_pe2 = n_enc.y
-            fov_pe2 = fov.y
-    
-    pe_traj, pe_order = tse_trajectory.get_traj(
+    # map fov and n_enc according to channels    
+    n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
+                                                                channel_ro, channel_pe1, n_enc, fov
+                                                                )
+    pe_traj, pe_order = seq_utils.get_traj(
                             n_enc_pe1 = n_enc_pe1,
                             n_enc_pe2 = n_enc_pe2,
                             etl = etl,
@@ -260,7 +221,7 @@ def constructor(
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
     tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) - echo_shift 
 
-    recommended_timing = tse_esp_etl.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
+    recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
     print(recommended_timing)
     
     for dummy in range(dummies):
