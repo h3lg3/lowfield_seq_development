@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum
 import math
+from console.interfaces.interface_acquisition_parameter import Dimensions
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -9,17 +10,14 @@ class Trajectory(Enum):
     LINEAR = 2
     INOUT = 3
     SYMMETRIC = 4
-    
     # Define trajectories corresponding to https://colab.research.google.com/github/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/03_k_space_sampling/notebooks/01_cartesian_ordering_and_undersampling_solution.ipynb#scrollTo=zYC6t2eOCt_L
-
 
 def get_traj(
     n_enc_pe1: int = 128,
     n_enc_pe2: int = 128,
     etl: int = 8,
     trajectory: Trajectory = Trajectory.INOUT,
-) -> tuple[list, list]:
-
+    ) -> tuple[list, list]:
 
     # Calculate center out trajectory
     pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
@@ -87,7 +85,7 @@ def get_esp_etl(
     echo_time: float = 25e-3,
     T2: int = 100,              # T2 value of main tissue of interest
     n_enc_pe1: int = 64,
-) -> dict:
+    ) -> dict: 
     
     # minimum echo spacing to accomodate gradients
     min_esp = -(min(tau_1, tau_2, tau_3) - echo_time/2)*2   
@@ -108,7 +106,11 @@ def get_esp_etl(
 
     return dict({'min_esp':min_esp, 'max_etl':max_etl, 'rec_etl':rec_etl})
 
-def validate_inputs(x, y, z)-> tuple[str, str, str]:
+def validate_inputs(
+    x:str, 
+    y:str, 
+    z:str
+    )-> tuple[str, str, str]:
     # Convert each input to lowercase
     x = x.lower()
     y = y.lower()
@@ -136,7 +138,12 @@ def validate_inputs(x, y, z)-> tuple[str, str, str]:
     # validate_inputs("x", "y", "z")  # This will pass validation.
     # validate_inputs("x", "y", "y")  # This will raise an AssertionError.
     
-def calculate_enc_fov_order(channel_ro, channel_pe1, n_enc, fov):
+def calculate_enc_fov_order(
+    channel_ro:str, 
+    channel_pe1:str, 
+    n_enc:Dimensions, 
+    fov:Dimensions
+    )-> tuple[int,float,int,float,int,float]:
     # Dynamically access the n_enc and fov attributes using getattr
     n_enc_ro = getattr(n_enc, channel_ro)
     fov_ro = getattr(fov, channel_ro)
@@ -151,13 +158,43 @@ def calculate_enc_fov_order(channel_ro, channel_pe1, n_enc, fov):
     n_enc_pe2 = getattr(n_enc, channel_pe2)
     fov_pe2 = getattr(fov, channel_pe2)
 
-    return n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2
+    return (n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)
 
-# # Example usage:
-# n_enc = Dimensions(x=64, y=80, z=100)
-# fov = Dimensions(x=200, y=220, z=240)
+    # # Example usage:
+    # n_enc = Dimensions(x=64, y=80, z=100)
+    # fov = Dimensions(x=200, y=220, z=240)
 
-# channel_ro = "x"
-# channel_pe1 = "y"
-# n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = calculate_enc_fov(channel_ro, channel_pe1, n_enc, fov)
-# print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
+    # channel_ro = "x"
+    # channel_pe1 = "y"
+    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = calculate_enc_fov(channel_ro, channel_pe1, n_enc, fov)
+    # print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
+    
+def calculate_acq_pos(
+    k_traj_adc:np.array,
+    n_enc_ro:int, 
+    channel_pe1:str, 
+    fov_pe1:float, 
+    channel_pe2:str, 
+    fov_pe2:float
+    )->list:
+    xyz = ["x", "y", "z"]
+    n_adc = n_enc_ro*2
+    
+    # RO samples
+    # idx_ro = xyz.index(channel_ro)
+    # k_traj_ro = -np.round(k_traj_adc[idx_ro][0:n_adc]*fov_ro*10)/10 
+    # k_traj_ro = k_traj_ro - min(k_traj_ro)   
+    
+    # PE1 samples
+    idx_pe1 = xyz.index(channel_pe1)
+    k_traj_pe1 = -np.round(k_traj_adc[idx_pe1][0::n_adc]*fov_pe1*10)/10 
+    k_traj_pe1 = k_traj_pe1 - min(k_traj_pe1)
+    
+    # PE2 samples
+    idx_pe2 = xyz.index(channel_pe2)
+    k_traj_pe2 = -np.round(k_traj_adc[idx_pe2][0::n_adc]*fov_pe2*10)/10  
+    k_traj_pe2 = k_traj_pe2 - min(k_traj_pe2)
+    acq_pos = [np.array([int(x), int(y)]) for x,y in zip(k_traj_pe1, k_traj_pe2)]
+    # if cast to integer not necessary: acq_pos = [list([x, int(y)]) for x,y in zip(k_traj_pe1, k_traj_pe2)]
+    
+    return acq_pos

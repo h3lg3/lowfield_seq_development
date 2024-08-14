@@ -224,7 +224,7 @@ def constructor(
     recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
     print(recommended_timing)
     
-    for dummy in range(dummies):
+    for _ in range(dummies):
         if inversion_pulse:
             seq.add_block(rf_inversion)
             seq.add_block(pp.make_delay(raster(val=inversion_time - rf_duration, precision=system.grad_raster_time)))
@@ -328,12 +328,11 @@ def constructor(
     # Calculate some sequence measures
     train_duration_tr = (seq.duration()[0]) / len(trains)
     train_duration = train_duration_tr - tr_delay
-    k_traj_adc = seq.calculate_kspacePP()[0]
     
-    a = np.round(k_traj_adc[1][0::64]*220e-3*-1*10)/10+15.5 # PE1 lines
-    b = np.round(k_traj_adc[2][0::64]*220e-3*-1*10)/10      # PE2 lines
-    c = [list([int(x), int(y)]) for x,y in zip(a, b)]   # if already integer: [list(x) for x in zip(a, b)]
-        
+    # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
+    k_traj_adc = seq.calculate_kspacePP()[0]
+    acq_pos = seq_utils.calculate_acq_pos(k_traj_adc, n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
+
     # # Add measures to sequence definition
     # seq.set_definition("n_total_trains", len(trains))
     # seq.set_definition("train_duration", train_duration)
