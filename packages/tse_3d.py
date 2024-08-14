@@ -98,36 +98,22 @@ def constructor(
     n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
                                                                 channel_ro, channel_pe1, n_enc, fov
                                                                 )
-    pe_traj, pe_order = seq_utils.get_traj(
-                            n_enc_pe1 = n_enc_pe1,
-                            n_enc_pe2 = n_enc_pe2,
-                            etl = etl,
-                            trajectory = trajectory,
-                            )
-
-    # Divide all PE steps into echo trains
-    if trajectory.name == 'SYMMETRIC':
-        num_trains = int(np.ceil(n_enc_pe1 / etl))
-        temp = [pe_traj[k::num_trains] for k in range(num_trains)]
-        trains = []
-        for k in np.arange(n_enc_pe2):
-            for i in np.arange(num_trains):
-                for j in np.arange(etl):
-                    trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
-                    
-        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
-        acq_pos = []    
-    else:
-        # # calculate the required gradient area for each k-point
-        pe_traj[:, 0] /= fov_pe1
-        pe_traj[:, 1] /= fov_pe2
-        num_trains = int(np.ceil(pe_traj.shape[0] / etl))
-        trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]
-        # Create a list with the kspace location of every line of kspace acquired, in the order it is acquired
-        trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]
-        acq_pos = []
-        for train_pos in trains_pos:
-            acq_pos.extend(train_pos)
+    pe_traj = seq_utils.get_traj(
+                n_enc_pe1 = n_enc_pe1,
+                n_enc_pe2 = n_enc_pe2,
+                etl = etl,
+                trajectory = trajectory,
+                )
+    
+    trains = seq_utils.get_trains(
+                pe_traj = pe_traj,
+                n_enc_pe1 = n_enc_pe1,
+                n_enc_pe2 = n_enc_pe2,
+                fov_pe1 = fov_pe1,
+                fov_pe2 = fov_pe2,
+                etl = etl,
+                trajectory = trajectory,
+                )    
 
     # Definition of RF pulses
     rf_90 = pp.make_block_pulse(
@@ -230,7 +216,7 @@ def constructor(
             seq.add_block(pp.make_delay(raster(val=inversion_time - rf_duration, precision=system.grad_raster_time)))
         seq.add_block(rf_90)
         seq.add_block(pp.make_delay(raster(val=echo_time / 2 - rf_duration, precision=system.grad_raster_time)))
-        for idx in range(etl):
+        for _ in range(etl):
             seq.add_block(rf_180)
             seq.add_block(pp.make_delay(raster(
                 val=echo_time - rf_duration,
@@ -331,7 +317,7 @@ def constructor(
     
     # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
     k_traj_adc = seq.calculate_kspacePP()[0]
-    acq_pos = seq_utils.calculate_acq_pos(k_traj_adc, n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
+    acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
 
     # # Add measures to sequence definition
     # seq.set_definition("n_total_trains", len(trains))

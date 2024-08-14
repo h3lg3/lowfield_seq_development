@@ -65,8 +65,36 @@ def get_traj(
         # PE dir 1
         n_ex = math.floor(n_enc_pe1 / etl)
         pe_traj = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
-                
+      
     return pe_traj
+
+def get_trains(
+    pe_traj:list,
+    n_enc_pe1:int,
+    n_enc_pe2:int,
+    fov_pe1:float,
+    fov_pe2:float,
+    etl:int,
+    trajectory:Trajectory,
+    ) -> list:
+    
+    # Divide all PE steps into echo trains
+    num_trains = int(np.ceil(n_enc_pe1/etl))
+    if trajectory.name == 'SYMMETRIC':
+        temp = [pe_traj[k::num_trains] for k in range(num_trains)]
+        trains = []
+        for k in np.arange(n_enc_pe2):
+            for i in np.arange(num_trains):
+                for j in np.arange(etl):
+                    trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
+                    
+        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
+    else:
+        pe_traj[:, 0] /= fov_pe1         # calculate the required gradient area for each k-point
+        pe_traj[:, 1] /= fov_pe2
+        trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]        
+                
+    return trains
 
 # Print min_esp (echo spacing) and max_etl (echo train length) and recommended etl for given PE steps
 def get_esp_etl(

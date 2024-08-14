@@ -21,12 +21,12 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb.seq",
                             rf_duration = 100e-6,
                             fov=Dimensions(x=fov[0], y=fov[1], z=fov[2]),  
                             n_enc=Dimensions(x=nk[0], y=nk[1], z=nk[2]),           
-                            trajectory=Trajectory.OUTIN,
+                            trajectory=Trajectory.LINEAR,
                             refocussing_angle=180/180 * pi,    # pi
                             excitation_phase=pi/2,
                             refocussing_phase=0,
-                            channel_ro="y", 
-                            channel_pe1="x",
+                            channel_ro="x", 
+                            channel_pe1="y",
                             channel_pe2="z",
                             system=system
                             )[0]
