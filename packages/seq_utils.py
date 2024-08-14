@@ -17,28 +17,21 @@ def get_traj(
     n_enc_pe2: int = 128,
     etl: int = 8,
     trajectory: Trajectory = Trajectory.INOUT,
-    ) -> tuple[list, list]:
+    ) -> list:
 
     # Calculate center out trajectory
     pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
     pe2 = np.arange(n_enc_pe2) - (n_enc_pe2 - 1) / 2
-
-    pe0_pos = np.arange(n_enc_pe1)
-    pe1_pos = np.arange(n_enc_pe2)
-
     pe_points = np.stack([grid.flatten() for grid in np.meshgrid(pe1, pe2)], axis=-1)
-    pe_positions = np.stack([grid.flatten() for grid in np.meshgrid(pe0_pos, pe1_pos)], axis=-1)
 
     pe_mag = np.sum(np.square(pe_points), axis=-1)  # calculate magnitude of all gradient combinations
     pe_mag_sorted = np.argsort(pe_mag)
 
     if trajectory is Trajectory.INOUT:
         pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
-        pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
     elif trajectory is Trajectory.OUTIN:
         pe_mag_sorted = np.flip(pe_mag_sorted)
         pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
-        pe_order = pe_positions[pe_mag_sorted, :]  # kspace position for each of the gradients
     elif trajectory is Trajectory.LINEAR:
         center_pos = 1 / 2  # where the center of kspace should be in the echo train
         num_points = np.size(pe_mag_sorted)
@@ -67,15 +60,13 @@ def get_traj(
             linear_pos[k_idx] = pe_mag_sorted[idx]
 
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
-        pe_order = pe_positions[linear_pos, :]  # kspace position for each of the gradients
     elif trajectory is Trajectory.SYMMETRIC:    # symmetric encoding, why is scheme so different from linear?
         assert n_enc_pe1 % etl == 0
-        pe_order = []
         # PE dir 1
         n_ex = math.floor(n_enc_pe1 / etl)
         pe_traj = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
                 
-    return (pe_traj, pe_order)
+    return pe_traj
 
 # Print min_esp (echo spacing) and max_etl (echo train length) and recommended etl for given PE steps
 def get_esp_etl(
