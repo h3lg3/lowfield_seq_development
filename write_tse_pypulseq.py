@@ -7,7 +7,7 @@ import pypulseq as pp
 from matplotlib import pyplot as plt
 
 from pypulseq.opts import Opts
-from packages.lf_system import system as default_system
+from packages.mr_systems import low_field as default_system
 
 def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq", 
         system:Opts = default_system, 
