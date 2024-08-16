@@ -140,12 +140,7 @@ def constructor(
             use="refocusing"
         )
 
-    # ADC duration
     adc_duration = n_enc_ro / ro_bandwidth
-    readout_time = np.ceil(
-        (adc_duration + system.adc_dead_time) / system.grad_raster_time
-        )* system.grad_raster_time
-    
     # Define readout gradient and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channel_ro,
