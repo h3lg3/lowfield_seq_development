@@ -162,16 +162,15 @@ def constructor(
     )
 
     # Calculate readout prephaser without correction times
-    ro_pre_duration = pp.calc_duration(grad_ro) / 2
-
     grad_ro_pre = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
         area=grad_ro.area / 2,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
-        duration=raster(ro_pre_duration, precision=system.grad_raster_time),
+        duration=raster(pp.calc_duration(grad_ro) / 2, precision=system.grad_raster_time),
     )
+    ro_pre_duration = pp.calc_duration(grad_ro_pre)
     
     adc = pp.make_adc(
         system=system,
@@ -201,10 +200,10 @@ def constructor(
     
     # Delay duration between center refocussing (180 degree) RF pulse and center readout
     tau_2 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.ringdown_time - 2*gradient_correction \
-        - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) + echo_shift
+        - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) + echo_shift
 
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
-    tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - pp.calc_duration(grad_ro_pre) - pp.calc_duration(grad_pe2_sp) - echo_shift 
+    tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) - echo_shift 
 
     recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
     print(recommended_timing)
