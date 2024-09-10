@@ -3,6 +3,7 @@ import numpy as np
 import pypulseq as pp
 import MRzeroCore as mr0
 import pickle
+import os 
 
 # %% Create phantom, simulate sequence, reconstruct image
 def simulate_seq(save: bool,
@@ -54,6 +55,12 @@ def simulate_seq(save: bool,
     reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=nk, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
     # %% save results
     if save:
+        # Check if directory exists
+        if not os.path.exists(sim_path):
+            # Create the directory
+            os.makedirs(sim_path)
+            print(f"Directory '{sim_path}' created.")
+
         with open(sim_path+ sim_name + '_obj_p.pkl', 'wb') as file:
             pickle.dump(obj_p, file)
 

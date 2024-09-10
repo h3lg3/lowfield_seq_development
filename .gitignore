@@ -4,7 +4,10 @@
 *.mat
 *.pyc
 ~*
+*.code-workspace
+__init__.py
 sequences/*.seq
+simulation/
 old/
 
 .vscode

@@ -29,10 +29,10 @@ seq_name = seq_name + '_lumina'
 fov = (220e-3, 220e-3, 220e-3)
 nk = (120, 120, 1)
 
-write_sequence = True
+write_sequence = False
 analyze_sequence = False
-simulate_sequence = False
-plot_simulation = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     if plot_simulation:
