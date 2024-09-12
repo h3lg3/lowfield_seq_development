@@ -5,7 +5,7 @@ import numpy as np
 import pypulseq as pp
 
 from pypulseq.opts import Opts
-from packages.mr_systems import lf_system as default_system
+from packages.mr_systems import low_field as default_system
 
 
 def main(plot: bool,

@@ -5,7 +5,7 @@
 *.pyc
 ~*
 *.code-workspace
-__init__.py
+__init__*
 sequences/*.seq
 simulation/
 old/

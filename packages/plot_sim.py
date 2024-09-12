@@ -31,11 +31,11 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
         except:
             seq.plot()
             
-        plt.plot(np.real(signal))
-        plt.title('real part of RF signal')
-        plt.xlabel('sampling points')
-        plt.ylabel('RF signal')
-        plt.show()
+        # plt.plot(np.real(signal))
+        # plt.title('real part of RF signal')
+        # plt.xlabel('sampling points')
+        # plt.ylabel('RF signal')
+        # plt.show()
         
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
