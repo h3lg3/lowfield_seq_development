@@ -141,6 +141,7 @@ def constructor(
         )
 
     adc_duration = n_enc_ro / ro_bandwidth
+    
     # Define readout gradient and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channel_ro,
@@ -177,20 +178,9 @@ def constructor(
         num_samples=int(n_enc_ro*ro_oversampling),
         duration=raster(val=adc_duration, precision=system.adc_raster_time),
         # Add gradient correction time and ADC correction time
-        # delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time) # HH: why 2*gradient_correction?
-        delay=raster(val=2 * gradient_correction + grad_ro.rise_time - 0.5*raster(val=adc_duration, precision=system.adc_raster_time)/int(n_enc_ro*ro_oversampling), precision=system.adc_raster_time) # HH: why 2*gradient_correction?
+        # HH: why 2*gradient_correction?
+        delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
     )
-
-    # # Calculate readout prephaser with correction times -> add small rephasor after adc 
-    # grad_ro_pre = pp.make_trapezoid(
-    #     channel=channel_ro,
-    #     system=system,
-    #     area=grad_ro.area / 2 + grad_ro.amplitude*adc.dwell*0.5,
-    #     rise_time=ramp_duration,
-    #     fall_time=ramp_duration,
-    #     duration=raster(pp.calc_duration(grad_ro) / 2, precision=system.grad_raster_time),
-    # )
-    # ro_pre_duration = pp.calc_duration(grad_ro_pre) 
     
     # ## Spoiler gradient on PE2 (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
     area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
@@ -280,18 +270,7 @@ def constructor(
                     rise_time=ramp_duration,
                     fall_time=ramp_duration
                 )
-            )
-            # # Calculate readout prephaser with correction times -> add small rephasor after adc 
-            # ,
-            #     pp.make_trapezoid(
-            #         channel=channel_ro,
-            #         area=grad_ro.amplitude*adc.dwell,
-            #         duration=ro_pre_duration/2,
-            #         system=system,
-            #         rise_time=ramp_duration,
-            #         fall_time=ramp_duration
-            #     )
-            
+            )          
 
             seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
 
