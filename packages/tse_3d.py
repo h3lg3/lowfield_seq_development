@@ -141,24 +141,16 @@ def constructor(
         )
 
     adc_duration = n_enc_ro / ro_bandwidth
-    
+    grad_flat_area = n_enc_ro / fov_ro
+    grad_amplitude = grad_flat_area / raster(adc_duration, precision=system.grad_raster_time)
     # Define readout gradient and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
-        flat_area=n_enc_ro / fov_ro,
+        amplitude=grad_amplitude,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
         # Add gradient correction time and ADC correction time
-        flat_time=raster(adc_duration, precision=system.grad_raster_time),
-    )
-    grad_ro = pp.make_trapezoid(  # using the previous calculation for the amplitde, hacky, should find a better way
-        channel=channel_ro,
-        system=system,
-        amplitude=grad_ro.amplitude,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration,
-        # Add gradient correction time
         flat_time=raster(adc_duration + 2 * gradient_correction, precision=system.grad_raster_time), # HH: why 2*gradient_correction?
     )
 
