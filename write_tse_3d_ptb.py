@@ -12,25 +12,26 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb.seq",
          nk:tuple =(64, 64, 64)
          ):
     seq = tse_3d.constructor(
-                            echo_time=16e-3,
-                            repetition_time=2000e-3,   # 600
-                            etl=7, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies=5,     # 5
-                            ro_bandwidth=20e3,
+                            echo_time = 16e-3,
+                            repetition_time = 2000e-3,  
+                            etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                            dummies = 5,    
+                            ro_bandwidth = 20e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             fov=Dimensions(x=fov[0], y=fov[1], z=fov[2]),  
                             n_enc=Dimensions(x=nk[0], y=nk[1], z=nk[2]),           
                             trajectory=Trajectory.SYMMETRIC,
-                            refocussing_angle=120/180 * pi,    # pi
-                            excitation_phase=pi/2,
-                            refocussing_phase=0,
-                            channel_ro="x", 
-                            channel_pe1="y",
-                            channel_pe2="z",
-                            system=system
+                            refocussing_angle = 180/180 * pi,  
+                            excitation_phase = pi/2,
+                            refocussing_phase = 0,
+                            channel_ro = "x", 
+                            channel_pe1 = "y",
+                            channel_pe2 = "z",
+                            system = system
                             )[0]
     # LF setting
+    # repetition_time=600e-3
     # fov=Dimensions(x=140e-3, y=140e-3, z=140e-3), 
     # n_enc=Dimensions(x=1, y=120, z=120) # x along bore (HF, PE2), y bottom to top(AP, PE1), z along B0 (LR, readout),
     # channel_ro="z", 

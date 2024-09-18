@@ -20,7 +20,6 @@ from packages import seq_utils
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
 
-
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
     repetition_time: float = 600e-3,
@@ -89,6 +88,8 @@ def constructor(
         Pulseq sequence and a list which describes the trajectory
     """
     disable_pe = False
+    alternate_refocussing_phase = False
+    
     seq = pp.Sequence(system)
     seq.set_definition("Name", "tse_3d")
 
@@ -131,6 +132,7 @@ def constructor(
         duration=rf_duration,
         use="refocusing"
     )
+    
     if inversion_pulse:
         rf_inversion = pp.make_block_pulse(
             system=system,
@@ -154,7 +156,7 @@ def constructor(
         flat_time=raster(adc_duration + 2 * gradient_correction, precision=system.grad_raster_time), # HH: why 2*gradient_correction?
     )
 
-    # # Calculate readout prephaser without correction times
+    # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
@@ -226,6 +228,10 @@ def constructor(
             )))
 
     for train in trains:
+        # Reset phase of 180° refocussing pulse if alternate refocussing phase is enabled
+        if alternate_refocussing_phase:
+            rf_180.phase_offset = refocussing_phase
+        
         if inversion_pulse:
             seq.add_block(rf_inversion)
             seq.add_block(pp.make_delay(raster(
@@ -235,7 +241,7 @@ def constructor(
         seq.add_block(rf_90)
         seq.add_block(grad_ro_pre)
         seq.add_block(pp.make_delay(raster(val=tau_1, precision=system.grad_raster_time)))
-
+        
         for echo in train:
             pe_1, pe_2 = echo
             if disable_pe:
@@ -288,6 +294,10 @@ def constructor(
             )
 
             seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
+            
+            # Alternate refocussing phase by 180° each time
+            if alternate_refocussing_phase:
+                rf_180.phase_offset = (rf_180.phase_offset + pi) % (2 * pi)
 
         seq.add_block(grad_pe2_sp) # add spoiler after last 180 pulse in echo train
 

@@ -79,8 +79,8 @@ def get_trains(
     ) -> list:
     
     # Divide all PE steps into echo trains
-    num_trains = int(np.ceil(n_enc_pe1/etl))
     if trajectory.name == 'SYMMETRIC':
+        num_trains = int(np.ceil(n_enc_pe1/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
         temp = [pe_traj[k::num_trains] for k in range(num_trains)]
         trains = []
         for k in np.arange(n_enc_pe2):
@@ -90,6 +90,7 @@ def get_trains(
                     
         trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
     else:
+        num_trains = int(np.ceil(n_enc_pe1*n_enc_pe2/etl)) # both pe directions are divided into trains
         pe_traj[:, 0] /= fov_pe1         # calculate the required gradient area for each k-point
         pe_traj[:, 1] /= fov_pe2
         trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]        

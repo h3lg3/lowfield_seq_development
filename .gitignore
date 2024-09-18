@@ -3,6 +3,8 @@
 *.npy
 *.mat
 *.pyc
+*.dat
+
 ~*
 *.code-workspace
 __init__*

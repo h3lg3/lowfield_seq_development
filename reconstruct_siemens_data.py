@@ -3,9 +3,19 @@
 import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
 import pypulseq as pp
 import matplotlib.pyplot as plt
+import glob
 # %%
-data_file = r".\siemens_data\meas_MID00108_FID109501_tse_pulseq.dat"
-seq_file =  r".\siemens_data\tse_pypulseq.seq"
+data_path = r".\siemens_data"
+seq_name = "tse_3d_lumina"
+
+seq_file = f"{data_path}\\{seq_name}.seq"
+data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
+
+# Use glob to find the actual data file matching the pattern
+data_files = glob.glob(data_pattern)
+if not data_files:
+    raise FileNotFoundError(f"No files matching pattern {data_pattern}")
+data_file = data_files[0]  # Use the first matching file
 
 seq = pp.Sequence()
 seq.read(seq_file)

@@ -32,10 +32,10 @@ def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq",
         rf_flip = np.zeros(n_echo) + rf_flip
     slice_thickness = 5e-3
     warnings.warn("Using fixed slice thickness. FOV in slice dir: thickness*nk[2]")
-    TE = 28e-3  # Echo time
+    TE = 16e-3  # Echo time
     TR = 2000e-3  # Repetition time
 
-    sampling_time = 6.4e-3
+    sampling_time = 7.2e-3
     readout_time = sampling_time + 2 * system.adc_dead_time
     t_ex = 3e-3
     t_exwd = t_ex + system.rf_ringdown_time + system.rf_dead_time
