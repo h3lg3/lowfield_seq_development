@@ -11,8 +11,11 @@ from math import pi
 import numpy as np
 import pypulseq as pp
 
-from console.interfaces.interface_acquisition_parameter import Dimensions
-from console.utilities.sequences.system_settings import raster
+#from console.interfaces.dimensions import Dimensions
+#from console.utilities.sequences.system_settings import raster
+from packages.seq_utils import Dimensions
+from packages.seq_utils import raster
+
 from pypulseq.opts import Opts
 from packages.mr_systems import low_field as default_system
 from packages import seq_utils
@@ -180,6 +183,8 @@ def constructor(
     area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
     area_pe2_sp = area_pe2_sp*1e-6*system.gamma # unit area: 1/m
     area_pe2_sp = np.round(area_pe2_sp*1e3)/1e3
+    area_pe2_sp = 0 # Turn off spoiler
+    
     grad_pe2_sp = pp.make_trapezoid(
         channel=channel_pe2, 
         area=area_pe2_sp,

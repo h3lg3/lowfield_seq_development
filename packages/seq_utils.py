@@ -1,7 +1,9 @@
 import numpy as np
 from enum import Enum
 import math
-from console.interfaces.interface_acquisition_parameter import Dimensions
+# from console.interfaces.dimensions import Dimensions
+from dataclasses import dataclass
+from packages.seq_utils import Dimensions
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -127,10 +129,31 @@ def get_esp_etl(
     return dict({'min_esp':min_esp, 'max_etl':max_etl, 'rec_etl':rec_etl})
 
 def validate_inputs(
-    x:str, 
-    y:str, 
-    z:str
-    )-> tuple[str, str, str]:
+    x: str, 
+    y: str, 
+    z: str
+) -> tuple[str, str, str]:   
+    """
+    Validates the input strings x, y, and z.
+    This function performs the following validations:
+    1. Converts each input to lowercase.
+    2. Ensures each variable is of length one.
+    3. Ensures each variable is one of 'x', 'y', or 'z'.
+    4. Ensures all variables are unique.
+    Parameters:
+    x (str): The first input string.
+    y (str): The second input string.
+    z (str): The third input string.
+    Returns:
+    tuple[str, str, str]: A tuple containing the validated and converted input strings.
+    Raises:
+    AssertionError: If any of the validation checks fail.
+    Example:
+    >>> validate_inputs("x", "y", "z")
+    ('x', 'y', 'z')
+    >>> validate_inputs("x", "y", "y")
+    AssertionError: y must be unique
+    """
     # Convert each input to lowercase
     x = x.lower()
     y = y.lower()
@@ -218,3 +241,40 @@ def calculate_acq_pos(
     # if cast to integer not necessary: acq_pos = [list([x, int(y)]) for x,y in zip(k_traj_pe1, k_traj_pe2)]
     
     return acq_pos
+
+"""Nexus Console Functions"""
+"""Interface class for dimensions."""
+
+@dataclass(frozen=True)
+class Dimensions:
+    """Dataclass for definition of dimensional parameters."""
+
+    x: float | int  # pylint: disable=invalid-name
+    """X dimension."""
+
+    y: float | int  # pylint: disable=invalid-name
+    """Y dimension."""
+
+    z: float | int  # pylint: disable=invalid-name
+    """Z dimension."""
+
+# Helper function
+def raster(val: float, precision: float) -> float:
+    """Fit value to gradient raster.
+
+    Parameters
+    ----------
+    val
+        Time value to be aligned on the raster.
+    precision
+        Raster precision, e.g. system.grad_raster_time or system.adc_raster_time
+
+    Returns
+    -------
+        Value wih given time/raster precision
+    """
+    # return np.round(val / precision) * precision
+    gridded_val = round(val / precision) * precision
+    return gridded_val
+    # decimals = abs(Decimal(str(precision)).as_tuple().exponent)
+    # return round(gridded_val, ndigits=decimals)

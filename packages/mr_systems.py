@@ -16,7 +16,7 @@ lumina = Opts(
     block_duration_raster=1e-5,
     
     adc_raster_time=1e-7,
-    adc_dead_time=10e-6, # Time delay at the beginning of ADC event
+    adc_dead_time=10e-6, # Time delay at the BEGINNING/END of ADC event
 
     B0=3.0
 )
@@ -26,7 +26,7 @@ low_field = Opts(
     max_slew=500.e3,
     rise_time=100.e-6,   # redundant with max_slew
 
-    # time delay at the end of RF event, SETS RF DELAY!
+    # time delay at the beginning of RF event, SETS RF DELAY!
     rf_dead_time=20.e-6,
 
     # Set raster times to spectrum card frequency (timing checks)
@@ -38,7 +38,7 @@ low_field = Opts(
     # Time delay at the beginning of an RF event
     rf_ringdown_time=0.,
     
-    # Time delay at the beginning of ADC event
+    # Time delay at the BEGINNING/END of ADC event, at beginning it is usually covered by delay
     adc_dead_time=0.,
     B0=50.e-3
 )

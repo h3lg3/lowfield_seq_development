@@ -59,7 +59,7 @@ system = pp.Opts(
     adc_raster_time=1e-7,
 )
 
-system.adc_dead_time = 10e-6    # time delay at the beginning of ADC event
+system.adc_dead_time = 10e-6    # time delay at the END of ADC event
 dG = 250e-6                     # rise time readout
 sampling_time= 6.4e-3
 

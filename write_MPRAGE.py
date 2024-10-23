@@ -25,7 +25,7 @@ def main(plot: bool,
     ro_os = 1  # Readout oversampling
     ro_spoil = 3  # Additional k-max excursion for RO spoiling
     TI = 1.1    # dt inversion_180-first_90
-    TR_out = 2.5 # dt inversion_180-inversion_180
+    TR_out = 5 # dt inversion_180-inversion_180
 
     rf_spoiling_inc = 117
     rf_len = 100e-6

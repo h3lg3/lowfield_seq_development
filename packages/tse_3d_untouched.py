@@ -13,8 +13,10 @@ from math import pi
 import numpy as np
 import pypulseq as pp
 
-from console.interfaces.interface_acquisition_parameter import Dimensions
-from console.utilities.sequences.system_settings import raster
+#from console.interfaces.dimensions import Dimensions
+#from console.utilities.sequences.system_settings import raster
+from packages.seq_utils import Dimensions
+
 from packages.mr_systems import low_field as default_system
 from pypulseq.opts import Opts
 
