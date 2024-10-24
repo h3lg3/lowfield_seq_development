@@ -9,16 +9,16 @@ TODO: Instead of mapping fov to fov_ro, fov_pe1, fov_pe2,,, just get indices (e.
 """
 from math import pi
 import numpy as np
-import pypulseq as pp
 
-#from console.interfaces.dimensions import Dimensions
-#from console.utilities.sequences.system_settings import raster
+import pypulseq as pp
+from pypulseq.opts import Opts
+
+from packages import seq_utils
 from packages.seq_utils import Dimensions
 from packages.seq_utils import raster
-
-from pypulseq.opts import Opts
 from packages.mr_systems import low_field as default_system
-from packages import seq_utils
+
+import warnings
 
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
@@ -92,6 +92,7 @@ def constructor(
     """
     disable_pe = False
     alternate_refocussing_phase = False
+    disable_spoiler = False
     
     seq = pp.Sequence(system)
     seq.set_definition("Name", "tse_3d")
@@ -183,7 +184,8 @@ def constructor(
     area_pe2_sp = 4*pi/(2*pi*42.57*fov.z/n_enc.z) # unit area: mt/m*ms
     area_pe2_sp = area_pe2_sp*1e-6*system.gamma # unit area: 1/m
     area_pe2_sp = np.round(area_pe2_sp*1e3)/1e3
-    area_pe2_sp = 0 # Turn off spoiler
+    if disable_spoiler:
+        area_pe2_sp = 0 # Turn off spoiler
     
     grad_pe2_sp = pp.make_trapezoid(
         channel=channel_pe2, 
@@ -312,6 +314,15 @@ def constructor(
 
         if inversion_pulse:
             tr_delay -= inversion_time
+        
+        # Check if TR is too short, needs same check for dummies. 
+        # if tr_delay < 0:
+        #     warnings.warn(
+        #         f"TR too short, adapted to: {1000 * (-(tr_delay-repetition_time) + 1e-3)} ms"
+        #     )
+        #     tr_delay = 1e-3
+        # else:
+        #     print(f"TR fill: {1000 * tr_delay} ms")
 
         seq.add_block(pp.make_delay(raster(
             val=tr_delay,

@@ -23,22 +23,19 @@ seq_name = "tse_3d"
 from packages.mr_systems import lumina as system
 seq_name = seq_name + '_lumina'
 
-# from packages.mr_systems import low_field as system
-# seq_name = seq_name + '_ptb'
-
 # ======
 # FOV
 # ======
 fov = (256e-3, 256e-3, 256e-3)
-nk = (64, 64, 1)
+nk = (16, 16, 1)
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
 # nk = (120, 120, 1)
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation:

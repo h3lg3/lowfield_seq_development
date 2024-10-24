@@ -1,10 +1,12 @@
 # Reconstruct Siemens data
 # %%
 import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
+
 import pypulseq as pp
+
 import matplotlib.pyplot as plt
-import glob
 from matplotlib.widgets import Slider
+import glob
 import numpy as np
 # %%
 data_path = r".\siemens_data\241021"

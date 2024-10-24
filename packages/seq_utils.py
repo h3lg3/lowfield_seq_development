@@ -3,7 +3,44 @@ from enum import Enum
 import math
 # from console.interfaces.dimensions import Dimensions
 from dataclasses import dataclass
-from packages.seq_utils import Dimensions
+
+"""Nexus Console Functions"""
+"""Interface class for dimensions."""
+
+@dataclass(frozen=True)
+class Dimensions:
+    """Dataclass for definition of dimensional parameters."""
+
+    x: float | int  # pylint: disable=invalid-name
+    """X dimension."""
+
+    y: float | int  # pylint: disable=invalid-name
+    """Y dimension."""
+
+    z: float | int  # pylint: disable=invalid-name
+    """Z dimension."""
+
+# Helper function
+def raster(val: float, precision: float) -> float:
+    """Fit value to gradient raster.
+
+    Parameters
+    ----------
+    val
+        Time value to be aligned on the raster.
+    precision
+        Raster precision, e.g. system.grad_raster_time or system.adc_raster_time
+
+    Returns
+    -------
+        Value wih given time/raster precision
+    """
+    # return np.round(val / precision) * precision
+    gridded_val = round(val / precision) * precision
+    return gridded_val
+    # decimals = abs(Decimal(str(precision)).as_tuple().exponent)
+    # return round(gridded_val, ndigits=decimals)
+    
 
 class Trajectory(Enum):
     """Trajectory type enum."""
@@ -242,39 +279,3 @@ def calculate_acq_pos(
     
     return acq_pos
 
-"""Nexus Console Functions"""
-"""Interface class for dimensions."""
-
-@dataclass(frozen=True)
-class Dimensions:
-    """Dataclass for definition of dimensional parameters."""
-
-    x: float | int  # pylint: disable=invalid-name
-    """X dimension."""
-
-    y: float | int  # pylint: disable=invalid-name
-    """Y dimension."""
-
-    z: float | int  # pylint: disable=invalid-name
-    """Z dimension."""
-
-# Helper function
-def raster(val: float, precision: float) -> float:
-    """Fit value to gradient raster.
-
-    Parameters
-    ----------
-    val
-        Time value to be aligned on the raster.
-    precision
-        Raster precision, e.g. system.grad_raster_time or system.adc_raster_time
-
-    Returns
-    -------
-        Value wih given time/raster precision
-    """
-    # return np.round(val / precision) * precision
-    gridded_val = round(val / precision) * precision
-    return gridded_val
-    # decimals = abs(Decimal(str(precision)).as_tuple().exponent)
-    # return round(gridded_val, ndigits=decimals)
