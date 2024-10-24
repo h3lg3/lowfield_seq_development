@@ -1,10 +1,10 @@
 from matplotlib import pyplot as plt
-from packages import tse_3d
-from packages.seq_utils import Trajectory
-from packages.seq_utils import Dimensions
-
 from math import pi
 from pypulseq.opts import Opts
+
+from packages import tse_3d_demo
+from packages.seq_utils import Trajectory
+from packages.seq_utils import Dimensions
 from packages.mr_systems import low_field as default_system
 
 def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
@@ -12,10 +12,10 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
          fov:tuple = (256e-3, 256e-3, 256e-3), 
          nk:tuple =(64, 64, 64)
          ):
-    seq = tse_3d.constructor(
-                            echo_time = 20e-3,
-                            repetition_time = 2000e-3,  
-                            etl = 1, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+    seq = tse_3d_demo.constructor(
+                            echo_time = 200e-3,
+                            repetition_time = 500e-3,  
+                            etl = 16, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                             dummies = 5,    
                             ro_bandwidth = 20e3,
                             ro_oversampling = 1, 

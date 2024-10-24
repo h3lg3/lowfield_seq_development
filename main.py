@@ -8,6 +8,9 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_pypulseq import main as write_seq
 # seq_name = "tse_2d"
 
+from write_tse_3d_demo import main as write_seq
+seq_name = "tse_3d-demo"
+
 from write_tse_3d_ptb import main as write_seq
 seq_name = "tse_3d"
 
