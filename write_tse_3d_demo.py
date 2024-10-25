@@ -7,16 +7,16 @@ from packages.seq_utils import Trajectory
 from packages.seq_utils import Dimensions
 from packages.mr_systems import low_field as default_system
 
-def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
+def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_demo_lumina.seq",
          system:Opts = default_system, 
          fov:tuple = (256e-3, 256e-3, 256e-3), 
          nk:tuple =(64, 64, 64)
          ):
     seq = tse_3d_demo.constructor(
-                            echo_time = 200e-3,
-                            repetition_time = 500e-3,  
-                            etl = 16, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 5,    
+                            echo_time = 20e-3,
+                            repetition_time = 2000e-3,  
+                            etl = 1, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                            dummies = 0,    
                             ro_bandwidth = 20e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
@@ -30,7 +30,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
                             channel_pe1 = "y",
                             channel_pe2 = "z",
                             system = system
-                            )[0]
+                            )   # [0]
 
     if plot:
         plot_kspace = True
@@ -63,39 +63,9 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
     # WRITE .SEQ
     # =========    
     if write_seq:
-        seq.set_definition('Name', 'se_3d_ptb')
+        seq.set_definition('Name', 'se_3d_demo')
         seq.write('./sequences/' + seq_filename)
         seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        
-    
-    
-# k-space order for 32 phase enc steps
-# # PYPULSEQ
-# array([[-14., -13., -12., -11.],
-#        [-10.,  -9.,  -8.,  -7.],
-#        [ -6.,  -5.,  -4.,  -3.],
-#        [ -2.,  -1.,   0.,   1.],
-#        [  2.,   3.,   4.,   5.],
-#        [  6.,   7.,   8.,   9.],
-#        [ 10.,  11.,  12.,  13.],
-#        [ 14.,  15., -16., -15.]])
-
-# # LINEAR ORDER
-# [array([ 15.5,  11.5,   7.5,   3.5,  -0.5,   4.5,  -8.5, -12.5]), 
-# array([-14.5, -10.5,   6.5,  -2.5,   1.5,   5.5,  -9.5, -13.5]), 
-# array([13.5,  9.5, -5.5, -1.5,  2.5, -6.5, 10.5, 14.5]), 
-# array([ 12.5,   8.5,  -4.5,   0.5,  -3.5,  -7.5, -11.5, -15.5])]
-
-# # OUTIN
-# [array([15.5, 13.5, 11.5,  9.5,  7.5, -5.5,  3.5, -1.5]), 
-# array([-15.5, -13.5, -11.5,  -9.5,  -7.5,   5.5,  -3.5,   1.5]),
-#  array([-14.5,  12.5, -10.5,   8.5,   6.5,  -4.5,  -2.5,   0.5]), 
-# array([ 14.5, -12.5,  10.5,  -8.5,  -6.5,   4.5,   2.5,  -0.5])]
-
-# #INOUT
-# [array([ -0.5,   2.5,   4.5,  -6.5,  -8.5,  10.5, -12.5,  14.5]), 
-# array([  0.5,  -2.5,  -4.5,   6.5,   8.5, -10.5,  12.5, -14.5]), 
-# array([  1.5,  -3.5,   5.5,  -7.5,  -9.5, -11.5, -13.5, -15.5]), 
-# array([-1.5,  3.5, -5.5,  7.5,  9.5, 11.5, 13.5, 15.5])]

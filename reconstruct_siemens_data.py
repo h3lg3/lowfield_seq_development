@@ -9,8 +9,8 @@ from matplotlib.widgets import Slider
 import glob
 import numpy as np
 # %%
-data_path = r".\siemens_data\241021"
-seq_name = "tse_3d_lumina_no_spoiler"
+data_path = r".\siemens_data\241025"
+seq_name = "tse_3d_demo_lumina"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
@@ -25,22 +25,21 @@ seq = pp.Sequence()
 seq.read(seq_file)
  
 kdata_unsorted = utils.read_raw_data(data_file)
-kdata_cropped = kdata_unsorted[:, 10:54, 10:54] 
 # %%
 axes = (-2, -1)
 #fft_data_unsorted = np.fft.fftshift(np.fft.ifftn(np.fft.ifftshift(kdata_unsorted, axes=axes), axes=axes), axes=axes)
 
-fft_data_unsorted = np.fft.fftshift(np.fft.ifftn(kdata_cropped, axes=axes), axes=axes)
-image = np.sqrt((abs(fft_data_unsorted)**2).sum(axis=0))
+image = np.fft.fftshift(np.fft.ifftn(np.fft.ifftshift(kdata_unsorted, axes=axes), axes=axes), axes=axes)
+image_sos = np.sqrt((abs(image)**2).sum(axis=0))
 
-# # Plot the first slice of fft_data_unsorted
-plt.figure(figsize=(10, 8))
-plt.imshow(image, cmap='gray')
-plt.title('FFT Data Unsorted - Slice 0')
-plt.axis('off')
-plt.show()
+# # # Plot the first slice of fft_data_unsorted
+# plt.figure(figsize=(10, 8))
+# plt.imshow(image_sos, cmap='gray')
+# plt.title('FFT Data Unsorted - Slice 0')
+# plt.axis('off')
+# plt.show()
 # %%
-data2plot = fft_data_unsorted
+data2plot = image
 
 # Plot abs(kdata_unsorted) as 2D image for kdata_unsorted[0:17, :, :]
 

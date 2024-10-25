@@ -90,13 +90,14 @@ def constructor(
     -------
         Pulseq sequence and a list which describes the trajectory
     """
+    # Sequence options
     disable_pe = False
     alternate_refocussing_phase = False
     disable_spoiler = False
     
+    # Create a new sequence object
     seq = pp.Sequence(system)
-    seq.set_definition("Name", "tse_3d")
-
+    
     # check if channel labels are valid
     channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
 
@@ -104,6 +105,18 @@ def constructor(
     n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
                                                                 channel_ro, channel_pe1, n_enc, fov
                                                                 )
+    
+    # derived and modifed parameters
+    delta_k_ro = 1/fov_ro
+    delta_k_pe1 = 1/fov_pe1
+    delta_k_pe2 = 1/fov_pe2
+    
+    adc_duration = raster(n_enc_ro / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
+    adc_dwell = 1 / ro_bandwidth
+    grad_amplitude = n_enc_ro*delta_k_ro/ adc_duration
+    
+    gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
+
     pe_traj = seq_utils.get_traj(
                 n_enc_pe1 = n_enc_pe1,
                 n_enc_pe2 = n_enc_pe2,
@@ -146,9 +159,6 @@ def constructor(
             use="refocusing"
         )
 
-    adc_duration = n_enc_ro / ro_bandwidth
-    grad_flat_area = n_enc_ro / fov_ro
-    grad_amplitude = grad_flat_area / raster(adc_duration, precision=system.grad_raster_time)
     # Define readout gradient and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channel_ro,
@@ -157,27 +167,26 @@ def constructor(
         rise_time=ramp_duration,
         fall_time=ramp_duration,
         # Add gradient correction time and ADC correction time
-        flat_time=raster(adc_duration + 2 * gradient_correction, precision=system.grad_raster_time), # HH: why 2*gradient_correction?
+        flat_time=adc_duration + 2 * gradient_correction # HH: why 2*gradient_correction?
     )
 
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
-        area=grad_ro.area / 2,
+        area=grad_ro.area / 2 + delta_k_ro / 2 ,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
-        duration=raster(pp.calc_duration(grad_ro) / 2, precision=system.grad_raster_time),
+        duration=pp.calc_duration(grad_ro) / 2,
     )
     ro_pre_duration = pp.calc_duration(grad_ro_pre) 
     
     adc = pp.make_adc(
         system=system,
-        num_samples=int(n_enc_ro*ro_oversampling),
-        duration=raster(val=adc_duration, precision=system.adc_raster_time),
+        num_samples=n_enc_ro*ro_oversampling,
+        duration=adc_duration,
         # Add gradient correction time and ADC correction time
-        # HH: why 2*gradient_correction?
-        delay=raster(val=2 * gradient_correction + grad_ro.rise_time, precision=system.adc_raster_time)
+        delay=2 * gradient_correction + grad_ro.rise_time
     )
     
     # ## Spoiler gradient on PE2 (used three times: before excitation (or after ADC), before refocusing, after refocusing) 
@@ -199,14 +208,14 @@ def constructor(
     # Calculate delays
     # Note: RF dead-time is contained in RF delay
     # Delay duration center excitation (90 degree) and center refocussing (180 degree) RF pulse
-    tau_1 = echo_time/2 - rf_90.shape_dur/2 - rf_90.ringdown_time - rf_180.shape_dur/2 - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp)
+    tau_1 = raster(val=echo_time/2 - rf_90.shape_dur/2 - rf_90.ringdown_time - rf_180.shape_dur/2 - rf_180.delay - ro_pre_duration - pp.calc_duration(grad_pe2_sp), precision=system.grad_raster_time)
     
     # Delay duration between center refocussing (180 degree) RF pulse and center readout
-    tau_2 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.ringdown_time - 2*gradient_correction \
-        - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) + echo_shift
+    tau_2 = raster(echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.ringdown_time - 2*gradient_correction \
+        - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) + echo_shift, precision=system.grad_raster_time)
 
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
-    tau_3 = echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) - echo_shift 
+    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - ro_pre_duration - pp.calc_duration(grad_pe2_sp) - echo_shift, precision=system.grad_raster_time)
 
     recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
     print(recommended_timing)
@@ -247,7 +256,7 @@ def constructor(
             )))
         seq.add_block(rf_90)
         seq.add_block(grad_ro_pre)
-        seq.add_block(pp.make_delay(raster(val=tau_1, precision=system.grad_raster_time)))
+        seq.add_block(pp.make_delay(tau_1))
         
         for echo in train:
             pe_1, pe_2 = echo
@@ -277,7 +286,7 @@ def constructor(
                 )
             )          
 
-            seq.add_block(pp.make_delay(raster(val=tau_2, precision=system.grad_raster_time)))
+            seq.add_block(pp.make_delay(tau_2))
 
             seq.add_block(grad_ro, adc)
 
@@ -300,7 +309,7 @@ def constructor(
                 )
             )
 
-            seq.add_block(pp.make_delay(raster(val=tau_3, precision=system.grad_raster_time)))
+            seq.add_block(pp.make_delay(tau_3))
             
             # Alternate refocussing phase by 180° each time
             if alternate_refocussing_phase:
@@ -309,25 +318,13 @@ def constructor(
         seq.add_block(grad_pe2_sp) # add spoiler after last 180 pulse in echo train
 
         # recalculate TR each train because train length is not guaranteed to be constant
-        tr_delay = repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_pe2_sp)
+        tr_delay = raster(repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
+            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration - pp.calc_duration(grad_pe2_sp), precision=system.grad_raster_time)
 
         if inversion_pulse:
             tr_delay -= inversion_time
         
-        # Check if TR is too short, needs same check for dummies. 
-        # if tr_delay < 0:
-        #     warnings.warn(
-        #         f"TR too short, adapted to: {1000 * (-(tr_delay-repetition_time) + 1e-3)} ms"
-        #     )
-        #     tr_delay = 1e-3
-        # else:
-        #     print(f"TR fill: {1000 * tr_delay} ms")
-
-        seq.add_block(pp.make_delay(raster(
-            val=tr_delay,
-            precision=system.block_duration_raster
-        )))
+        seq.add_block(pp.make_delay(tr_delay))
 
     # Calculate some sequence measures
     train_duration_tr = (seq.duration()[0]) / len(trains)

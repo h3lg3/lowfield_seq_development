@@ -16,7 +16,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
                             echo_time = 20e-3,
                             repetition_time = 2000e-3,  
                             etl = 1, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 5,    
+                            dummies = 0,    
                             ro_bandwidth = 20e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
@@ -63,7 +63,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_2d_lumina.seq",
     # WRITE .SEQ
     # =========    
     if write_seq:
-        seq.set_definition('Name', 'se_3d_ptb')
+        seq.set_definition('Name', 'tse_3d')
         seq.write('./sequences/' + seq_filename)
         seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
