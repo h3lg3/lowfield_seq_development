@@ -11,11 +11,14 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_3d_demo import main as write_seq
 # seq_name = "tse_3d_demo"
 
-from write_tse_3d import main as write_seq
-seq_name = "tse_3d"
+# from write_tse_3d import main as write_seq
+# seq_name = "tse_3d"
+
+from write_tse_3d_rospoiler import main as write_seq
+seq_name = "tse_3d_rospoiler"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
-# seq_name = "tse_3d_untouched"
+# seq_name = "tse_3d_ptb_untouched"
 
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage"
@@ -30,13 +33,13 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (256e-3, 256e-3, 256e-3)
-nk = (16, 16, 1)
+nk = (64, 64, 1)
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
 # nk = (120, 120, 1)
 
 write_sequence = True
-analyze_sequence = False
+analyze_sequence = True
 simulate_sequence = True
 plot_simulation = True
 

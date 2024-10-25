@@ -48,7 +48,7 @@ class Trajectory(Enum):
     OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
     LINEAR = 2
     INOUT = 3
-    SYMMETRIC = 4
+    ASCENDING = 4
     # Define trajectories corresponding to https://colab.research.google.com/github/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/03_k_space_sampling/notebooks/01_cartesian_ordering_and_undersampling_solution.ipynb#scrollTo=zYC6t2eOCt_L
 
 def get_traj(
@@ -59,8 +59,12 @@ def get_traj(
     ) -> list:
 
     # Calculate center out trajectory
-    pe1 = np.arange(n_enc_pe1) - (n_enc_pe1 - 1) / 2
-    pe2 = np.arange(n_enc_pe2) - (n_enc_pe2 - 1) / 2
+    pe1 = np.arange(n_enc_pe1) - n_enc_pe1/2
+    if n_enc_pe2 == 1:  # exception if only 1 PE2 step is present
+        pe2 = np.array([0])
+    else:
+        pe2 = np.arange(n_enc_pe2) - (n_enc_pe2) / 2
+        
     pe_points = np.stack([grid.flatten() for grid in np.meshgrid(pe1, pe2)], axis=-1)
 
     pe_mag = np.sum(np.square(pe_points), axis=-1)  # calculate magnitude of all gradient combinations
@@ -99,11 +103,10 @@ def get_traj(
             linear_pos[k_idx] = pe_mag_sorted[idx]
 
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
-    elif trajectory is Trajectory.SYMMETRIC:    # symmetric encoding, why is scheme so different from linear?
+    elif trajectory is Trajectory.ASCENDING:    # ascending phase encoding, from negative frequencies to positive, why is scheme so different from linear?
         assert n_enc_pe1 % etl == 0
         # PE dir 1
-        n_ex = math.floor(n_enc_pe1 / etl)
-        pe_traj = np.arange(1, etl * n_ex + 1) - 0.5 * etl * n_ex - 1
+        pe_traj = pe1
       
     return pe_traj
 
@@ -118,7 +121,7 @@ def get_trains(
     ) -> list:
     
     # Divide all PE steps into echo trains
-    if trajectory.name == 'SYMMETRIC':
+    if trajectory.name == 'ASCENDING':
         num_trains = int(np.ceil(n_enc_pe1/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
         temp = [pe_traj[k::num_trains] for k in range(num_trains)]
         trains = []

@@ -10,7 +10,7 @@ from packages.mr_systems import low_field as default_system
 
 def main(plot: bool,
         write_seq: bool,
-        seq_filename: str = "mprage_pypulseq.seq", 
+        seq_filename: str = "mprage", 
         system:Opts = default_system, 
         fov:tuple = (256e-3, 256e-3, 256e-3), 
         nk:tuple =(64, 64, 64)

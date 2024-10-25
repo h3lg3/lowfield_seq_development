@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from pypulseq.opts import Opts
 from packages.mr_systems import low_field as default_system
 
-def main(plot: bool, write_seq: bool, seq_filename: str = "tse_pypulseq", 
+def main(plot: bool, write_seq: bool, seq_filename: str = "tse_2d", 
         system:Opts = default_system, 
         fov:tuple = (256e-3, 256e-3, 0), 
         nk:tuple =(64, 64, 4)

@@ -7,7 +7,7 @@ from math import pi
 from pypulseq.opts import Opts
 from packages.mr_systems import low_field as default_system
 
-def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb_untouched.seq",
+def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb_untouched",
          system:Opts = default_system, 
          fov:tuple = (256e-3, 256e-3, 256e-3), 
          nk:tuple =(64, 64, 64)
@@ -62,7 +62,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d_ptb_untouched.seq
     # WRITE .SEQ
     # =========    
     if write_seq:
-        seq.set_definition('Name', 'se_3d_ptb_untoched')
+        seq.set_definition('Name', seq_filename)
         seq.write('./sequences/' + seq_filename)
         seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
