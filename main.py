@@ -11,11 +11,11 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_3d_demo import main as write_seq
 # seq_name = "tse_3d_demo"
 
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
-from write_tse_3d_rospoiler import main as write_seq
-seq_name = "tse_3d_rospoiler"
+# from write_tse_3d_rospoiler import main as write_seq
+# seq_name = "tse_3d_rospoiler"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
@@ -39,7 +39,7 @@ nk = (64, 64, 1)
 # nk = (120, 120, 1)
 
 write_sequence = True
-analyze_sequence = True
+analyze_sequence = False
 simulate_sequence = True
 plot_simulation = True
 
