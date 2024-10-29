@@ -6,14 +6,14 @@ from packages.analyze_seq import analyze_seq
 # SEQUENCE
 # ======
 
-# from write_tse_3d_demo import main as write_seq
-# seq_name = "tse_3d_demo"
+from write_tse_3d_demo import main as write_seq
+seq_name = "tse_3d_demo"
 
 # from write_tse_3d import main as write_seq
 # seq_name = "tse_3d"
 
-from write_tse_3d_ptb_untouched import main as write_seq
-seq_name = "tse_3d_ptb_untouched"
+# from write_tse_3d_ptb_untouched import main as write_seq
+# seq_name = "tse_3d_ptb_untouched"
 
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage"
@@ -34,7 +34,7 @@ n_enc = (64, 64, 8)
 # nk = (120, 120, 1)
 
 write_sequence = True
-analyze_sequence = False
+analyze_sequence = True
 simulate_sequence = False
 plot_simulation = False
 

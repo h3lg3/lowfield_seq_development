@@ -23,7 +23,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
-                            trajectory=Trajectory.LINEAR,
+                            trajectory = Trajectory.ASCENDING,
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
@@ -51,10 +51,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
         k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
 
         plt.figure()
+        plt.title('full k-space trajectory ($k_{x}$ x $k_{y}$)')
         plt.plot(k_traj[0],k_traj[1])
         plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
         plt.show()
-                
+                        
     if plot_seq:
         seq.plot()
         

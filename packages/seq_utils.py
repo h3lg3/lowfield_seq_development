@@ -272,8 +272,8 @@ def get_trains(
         pe_order = np.array([[pe_traj[k, 0] + n_enc['pe1']/2, pe_traj[k, 1] + n_enc['pe2']/2] for k in range(len(pe_traj))])   
           
         num_trains = int(np.ceil(n_enc['pe1']*n_enc['pe2']/etl)) # both pe directions are divided into trains
-        # pe_traj[:, 0] /= fov['pe1']         # calculate the required gradient area for each k-point
-        # pe_traj[:, 1] /= fov['pe2']
+        pe_traj[:, 0] /= fov['pe1']         # calculate the required gradient area for each k-point
+        pe_traj[:, 1] /= fov['pe2']
         trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]   
         trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]      
         
