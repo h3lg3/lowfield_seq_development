@@ -109,15 +109,15 @@ def constructor(
     gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
 
     pe_traj = seq_utils.get_traj(
-                n_enc,
+                n_enc=n_enc,
                 etl = etl,
                 trajectory = trajectory,
                 )
     
     trains, trains_pos = seq_utils.get_trains(
                 pe_traj = pe_traj,
-                n_enc,
-                fov,
+                n_enc=n_enc,
+                fov=fov,
                 etl = etl,
                 trajectory = trajectory,
                 )
@@ -149,7 +149,7 @@ def constructor(
 
     # Define readout gradient, spoiler and prewinder
     grad_ro = pp.make_trapezoid(
-        channel=channel_ro,
+        channel=channels.ro,
         system=system,
         amplitude=grad_amplitude,
         rise_time=ramp_duration,
@@ -160,7 +160,7 @@ def constructor(
     
     # Readout spoiler gradient
     grad_ro_spr = pp.make_trapezoid(
-        channel=channel_ro,
+        channel=channels.ro,
         system=system,
         area=grad_ro.area,
         duration=pp.calc_duration(grad_ro),
@@ -168,7 +168,7 @@ def constructor(
     
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
-        channel=channel_ro,
+        channel=channels.ro,
         system=system,
         area=grad_ro.area / 2 + grad_ro_spr.area,
         rise_time=ramp_duration,
@@ -179,7 +179,7 @@ def constructor(
      
     adc = pp.make_adc(
         system=system,
-        num_samples=n_enc_ro*ro_oversampling,
+        num_samples=n_enc['ro']*ro_oversampling,
         duration=adc_duration,
         # Add gradient correction time and ADC correction time
         delay=2 * gradient_correction + grad_ro.rise_time
@@ -247,7 +247,7 @@ def constructor(
             seq.add_block(rf_180)
             seq.add_block(
                 pp.make_trapezoid(
-                    channel=channel_pe1,
+                    channel=channels.pe1,
                     area=pe_1,
                     duration=ro_pre_duration,
                     system=system,
@@ -255,7 +255,7 @@ def constructor(
                     fall_time=ramp_duration
                 ),
                 pp.make_trapezoid(
-                    channel=channel_pe2,
+                    channel=channels.pe2,
                     area=pe_2,
                     duration=ro_pre_duration,
                     system=system,
@@ -275,7 +275,7 @@ def constructor(
 
             seq.add_block(
                 pp.make_trapezoid(
-                    channel=channel_pe1,
+                    channel=channels.pe1,
                     area=-pe_1,
                     duration=ro_pre_duration,
                     system=system,
@@ -283,7 +283,7 @@ def constructor(
                     fall_time=ramp_duration
                 ),
                 pp.make_trapezoid(
-                    channel=channel_pe2,
+                    channel=channels.pe2,
                     area=-pe_2,
                     duration=ro_pre_duration,
                     system=system,

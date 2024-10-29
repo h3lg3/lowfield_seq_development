@@ -185,8 +185,8 @@ def calculate_enc_fov_order(
     # print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
     
 def get_traj(
-    n_enc: dict = {'pe1': 128, 'pe2': 128},
-    etl: int = 8,
+    n_enc: dict,
+    etl: int,
     trajectory: Trajectory = Trajectory.INOUT,
     ) -> list:
 
@@ -247,10 +247,8 @@ def get_traj(
 
 def get_trains(
     pe_traj:list,
-    n_enc_pe1:int,
-    n_enc_pe2:int,
-    fov_pe1:float,
-    fov_pe2:float,
+    n_enc: dict,
+    fov: dict,
     etl:int,
     trajectory:Trajectory,
     ) -> tuple[list, list]:
@@ -260,22 +258,22 @@ def get_trains(
     
     # Divide all PE steps into echo trains
     if trajectory.name == 'ASCENDING':
-        num_trains = int(np.ceil(n_enc_pe1/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
+        num_trains = int(np.ceil(n_enc['pe1']/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
         temp = [pe_traj[k::num_trains] for k in range(num_trains)]
-        for k in np.arange(n_enc_pe2)-n_enc_pe2/2:
+        for k in np.arange(n_enc['pe2'])-n_enc['pe2']/2:
             for i in np.arange(num_trains):
                 for j in np.arange(etl):
-                    trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
-                    trains_pos.append([temp[i][j] + n_enc_pe1/2, k + n_enc_pe2/2])
+                    trains.append([temp[i][j]/fov['pe1'], k/fov['pe2']])
+                    trains_pos.append([temp[i][j] + n_enc['pe1']/2, k + n_enc['pe2']/2])
                     
-        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
-        trains_pos = [trains_pos[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
+        trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc['pe2'])]  
+        trains_pos = [trains_pos[k*etl:(k+1)*etl] for k in range(num_trains*n_enc['pe2'])]  
     else:
-        pe_order = np.array([[pe_traj[k, 0] + n_enc_pe1/2, pe_traj[k, 1] + n_enc_pe2/2] for k in range(len(pe_traj))])   
+        pe_order = np.array([[pe_traj[k, 0] + n_enc['pe1']/2, pe_traj[k, 1] + n_enc['pe2']/2] for k in range(len(pe_traj))])   
           
-        num_trains = int(np.ceil(n_enc_pe1*n_enc_pe2/etl)) # both pe directions are divided into trains
-        # pe_traj[:, 0] /= fov_pe1         # calculate the required gradient area for each k-point
-        # pe_traj[:, 1] /= fov_pe2
+        num_trains = int(np.ceil(n_enc['pe1']*n_enc['pe2']/etl)) # both pe directions are divided into trains
+        # pe_traj[:, 0] /= fov['pe1']         # calculate the required gradient area for each k-point
+        # pe_traj[:, 1] /= fov['pe2']
         trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]   
         trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]      
         
