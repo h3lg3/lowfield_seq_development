@@ -63,7 +63,7 @@ def get_traj(
     if n_enc_pe2 == 1:  # exception if only 1 PE2 step is present
         pe2 = np.array([0])
     else:
-        pe2 = np.arange(n_enc_pe2) - (n_enc_pe2) / 2
+        pe2 = np.arange(n_enc_pe2) - (n_enc_pe2) / 2  
         
     pe_points = np.stack([grid.flatten() for grid in np.meshgrid(pe1, pe2)], axis=-1)
 
@@ -72,9 +72,11 @@ def get_traj(
 
     if trajectory is Trajectory.INOUT:
         pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
+
     elif trajectory is Trajectory.OUTIN:
         pe_mag_sorted = np.flip(pe_mag_sorted)
         pe_traj = pe_points[pe_mag_sorted, :]  # sort the points based on magnitude
+    
     elif trajectory is Trajectory.LINEAR:
         center_pos = 1 / 2  # where the center of kspace should be in the echo train
         num_points = np.size(pe_mag_sorted)
@@ -102,7 +104,8 @@ def get_traj(
                 print("Sorting error")
             linear_pos[k_idx] = pe_mag_sorted[idx]
 
-        pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude
+        pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude    
+        
     elif trajectory is Trajectory.ASCENDING:    # ascending phase encoding, from negative frequencies to positive, why is scheme so different from linear?
         assert n_enc_pe1 % etl == 0
         # PE dir 1
@@ -118,26 +121,33 @@ def get_trains(
     fov_pe2:float,
     etl:int,
     trajectory:Trajectory,
-    ) -> list:
+    ) -> tuple[list, list]:
+    
+    trains = []
+    trains_pos = []
     
     # Divide all PE steps into echo trains
     if trajectory.name == 'ASCENDING':
         num_trains = int(np.ceil(n_enc_pe1/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
         temp = [pe_traj[k::num_trains] for k in range(num_trains)]
-        trains = []
-        for k in np.arange(n_enc_pe2):
+        for k in np.arange(n_enc_pe2)-n_enc_pe2/2:
             for i in np.arange(num_trains):
                 for j in np.arange(etl):
                     trains.append([temp[i][j]/fov_pe1, k/fov_pe2])
+                    trains_pos.append([temp[i][j] + n_enc_pe1/2, k + n_enc_pe2/2])
                     
         trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
+        trains_pos = [trains_pos[k*etl:(k+1)*etl] for k in range(num_trains*n_enc_pe2)]  
     else:
+        pe_order = np.array([[pe_traj[k, 0] + n_enc_pe1/2, pe_traj[k, 1] + n_enc_pe2/2] for k in range(len(pe_traj))])   
+          
         num_trains = int(np.ceil(n_enc_pe1*n_enc_pe2/etl)) # both pe directions are divided into trains
-        pe_traj[:, 0] /= fov_pe1         # calculate the required gradient area for each k-point
-        pe_traj[:, 1] /= fov_pe2
-        trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]        
-                
-    return trains
+        # pe_traj[:, 0] /= fov_pe1         # calculate the required gradient area for each k-point
+        # pe_traj[:, 1] /= fov_pe2
+        trains = [pe_traj[k::num_trains, :] for k in range(num_trains)]   
+        trains_pos = [pe_order[k::num_trains, :] for k in range(num_trains)]      
+        
+    return trains, trains_pos
 
 # Print min_esp (echo spacing) and max_etl (echo train length) and recommended etl for given PE steps
 def get_esp_etl(

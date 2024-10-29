@@ -93,7 +93,6 @@ def constructor(
     # Sequence options
     disable_pe = False
     alternate_refocussing_phase = False
-    disable_spoiler = True
     
     # Create a new sequence object
     seq = pp.Sequence(system)
@@ -119,7 +118,7 @@ def constructor(
                 trajectory = trajectory,
                 )
     
-    trains = seq_utils.get_trains(
+    trains, trains_pos = seq_utils.get_trains(
                 pe_traj = pe_traj,
                 n_enc_pe1 = n_enc_pe1,
                 n_enc_pe2 = n_enc_pe2,
@@ -127,7 +126,7 @@ def constructor(
                 fov_pe2 = fov_pe2,
                 etl = etl,
                 trajectory = trajectory,
-                )    
+                )
 
     # Definition of RF pulses
     rf_90 = pp.make_block_pulse(
@@ -154,7 +153,7 @@ def constructor(
             use="refocusing"
         )
 
-    # Define readout gradient and prewinder
+    # Define readout gradient, spoiler and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
@@ -165,9 +164,8 @@ def constructor(
         flat_time=adc_duration + 2 * gradient_correction # HH: why 2*gradient_correction?
     )
     
-    
     # Readout spoiler gradient
-    gr_spr = pp.make_trapezoid(
+    grad_ro_spr = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
         area=grad_ro.area,
@@ -178,7 +176,7 @@ def constructor(
     grad_ro_pre = pp.make_trapezoid(
         channel=channel_ro,
         system=system,
-        area=grad_ro.area / 2 + gr_spr.area,
+        area=grad_ro.area / 2 + grad_ro_spr.area,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
         duration=pp.calc_duration(grad_ro),
@@ -231,7 +229,7 @@ def constructor(
                 precision=system.grad_raster_time
             )))
 
-    for train in trains:
+    for train, position in zip(trains, trains_pos):
         # Reset phase of 180° refocussing pulse if alternate refocussing phase is enabled
         if alternate_refocussing_phase:
             rf_180.phase_offset = refocussing_phase
@@ -246,37 +244,13 @@ def constructor(
         seq.add_block(grad_ro_pre)
         seq.add_block(pp.make_delay(tau_1))
         
-        for echo in train:
+        for echo, pe_indices in zip(train, position):
             pe_1, pe_2 = echo
             if disable_pe:
                 pe_1 = 0
                 pe_2 = 0
             
             seq.add_block(rf_180)
-            seq.add_block(
-                pp.make_trapezoid(
-                    channel=channel_pe1,
-                    area=-pe_1,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                pp.make_trapezoid(
-                    channel=channel_pe2,
-                    area=-pe_2,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                gr_spr                
-            )          
-
-            seq.add_block(pp.make_delay(tau_2))
-
-            seq.add_block(grad_ro, adc)
-
             seq.add_block(
                 pp.make_trapezoid(
                     channel=channel_pe1,
@@ -294,7 +268,35 @@ def constructor(
                     rise_time=ramp_duration,
                     fall_time=ramp_duration
                 ),
-                gr_spr
+                grad_ro_spr                
+            )          
+
+            seq.add_block(pp.make_delay(tau_2))
+            
+            
+            # Cast index values from int32 to int, otherwise make_label function complains
+            label_pe1 = pp.make_label(type="SET", label="LIN", value=int(pe_indices[0]))
+            label_pe2 = pp.make_label(type="SET", label="PAR", value=int(pe_indices[1]))
+            seq.add_block(grad_ro, adc, label_pe1, label_pe2)
+
+            seq.add_block(
+                pp.make_trapezoid(
+                    channel=channel_pe1,
+                    area=-pe_1,
+                    duration=ro_pre_duration,
+                    system=system,
+                    rise_time=ramp_duration,
+                    fall_time=ramp_duration
+                ),
+                pp.make_trapezoid(
+                    channel=channel_pe2,
+                    area=-pe_2,
+                    duration=ro_pre_duration,
+                    system=system,
+                    rise_time=ramp_duration,
+                    fall_time=ramp_duration
+                ),
+                grad_ro_spr
             )
 
             seq.add_block(pp.make_delay(tau_3))
@@ -320,11 +322,50 @@ def constructor(
     k_traj_adc = seq.calculate_kspacePP()[0]
     acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
 
+    # Check labels
+    labels = seq.evaluate_labels(evolution="adc")
+    
+    # Check labels
+    labels = seq.evaluate_labels(evolution="adc")
+    acq_pos = np.concatenate(trains_pos).T
+    # TODO: When noise scans are done, the last LIN/PAR label is duplicated
+    # Could be fixed by using a different label which marks the noise scan?
+    if not np.array_equal(labels["LIN"], acq_pos[0, :]):
+        raise ValueError("LIN labels don't match actual acquisition positions.")
+    if not np.array_equal(labels["PAR"], acq_pos[1, :]):
+        raise ValueError("PAR labels don't match actual acquisition positions.")
+    
+    # import matplotlib.pyplot as plt
+
+    # plt.figure()
+    # plt.plot(adc_labels['LIN'])
+    # plt.title('ADC Labels')
+    # plt.xlabel('Time')
+    # plt.ylabel('Label Value')
+    # plt.show()
+    # plt.pause(1)
+    # plt.close()
     # # Add measures to sequence definition
     # seq.set_definition("n_total_trains", len(trains))
     # seq.set_definition("train_duration", train_duration)
     # seq.set_definition("train_duration_tr", train_duration_tr)
     # seq.set_definition("tr_delay", tr_delay)
+    
+    # optional https://github.com/schuenke/PTBSequences/blob/main/PTBSequences/utils/write_seq_definitions.py
+    # write_seq_definitions(
+    # seq=seq,
+    # fov=fov,
+    # slice_thickness=slice_thickness,
+    # name=filename,
+    # alpha=rf_angle,
+    # Nx=adc_total_samples,
+    # Ny=n_spirals,
+    # sampling_scheme='spiral',
+    # N_slices=1,
+    # TR=tr_value,
+    # TE=min_TE,
+    # delta=delta_angle,
+    # )
 
     return (seq, acq_pos, [n_enc_ro, n_enc_pe1, n_enc_pe2])
 

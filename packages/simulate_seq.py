@@ -21,7 +21,10 @@ def simulate_seq(save: bool,
     seq0 = mr0.Sequence.import_file(seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    if sel_phantom == 'simbrain' and nk[2] > 1:
+        print('3D simulation is not supported for simbrain phantom - change to invivo phantom')
+        sel_phantom = "invivo"
 
     print('load phantom')
     if sel_phantom == 'pixel':
@@ -43,12 +46,34 @@ def simulate_seq(save: bool,
         obj_p.D[:] = 0
     elif sel_phantom == 'invivo':
         obj_p = mr0.VoxelGridPhantom.brainweb("./data/subject05.npz")
-        obj_p = obj_p.interpolate(nk[0], nk[1], 32).slices([16])    # select center slice
-        # obj_p = obj_p.interpolate(nk[0], nk[1], nk[2])          # can be used for 3D simulation
+        obj_p.B0[:] = 0 # Remove B0 inhomogeneity
+        obj_p.D[:] = 0 # Remove diffusion
+        if nk[2] == 1:
+            center_slice = obj_p.PD.shape[2]//2
+            obj_p = obj_p.slices([center_slice])    # select center slice
+            obj_p = obj_p.interpolate(nk[0], nk[1], 1)  # interpolate     
+        else:
+            range_slices = tuple(np.linspace(40, 90, nk[2], dtype=int))
+            obj_p = obj_p.slices(range_slices)      # select slices within the range
+            obj_p = obj_p.interpolate(nk[0], nk[1], nk[2])      # interpolate
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
+    # # Plot obj_p.PD along all entries in the third dimension
+    # import matplotlib.pyplot as plt
 
+    # num_slices = obj_p.PD.shape[2]
+    # fig, axes = plt.subplots(1, num_slices, figsize=(15, 5))
+
+    # for i in range(num_slices):
+    #     ax = axes[i]
+    #     ax.imshow(obj_p.PD[:, :, i], cmap='gray')
+    #     ax.set_title(f'Slice {i+1}')
+    #     ax.axis('off')
+
+    # plt.suptitle('PD along all entries in the third dimension')
+    # plt.show()
+    # plt.pause(1)
     # SIMULATE the external.seq file and add acquired signal to ADC plot
     graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
     signal=mr0.execute_graph(graph, seq0, obj_sim)

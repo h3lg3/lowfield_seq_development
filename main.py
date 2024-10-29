@@ -33,15 +33,15 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (256e-3, 256e-3, 256e-3)
-nk = (64, 64, 1)
+nk = (32, 32, 8)
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
 # nk = (120, 120, 1)
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation:
@@ -58,7 +58,7 @@ if simulate_sequence:
 if plot_simulation:
     plot_sim(plot={
         "phantom": False,
-        "seq": True,
-        "kspace": True,
+        "seq": False,
+        "kspace": False,
         "reco": True
         }, seq_filename=seq_name) 

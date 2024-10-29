@@ -24,13 +24,13 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
     # %%
     if plot["phantom"]:
         obj_p.plot()
-        
+        plt.pause(1)
     if plot["seq"]:
         try:
             sp_adc, t_adc = mr0.util.pulseq_plot(seq=seq,signal=signal)
         except:
             seq.plot()
-            
+            plt.pause(1)
         # plt.plot(np.real(signal))
         # plt.title('real part of RF signal')
         # plt.xlabel('sampling points')
@@ -40,17 +40,30 @@ def plot_sim(plot: dict, seq_filename: str, sim_path: str = "./simulation/"):
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
             
-    if plot["reco"]:
-        plt.figure()
-        plt.subplot(121)
-        plt.title("Magnitude")
-        plt.imshow(reco[:, :, 0].T.abs(), origin="lower")
-        plt.colorbar()
-        plt.subplot(122)
-        plt.title("Phase")
-        plt.imshow(reco[:, :, 0].T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
-        plt.colorbar()
-        plt.show()
+    if plot["reco"]:  
+        if reco.shape[2] > 1:
+            # Plot reco.T.abs() along the third dimension in one figure
+            fig, axes = plt.subplots(1, reco.shape[2], figsize=(15, 5))
+            
+            for i in range(reco.shape[2]):
+                axes[i].imshow(reco[:, :, i].T.abs(), cmap='viridis', origin="lower")
+                axes[i].set_title(f'Slice {i+1}')
+                axes[i].axis('off')  # Hide axes
+            
+            # Adjust layout to prevent overlap
+            plt.tight_layout()
+            plt.show()
+        else:
+            plt.figure()
+            plt.subplot(121)
+            plt.title("Magnitude")
+            plt.imshow(reco[:, :, 0].T.abs(), origin="lower")
+            plt.colorbar()
+            plt.subplot(122)
+            plt.title("Phase")
+            plt.imshow(reco[:, :, 0].T.angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
+            plt.colorbar()
+            plt.show()
     
 if __name__ == "__main__":
     plot_sim(plot={
