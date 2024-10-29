@@ -197,7 +197,7 @@ def constructor(
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
     tau_3 = raster(echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
 
-    recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc_pe1)
+    recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
     print(recommended_timing)
     
     for _ in range(dummies):

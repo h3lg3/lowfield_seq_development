@@ -11,7 +11,7 @@ def simulate_seq(save: bool,
                 seq_path: str = "./sequences/",
                 sim_path: str = "./simulation/",
                 fov:tuple = (256e-3, 256e-3, 256e-3), 
-                nk:tuple =(64, 64, 1)
+                n_enc:tuple =(64, 64, 1)
                 ):
     sim_name = "sim_" + seq_filename
     seq_file = seq_path + seq_filename + ".seq"
@@ -22,7 +22,7 @@ def simulate_seq(save: bool,
 
     # Setup spin system/object on which we can run the MR sequence
     sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
-    if sel_phantom == 'simbrain' and nk[2] > 1:
+    if sel_phantom == 'simbrain' and n_enc[2] > 1:
         print('3D simulation is not supported for simbrain phantom - change to invivo phantom')
         sel_phantom = "invivo"
 
@@ -41,21 +41,21 @@ def simulate_seq(save: bool,
         )
     elif sel_phantom == 'simbrain':
         obj_p = mr0.VoxelGridPhantom.load_mat('./data/numerical_brain_cropped.mat') # has only 1 slice
-        obj_p = obj_p.interpolate(nk[0], nk[1], 1)  
+        obj_p = obj_p.interpolate(n_enc[0], n_enc[1], 1)  
         obj_p.B0[:] = 0
         obj_p.D[:] = 0
     elif sel_phantom == 'invivo':
         obj_p = mr0.VoxelGridPhantom.brainweb("./data/subject05.npz")
         obj_p.B0[:] = 0 # Remove B0 inhomogeneity
         obj_p.D[:] = 0 # Remove diffusion
-        if nk[2] == 1:
+        if n_enc[2] == 1:
             center_slice = obj_p.PD.shape[2]//2
             obj_p = obj_p.slices([center_slice])    # select center slice
-            obj_p = obj_p.interpolate(nk[0], nk[1], 1)  # interpolate     
+            obj_p = obj_p.interpolate(n_enc[0], n_enc[1], 1)  # interpolate     
         else:
-            range_slices = tuple(np.linspace(40, 90, nk[2], dtype=int))
+            range_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
             obj_p = obj_p.slices(range_slices)      # select slices within the range
-            obj_p = obj_p.interpolate(nk[0], nk[1], nk[2])      # interpolate
+            obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])      # interpolate
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
@@ -77,7 +77,7 @@ def simulate_seq(save: bool,
     # SIMULATE the external.seq file and add acquired signal to ADC plot
     graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
     signal=mr0.execute_graph(graph, seq0, obj_sim)
-    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=nk, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
     # %% save results
     if save:
         # Check if directory exists
