@@ -318,16 +318,15 @@ def constructor(
     train_duration_tr = (seq.duration()[0]) / len(trains)
     train_duration = train_duration_tr - tr_delay
     
-    # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
-    k_traj_adc = seq.calculate_kspacePP()[0]
-    acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
-
-    # Check labels
-    labels = seq.evaluate_labels(evolution="adc")
-    
     # Check labels
     labels = seq.evaluate_labels(evolution="adc")
     acq_pos = np.concatenate(trains_pos).T
+    
+    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
+    # # Commented because calculates the same as: np.concatenate(trains_pos).T
+    # k_traj_adc = seq.calculate_kspacePP()[0]
+    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
+    
     # TODO: When noise scans are done, the last LIN/PAR label is duplicated
     # Could be fixed by using a different label which marks the noise scan?
     if not np.array_equal(labels["LIN"], acq_pos[0, :]):
@@ -335,21 +334,25 @@ def constructor(
     if not np.array_equal(labels["PAR"], acq_pos[1, :]):
         raise ValueError("PAR labels don't match actual acquisition positions.")
     
-    # import matplotlib.pyplot as plt
-
-    # plt.figure()
-    # plt.plot(adc_labels['LIN'])
-    # plt.title('ADC Labels')
-    # plt.xlabel('Time')
-    # plt.ylabel('Label Value')
-    # plt.show()
-    # plt.pause(1)
-    # plt.close()
-    # # Add measures to sequence definition
+    header = seq_utils.create_ismrmd_header(
+                n_enc_ro = n_enc_ro,
+                n_enc_pe1 = n_enc_pe1,
+                n_enc_pe2 = n_enc_pe2,
+                fov_ro = fov_ro,
+                fov_pe1 = fov_pe1,
+                fov_pe2 = fov_pe2,
+                system = system
+                )
+    # # Add measures and definitions to sequence definition
     # seq.set_definition("n_total_trains", len(trains))
     # seq.set_definition("train_duration", train_duration)
     # seq.set_definition("train_duration_tr", train_duration_tr)
     # seq.set_definition("tr_delay", tr_delay)
+
+    # seq.set_definition("encoding_dim", [n_enc_ro, n_enc_pe1, n_enc_pe2])
+    # seq.set_definition("encoding_fov", [fov_ro, fov_pe1, fov_pe2])
+    # seq.set_definition("channel_order", [channel_ro, channel_pe1, channel_pe2])
+    
     
     # optional https://github.com/schuenke/PTBSequences/blob/main/PTBSequences/utils/write_seq_definitions.py
     # write_seq_definitions(
@@ -367,24 +370,4 @@ def constructor(
     # delta=delta_angle,
     # )
 
-    return (seq, acq_pos, [n_enc_ro, n_enc_pe1, n_enc_pe2])
-
-
-def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np.ndarray:
-    """
-    Sort acquired k-space lines.
-
-    Parameters
-    ----------
-    kspace
-        Acquired k-space data in the format (averages, coils, pe, ro)
-    trajectory
-        k-Space trajectory returned by TSE constructor with dimension (pe, 2)
-    dim
-        dimensions of kspace
-    """
-    n_avg, n_coil, _, _ = raw_data.shape
-    ksp = np.zeros((n_avg, n_coil, kdims[2], kdims[1], kdims[0]), dtype=complex)
-    for idx, kpt in enumerate(trajectory):
-        ksp[..., kpt[1], kpt[0], :] = raw_data[:, :, idx, :]
-    return ksp
+    return (seq, header)

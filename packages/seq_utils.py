@@ -1,8 +1,9 @@
 import numpy as np
 from enum import Enum
 import math
-# from console.interfaces.dimensions import Dimensions
 from dataclasses import dataclass
+import ismrmrd
+from pypulseq.opts import Opts
 
 """Nexus Console Functions"""
 """Interface class for dimensions."""
@@ -271,7 +272,7 @@ def calculate_acq_pos(
     fov_pe2:float
     )->list:
     xyz = ["x", "y", "z"]
-    n_adc = n_enc_ro*2
+    n_adc = n_enc_ro
     
     # RO samples
     # idx_ro = xyz.index(channel_ro)
@@ -280,15 +281,106 @@ def calculate_acq_pos(
     
     # PE1 samples
     idx_pe1 = xyz.index(channel_pe1)
-    k_traj_pe1 = -np.round(k_traj_adc[idx_pe1][0::n_adc]*fov_pe1*10)/10 
+    k_traj_pe1 = np.round(k_traj_adc[idx_pe1][0::n_adc]*fov_pe1*10)/10 
     k_traj_pe1 = k_traj_pe1 - min(k_traj_pe1)
     
     # PE2 samples
     idx_pe2 = xyz.index(channel_pe2)
-    k_traj_pe2 = -np.round(k_traj_adc[idx_pe2][0::n_adc]*fov_pe2*10)/10  
+    k_traj_pe2 = np.round(k_traj_adc[idx_pe2][0::n_adc]*fov_pe2*10)/10  
     k_traj_pe2 = k_traj_pe2 - min(k_traj_pe2)
     acq_pos = [np.array([int(x), int(y)]) for x,y in zip(k_traj_pe1, k_traj_pe2)]
     # if cast to integer not necessary: acq_pos = [list([x, int(y)]) for x,y in zip(k_traj_pe1, k_traj_pe2)]
     
     return acq_pos
 
+def create_ismrmd_header(
+    n_enc_ro:int,
+    n_enc_pe1:int,
+    n_enc_pe2:int, 
+    fov_ro:float, 
+    fov_pe1:float, 
+    fov_pe2:float,
+    system:Opts
+    )->list:
+
+# Create ISMRMRD header
+    header = ismrmrd.xsd.ismrmrdHeader()
+
+    # experimental conditions
+    exp = ismrmrd.xsd.experimentalConditionsType()
+    exp.H1resonanceFrequency_Hz = system.B0 * system.gamma / (2 * np.pi)
+    header.experimentalConditions = exp
+
+    # set fov and matrix size
+    efov = ismrmrd.xsd.fieldOfViewMm()  # kspace fov in mm
+    efov.x = fov_ro * 1e3
+    efov.y = fov_pe1 * 1e3
+    efov.z = fov_pe2 * 1e3
+
+    rfov = ismrmrd.xsd.fieldOfViewMm()  # image fov in mm
+    rfov.x = fov_ro * 1e3
+    rfov.y = fov_pe1 * 1e3
+    rfov.z = fov_pe2 * 1e3
+
+    ematrix = ismrmrd.xsd.matrixSizeType()  # encoding dimensions
+    ematrix.x = n_enc_ro
+    ematrix.y = n_enc_pe1
+    ematrix.z = n_enc_pe2
+
+    rmatrix = ismrmrd.xsd.matrixSizeType()  # image dimensions
+    rmatrix.x = n_enc_ro
+    rmatrix.y = n_enc_pe1
+    rmatrix.z = n_enc_pe2
+
+    # set encoded and recon spaces
+    escape = ismrmrd.xsd.encodingSpaceType()
+    escape.matrixSize = ematrix
+    escape.fieldOfView_mm = efov
+
+    rspace = ismrmrd.xsd.encodingSpaceType()
+    rspace.matrixSize = rmatrix
+    rspace.fieldOfView_mm = rfov
+
+    # encoding
+    encoding = ismrmrd.xsd.encodingType()
+    encoding.encodedSpace = escape
+    encoding.reconSpace = rspace
+    # Trajectory type required by gadgetron (not by mrpro)
+    encoding.trajectory = ismrmrd.xsd.trajectoryType("cartesian")
+    header.encoding.append(encoding)
+
+    # encoding limits
+    limits = ismrmrd.xsd.encodingLimitsType()
+
+    limits.kspace_encoding_step_1 = ismrmrd.xsd.limitType()
+    limits.kspace_encoding_step_1.minimum = 0
+    limits.kspace_encoding_step_1.maximum = n_enc_pe1 - 1
+    limits.kspace_encoding_step_1.center = int(n_enc_pe1 / 2)
+
+    limits.kspace_encoding_step_2 = ismrmrd.xsd.limitType()
+    limits.kspace_encoding_step_2.minimum = 0
+    limits.kspace_encoding_step_2.maximum = n_enc_pe2 - 1
+    limits.kspace_encoding_step_2.center = int(n_enc_pe2 / 2)
+
+    encoding.encodingLimits = limits
+    
+    return header
+
+def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np.ndarray:
+    """
+    Sort acquired k-space lines.
+
+    Parameters
+    ----------
+    kspace
+        Acquired k-space data in the format (averages, coils, pe, ro)
+    trajectory
+        k-Space trajectory returned by TSE constructor with dimension (pe, 2)
+    dim
+        dimensions of kspace
+    """
+    n_avg, n_coil, _, _ = raw_data.shape
+    ksp = np.zeros((n_avg, n_coil, kdims[2], kdims[1], kdims[0]), dtype=complex)
+    for idx, kpt in enumerate(trajectory):
+        ksp[..., kpt[1], kpt[0], :] = raw_data[:, :, idx, :]
+    return ksp
