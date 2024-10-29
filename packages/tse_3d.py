@@ -103,24 +103,21 @@ def constructor(
     n_enc, fov = seq_utils.map_fov_enc(channels, input_fov, input_enc)
                                            
     # derived and modifed parameters
-    delta_k_ro = 1/fov_ro
-    adc_duration = raster(n_enc_ro / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
-    grad_amplitude = n_enc_ro*delta_k_ro/ adc_duration
+    delta_k_ro = 1/fov['ro']
+    adc_duration = raster(n_enc['ro'] / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
+    grad_amplitude = n_enc['ro'] *delta_k_ro/ adc_duration
     gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
 
     pe_traj = seq_utils.get_traj(
-                n_enc_pe1 = n_enc_pe1,
-                n_enc_pe2 = n_enc_pe2,
+                n_enc,
                 etl = etl,
                 trajectory = trajectory,
                 )
     
     trains, trains_pos = seq_utils.get_trains(
                 pe_traj = pe_traj,
-                n_enc_pe1 = n_enc_pe1,
-                n_enc_pe2 = n_enc_pe2,
-                fov_pe1 = fov_pe1,
-                fov_pe2 = fov_pe2,
+                n_enc,
+                fov,
                 etl = etl,
                 trajectory = trajectory,
                 )

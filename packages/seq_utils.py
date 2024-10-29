@@ -185,18 +185,17 @@ def calculate_enc_fov_order(
     # print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
     
 def get_traj(
-    n_enc_pe1: int = 128,
-    n_enc_pe2: int = 128,
+    n_enc: dict = {'pe1': 128, 'pe2': 128},
     etl: int = 8,
     trajectory: Trajectory = Trajectory.INOUT,
     ) -> list:
 
     # Calculate center out trajectory
-    pe1 = np.arange(n_enc_pe1) - n_enc_pe1/2
-    if n_enc_pe2 == 1:  # exception if only 1 PE2 step is present
+    pe1 = np.arange(n_enc['pe1']) - n_enc['pe1']/2
+    if n_enc['pe2'] == 1:  # exception if only 1 PE2 step is present
         pe2 = np.array([0])
     else:
-        pe2 = np.arange(n_enc_pe2) - (n_enc_pe2) / 2  
+        pe2 = np.arange(n_enc['pe2']) - (n_enc['pe2']) / 2  
         
     pe_points = np.stack([grid.flatten() for grid in np.meshgrid(pe1, pe2)], axis=-1)
 
@@ -240,7 +239,7 @@ def get_traj(
         pe_traj = pe_points[linear_pos, :]  # sort the points based on magnitude    
         
     elif trajectory is Trajectory.ASCENDING:    # ascending phase encoding, from negative frequencies to positive, why is scheme so different from linear?
-        assert n_enc_pe1 % etl == 0
+        assert n_enc['pe1'] % etl == 0
         # PE dir 1
         pe_traj = pe1
       
