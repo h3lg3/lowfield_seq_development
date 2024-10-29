@@ -21,6 +21,37 @@ class Dimensions:
     z: float | int  # pylint: disable=invalid-name
     """Z dimension."""
 
+@dataclass(frozen=True)
+class Channels:
+    """
+    Channels is a dataclass for defining channel parameters used in a sequence.
+    Attributes:
+        ro (str): Readout (RO) channel. Must be one of 'x', 'y', or 'z'.
+        pe1 (str): Phase Encoding 1 (PE1) channel. Must be one of 'x', 'y', or 'z'.
+        pe2 (str): Phase Encoding 2 (PE2) channel. Must be one of 'x', 'y', or 'z'.
+    Methods:
+        __post_init__(): Validates that the channel values are within the allowed set {'x', 'y', 'z'} and that all channel values are unique.
+    """
+
+    ro: str  # pylint: disable=invalid-name
+    """RO channel."""
+
+    pe1: str  # pylint: disable=invalid-name
+    """PE1 channel."""
+
+    pe2: str  # pylint: disable=invalid-name
+    """PE2 channel."""
+
+    def __post_init__(self):
+        allowed_values = {"x", "y", "z"}
+        values = {self.ro, self.pe1, self.pe2}
+        
+        # Ensure all values are in allowed_values
+        assert values <= allowed_values, "Channels must be one of 'x', 'y', or 'z'"
+        
+        # Ensure all values are unique
+        assert len(values) == 3, "Channels must be unique"
+
 # Helper function
 def raster(val: float, precision: float) -> float:
     """Fit value to gradient raster.

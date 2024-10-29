@@ -15,13 +15,13 @@ from pypulseq.opts import Opts
 
 from packages import seq_utils
 from packages.seq_utils import Dimensions
+from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
 
-import warnings
-
 default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
 default_encoding = Dimensions(x=70, y=70, z=49)
+default_channels = Channels(ro="y", pe1="z", pe2="x")
 
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
@@ -44,9 +44,7 @@ def constructor(
     inversion_pulse: bool = False,
     inversion_time: float = 50e-3,
     inversion_angle: float = pi,
-    channel_ro: str = "y",
-    channel_pe1: str = "z",
-    channel_pe2: str = "x",
+    channels: Channels = default_channels,
     system:Opts = default_system,
 ) -> tuple[pp.Sequence, list, list]:
     """Construct 3D turbo spin echo sequence.
@@ -313,22 +311,11 @@ def constructor(
             tr_delay -= inversion_time
         
         seq.add_block(pp.make_delay(tr_delay))
-
-    # Calculate some sequence measures
-    train_duration_tr = (seq.duration()[0]) / len(trains)
-    train_duration = train_duration_tr - tr_delay
     
     # Check labels
     labels = seq.evaluate_labels(evolution="adc")
     acq_pos = np.concatenate(trains_pos).T
     
-    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
-    # # Commented because calculates the same as: np.concatenate(trains_pos).T
-    # k_traj_adc = seq.calculate_kspacePP()[0]
-    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
-    
-    # TODO: When noise scans are done, the last LIN/PAR label is duplicated
-    # Could be fixed by using a different label which marks the noise scan?
     if not np.array_equal(labels["LIN"], acq_pos[0, :]):
         raise ValueError("LIN labels don't match actual acquisition positions.")
     if not np.array_equal(labels["PAR"], acq_pos[1, :]):
@@ -343,6 +330,16 @@ def constructor(
                 fov_pe2 = fov_pe2,
                 system = system
                 )
+    
+    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
+    # # Commented because calculates the same as: np.concatenate(trains_pos).T
+    # k_traj_adc = seq.calculate_kspacePP()[0]
+    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
+        
+    # # Calculate some sequence measures
+    # train_duration_tr = (seq.duration()[0]) / len(trains)
+    # train_duration = train_duration_tr - tr_delay
+    
     # # Add measures and definitions to sequence definition
     # seq.set_definition("n_total_trains", len(trains))
     # seq.set_definition("train_duration", train_duration)
@@ -352,22 +349,5 @@ def constructor(
     # seq.set_definition("encoding_dim", [n_enc_ro, n_enc_pe1, n_enc_pe2])
     # seq.set_definition("encoding_fov", [fov_ro, fov_pe1, fov_pe2])
     # seq.set_definition("channel_order", [channel_ro, channel_pe1, channel_pe2])
-    
-    
-    # optional https://github.com/schuenke/PTBSequences/blob/main/PTBSequences/utils/write_seq_definitions.py
-    # write_seq_definitions(
-    # seq=seq,
-    # fov=fov,
-    # slice_thickness=slice_thickness,
-    # name=filename,
-    # alpha=rf_angle,
-    # Nx=adc_total_samples,
-    # Ny=n_spirals,
-    # sampling_scheme='spiral',
-    # N_slices=1,
-    # TR=tr_value,
-    # TE=min_TE,
-    # delta=delta_angle,
-    # )
 
     return (seq, header)

@@ -65,7 +65,7 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     plt.plot(wf_interp['t'],wf_interp['g_norm'], c='k')
     plt.xlabel("time [s]")
     plt.ylabel("gradient amplitude [mT/m]")
-    plt.legend(["x", "y", "z", "norm"])
+    plt.legend(["x", "y", "z", "norm"], loc= 'upper right')
     plt.show()
     # Slew rates
     plt.figure()
@@ -75,7 +75,7 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     plt.plot(wf_interp['t'][0:-1],wf_interp['slew_norm'], c='k')
     plt.xlabel("time [s]")
     plt.ylabel("slew rate [T/m/s]")
-    plt.legend(["x", "y", "z", "norm"])
+    plt.legend(["x", "y", "z", "norm"], loc= 'upper right')
     plt.show()
     # %% Sequence test report
     # For the real TE, TR or for staying within slew-rate limits
@@ -86,13 +86,14 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     
     # # REQUIRES SEQUENCES COMPILED WITH PYPULSEQ Version > 1.4.0
     # # %% Calculate SAR only possible if sequence has certain length (>2s?)
-    if pp.Sequence.duration(seq)[0] > 2:
-        pp.SAR.SAR_calc.calc_SAR(seq)
+    
+    # if pp.Sequence.duration(seq)[0] > 2:
+    #     pp.SAR.SAR_calc.calc_SAR(seq)
     # %% Calculate PNS
     # use example specs
     # seq.calculate_pns(pp.utils.safe_pns_prediction.safe_example_hw(), do_plots=True) 
     # use PRISMA specs
-    seq.calculate_pns('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
+    #seq.calculate_pns('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
     # %% Calculate mechanical resonances
     asc_dict = siemens.readasc.readasc('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
     resonances = siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])

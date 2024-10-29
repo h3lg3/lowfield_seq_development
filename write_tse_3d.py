@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from packages import tse_3d
 from packages.seq_utils import Trajectory
 from packages.seq_utils import Dimensions
+from packages.seq_utils import Channels
 
 from math import pi
 from pypulseq.opts import Opts
@@ -26,9 +27,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
-                            channel_ro = "x", 
-                            channel_pe1 = "y",
-                            channel_pe2 = "z",
+                            channels = Channels(ro="x", pe1="y", pe2="z"),
                             system = system
                             )[0]
 
