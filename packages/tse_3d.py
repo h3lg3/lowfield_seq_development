@@ -318,12 +318,8 @@ def constructor(
         raise ValueError("PAR labels don't match actual acquisition positions.")
     
     header = seq_utils.create_ismrmd_header(
-                n_enc_ro = n_enc_ro,
-                n_enc_pe1 = n_enc_pe1,
-                n_enc_pe2 = n_enc_pe2,
-                fov_ro = fov_ro,
-                fov_pe1 = fov_pe1,
-                fov_pe2 = fov_pe2,
+                n_enc = n_enc,
+                fov = fov,
                 system = system
                 )
     

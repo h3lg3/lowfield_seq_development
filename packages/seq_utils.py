@@ -339,12 +339,8 @@ def calculate_acq_pos(
     return acq_pos
 
 def create_ismrmd_header(
-    n_enc_ro:int,
-    n_enc_pe1:int,
-    n_enc_pe2:int, 
-    fov_ro:float, 
-    fov_pe1:float, 
-    fov_pe2:float,
+    n_enc: dict,
+    fov: dict,
     system:Opts
     )->list:
 
@@ -358,24 +354,24 @@ def create_ismrmd_header(
 
     # set fov and matrix size
     efov = ismrmrd.xsd.fieldOfViewMm()  # kspace fov in mm
-    efov.x = fov_ro * 1e3
-    efov.y = fov_pe1 * 1e3
-    efov.z = fov_pe2 * 1e3
+    efov.x = fov['ro'] * 1e3
+    efov.y = fov['pe1'] * 1e3
+    efov.z = fov['pe2'] * 1e3
 
     rfov = ismrmrd.xsd.fieldOfViewMm()  # image fov in mm
-    rfov.x = fov_ro * 1e3
-    rfov.y = fov_pe1 * 1e3
-    rfov.z = fov_pe2 * 1e3
+    rfov.x = fov['ro'] * 1e3
+    rfov.y = fov['pe1'] * 1e3
+    rfov.z = fov['pe2'] * 1e3
 
     ematrix = ismrmrd.xsd.matrixSizeType()  # encoding dimensions
-    ematrix.x = n_enc_ro
-    ematrix.y = n_enc_pe1
-    ematrix.z = n_enc_pe2
+    ematrix.x = n_enc['ro']
+    ematrix.y = n_enc['pe1']
+    ematrix.z = n_enc['pe2']
 
     rmatrix = ismrmrd.xsd.matrixSizeType()  # image dimensions
-    rmatrix.x = n_enc_ro
-    rmatrix.y = n_enc_pe1
-    rmatrix.z = n_enc_pe2
+    rmatrix.x = n_enc['ro']
+    rmatrix.y = n_enc['pe1']
+    rmatrix.z = n_enc['pe2']
 
     # set encoded and recon spaces
     escape = ismrmrd.xsd.encodingSpaceType()
@@ -386,29 +382,30 @@ def create_ismrmd_header(
     rspace.matrixSize = rmatrix
     rspace.fieldOfView_mm = rfov
 
+    # encoding limits
+    limits = ismrmrd.xsd.encodingLimitsType()
+
+    limits.kspace_encoding_step_1 = ismrmrd.xsd.limitType()
+    limits.kspace_encoding_step_1.minimum = 0
+    limits.kspace_encoding_step_1.maximum = n_enc['pe1'] - 1
+    limits.kspace_encoding_step_1.center = int(n_enc['pe1'] / 2)
+
+    limits.kspace_encoding_step_2 = ismrmrd.xsd.limitType()
+    limits.kspace_encoding_step_2.minimum = 0
+    limits.kspace_encoding_step_2.maximum = n_enc['pe2'] - 1
+    limits.kspace_encoding_step_2.center = int(n_enc['pe2'] / 2)
+    
     # encoding
     encoding = ismrmrd.xsd.encodingType()
     encoding.encodedSpace = escape
     encoding.reconSpace = rspace
     # Trajectory type required by gadgetron (not by mrpro)
     encoding.trajectory = ismrmrd.xsd.trajectoryType("cartesian")
-    header.encoding.append(encoding)
-
-    # encoding limits
-    limits = ismrmrd.xsd.encodingLimitsType()
-
-    limits.kspace_encoding_step_1 = ismrmrd.xsd.limitType()
-    limits.kspace_encoding_step_1.minimum = 0
-    limits.kspace_encoding_step_1.maximum = n_enc_pe1 - 1
-    limits.kspace_encoding_step_1.center = int(n_enc_pe1 / 2)
-
-    limits.kspace_encoding_step_2 = ismrmrd.xsd.limitType()
-    limits.kspace_encoding_step_2.minimum = 0
-    limits.kspace_encoding_step_2.maximum = n_enc_pe2 - 1
-    limits.kspace_encoding_step_2.center = int(n_enc_pe2 / 2)
-
+    
     encoding.encodingLimits = limits
     
+    header.encoding.append(encoding)
+        
     return header
 
 def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np.ndarray:
