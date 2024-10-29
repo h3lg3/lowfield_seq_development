@@ -7,13 +7,12 @@ from pypulseq.opts import Opts
 
 from packages import seq_utils
 from packages.seq_utils import Dimensions
+from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
 
 import warnings
 
-default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
-default_encoding = Dimensions(x=70, y=70, z=49)
 
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
@@ -24,16 +23,14 @@ def constructor(
     ramp_duration: float = 200e-6,
     ro_bandwidth: float = 20e3,
     ro_oversampling: int = 5,
-    fov: Dimensions = default_fov,
-    n_enc: Dimensions = default_encoding,
+    input_fov: Dimensions = Dimensions(x=220e-3, y=220e-3, z=225e-3),
+    input_enc: Dimensions = Dimensions(x=70, y=70, z=49),
     trajectory: seq_utils.Trajectory = seq_utils.Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
     excitation_phase: float = 0.,
     refocussing_angle: float = pi,
     refocussing_phase: float = pi / 2,
-    channel_ro: str = "y",
-    channel_pe1: str = "z",
-    channel_pe2: str = "x",
+    channels: Channels = Channels(ro="y", pe1="z", pe2="x"),
     system:Opts = default_system,
 ) -> pp.Sequence:
     # -> tuple[pp.Sequence, list, list]:
@@ -43,8 +40,8 @@ def constructor(
 
     # DEFINE the sequence, FOV, resolution, and other parameters
 
-    nRD, nPH, n3D = n_enc.x, n_enc.y, n_enc.z     # Define resolution (matrix sizes)
-    
+    nRD, nPH, n3D = input_enc.x, input_enc.y, input_enc.z     # Define resolution (matrix sizes)
+    fov = input_fov
     TE = echo_time # Echo time
     TR = repetition_time  # Repetition time
 
@@ -92,7 +89,7 @@ def constructor(
     rd_amp = nRD * delta_kx / sampling_time
 
     gr_acq = pp.make_trapezoid(
-        channel=channel_ro,
+        channel=channels.ro,
         system=system,
         amplitude = rd_amp,
         flat_time=rd_flattop_time,
@@ -105,7 +102,7 @@ def constructor(
         delay=t_sp )
 
     gr_spr = pp.make_trapezoid(
-        channel=channel_ro,
+        channel=channels.ro,
         system=system,
         area=gr_acq.area * fsp_r,
         duration=t_sp,
@@ -114,7 +111,7 @@ def constructor(
     # Phase-encoding
     delta_ky = 1 / fov.y
     gp_max = pp.make_trapezoid(
-                    channel=channel_pe1,
+                    channel=channels.pe1,
                     system=system,
                     area=delta_ky*nPH/2,
                     duration=t_sp,
@@ -123,7 +120,7 @@ def constructor(
     # Partition encoding
     delta_kz = 1 / fov.z
     gs_max = pp.make_trapezoid(
-                    channel=channel_pe2,
+                    channel=channels.pe2,
                     system=system,
                     area=delta_kz*n3D/2,
                     duration=t_sp,
@@ -143,7 +140,7 @@ def constructor(
     gc_times = np.cumsum(gc_times)
 
     gr_amp = np.array([0, gr_spr.amplitude, gr_spr.amplitude, gr_acq.amplitude, gr_acq.amplitude, gr_spr.amplitude, gr_spr.amplitude, 0])
-    gr = pp.make_extended_trapezoid(channel=channel_ro, times=gc_times, amplitudes=gr_amp)
+    gr = pp.make_extended_trapezoid(channel=channels.ro, times=gc_times, amplitudes=gr_amp)
 
     agr_preph = gr_acq.area / 2 + delta_kx / 2 + gr_spr.area # readout prephaser: account for readout pre-spoiler, readout gradient, and that sample are taken at the center of raster
     gr_preph = pp.make_trapezoid(
@@ -151,11 +148,11 @@ def constructor(
 
     # Gradient surgery for phase encoding
     gp_amp = np.array([0, gp_max.amplitude, gp_max.amplitude, 0, 0, -gp_max.amplitude, -gp_max.amplitude, 0])
-    gp_max = pp.make_extended_trapezoid(channel=channel_pe1, times=gc_times, amplitudes=gp_amp)
+    gp_max = pp.make_extended_trapezoid(channel=channels.pe1, times=gc_times, amplitudes=gp_amp)
 
     # Gradient surgery for partition encoding
     gs_amp = np.array([0, gs_max.amplitude, gs_max.amplitude, 0, 0, -gs_max.amplitude, -gs_max.amplitude, 0])
-    gs_max = pp.make_extended_trapezoid(channel=channel_pe2, times=gc_times, amplitudes=gs_amp)
+    gs_max = pp.make_extended_trapezoid(channel=channels.pe2, times=gc_times, amplitudes=gs_amp)
 
     # Fill-times
     t_ex = pp.calc_duration(d_ex) + pp.calc_duration(gr_preph)

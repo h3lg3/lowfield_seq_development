@@ -23,11 +23,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
-                            trajectory=Trajectory.ASCENDING,
+                            trajectory=Trajectory.LINEAR,
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
-                            channels = Channels(ro="x", pe1="y", pe2="z"),
+                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
                             system = system
                             )[0]
 

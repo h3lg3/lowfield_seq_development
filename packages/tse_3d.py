@@ -90,14 +90,6 @@ def constructor(
     
     # Create a new sequence object
     seq = pp.Sequence(system)
-    
-    # # check if channel labels are valid
-    # channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
-
-    # # map fov and n_enc according to channels    
-    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
-    #                                                             channel_ro, channel_pe1, n_enc, fov
-    #                                                             )
 
     # map fov and n_enc with channels  
     n_enc, fov = seq_utils.map_fov_enc(channels, input_fov, input_enc)
@@ -105,7 +97,7 @@ def constructor(
     # derived and modifed parameters
     delta_k_ro = 1/fov['ro']
     adc_duration = raster(n_enc['ro'] / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
-    grad_amplitude = n_enc['ro'] *delta_k_ro/ adc_duration
+    grad_amplitude = n_enc['ro'] * delta_k_ro / adc_duration
     gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
 
     pe_traj = seq_utils.get_traj(
@@ -267,7 +259,6 @@ def constructor(
 
             seq.add_block(pp.make_delay(tau_2))
             
-            
             # Cast index values from int32 to int, otherwise make_label function complains
             label_pe1 = pp.make_label(type="SET", label="LIN", value=int(pe_indices[0]))
             label_pe2 = pp.make_label(type="SET", label="PAR", value=int(pe_indices[1]))
@@ -322,11 +313,6 @@ def constructor(
                 fov = fov,
                 system = system
                 )
-    
-    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
-    # # Commented because calculates the same as: np.concatenate(trains_pos).T
-    # k_traj_adc = seq.calculate_kspacePP()[0]
-    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)
         
     # # Calculate some sequence measures
     # train_duration_tr = (seq.duration()[0]) / len(trains)
@@ -343,3 +329,16 @@ def constructor(
     # seq.set_definition("channel_order", [channel_ro, channel_pe1, channel_pe2])
 
     return (seq, header)
+
+    # # check if channel labels are valid
+    # channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
+
+    # # map fov and n_enc according to channels    
+    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
+    #                                                             channel_ro, channel_pe1, n_enc, fov
+    #                                                             )
+
+    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
+    # # Commented because calculates the same as: np.concatenate(trains_pos).T
+    # k_traj_adc = seq.calculate_kspacePP()[0]
+    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)

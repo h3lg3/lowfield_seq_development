@@ -167,12 +167,12 @@ def ifft_nd(x, axes):
 
 
 # Function to sort kspace data according to labels provided in the sequence
-# Returns data in shape: [N_coils, (Nseg), (Nset), (Nrep), (Nphs), (Neco), (Nslc), (Nlin), Nx]
+# Returns data in shape: [N_coils, (Nseg), (Nset), (Nrep), (Nphs), (Neco), (Nslc), (Nlin), (Npar), Nx]
 def sort_data_labels(kdata, seq, shape=None):
     n_coils = kdata.shape[0]
     adc_samples = kdata.shape[2]
 
-    supported_labels = ['SEG', 'SET', 'REP', 'PHS', 'ECO', 'SLC', 'LIN', 'AVG']
+    supported_labels = ['SEG', 'SET', 'REP', 'PHS', 'ECO', 'SLC', 'LIN', 'PAR', 'AVG']
 
     # Get label evolutions from sequence
     labels = seq.evaluate_labels(evolution='adc')

@@ -5,17 +5,15 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # ======
-# from write_tse_pypulseq import main as write_seq
-# seq_name = "tse_2d"
 
 # from write_tse_3d_demo import main as write_seq
 # seq_name = "tse_3d_demo"
 
-from write_tse_3d import main as write_seq
-seq_name = "tse_3d"
+# from write_tse_3d import main as write_seq
+# seq_name = "tse_3d"
 
-# from write_tse_3d_ptb_untouched import main as write_seq
-# seq_name = "tse_3d_ptb_untouched"
+from write_tse_3d_ptb_untouched import main as write_seq
+seq_name = "tse_3d_ptb_untouched"
 
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage"
@@ -37,8 +35,8 @@ n_enc = (64, 64, 8)
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation:
