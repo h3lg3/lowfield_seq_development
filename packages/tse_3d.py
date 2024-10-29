@@ -95,13 +95,6 @@ def constructor(
     # Create a new sequence object
     seq = pp.Sequence(system)
     
-    # check if channel labels are valid
-    channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
-
-    # map fov and n_enc according to channels    
-    n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
-                                                                channel_ro, channel_pe1, n_enc, fov
-                                                                )
     
     # derived and modifed parameters
     delta_k_ro = 1/fov_ro
