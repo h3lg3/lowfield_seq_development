@@ -30,7 +30,7 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (256e-3, 256e-3, 256e-3)
-nk = (64, 64, 8)
+n_enc = (64, 64, 8)
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
 # nk = (120, 120, 1)
@@ -42,15 +42,15 @@ plot_simulation = False
 
 if write_sequence:
     if plot_simulation:
-        write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, nk=nk)
+        write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     else:
-        write_seq(plot=True, write_seq=True, seq_filename=seq_name, system=system, fov=fov, nk=nk)
+        write_seq(plot=True, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     
 if analyze_sequence:
     analyze_seq(seq_filename=seq_name)
             
 if simulate_sequence:
-    simulate_seq(save=True, seq_filename=seq_name, fov=fov, nk=nk)
+    simulate_seq(save=True, seq_filename=seq_name, fov=fov, n_enc=n_enc)
     
 if plot_simulation:
     plot_sim(plot={

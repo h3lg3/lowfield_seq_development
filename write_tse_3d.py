@@ -11,7 +11,7 @@ from packages.mr_systems import low_field as default_system
 def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          system:Opts = default_system, 
          fov:tuple = (256e-3, 256e-3, 256e-3), 
-         nk:tuple =(64, 64, 64)
+         n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d.constructor(
                             echo_time = 20e-3,
@@ -21,8 +21,8 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             ro_bandwidth = 20e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
-                            fov=Dimensions(x=fov[0], y=fov[1], z=fov[2]),  
-                            n_enc=Dimensions(x=nk[0], y=nk[1], z=nk[2]),           
+                            input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
+                            input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
                             trajectory=Trajectory.ASCENDING,
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,

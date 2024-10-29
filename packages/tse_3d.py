@@ -19,10 +19,6 @@ from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
 
-default_fov = Dimensions(x=220e-3, y=220e-3, z=225e-3)
-default_encoding = Dimensions(x=70, y=70, z=49)
-default_channels = Channels(ro="y", pe1="z", pe2="x")
-
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
     repetition_time: float = 600e-3,
@@ -33,8 +29,8 @@ def constructor(
     gradient_correction: float = 0.,
     ro_bandwidth: float = 20e3,
     ro_oversampling: int = 5,
-    fov: Dimensions = default_fov,
-    n_enc: Dimensions = default_encoding,
+    input_fov: Dimensions = Dimensions(x=220e-3, y=220e-3, z=225e-3),
+    input_enc: Dimensions = Dimensions(x=70, y=70, z=49),
     echo_shift: float = 0.0,
     trajectory: seq_utils.Trajectory = seq_utils.Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
@@ -44,7 +40,7 @@ def constructor(
     inversion_pulse: bool = False,
     inversion_time: float = 50e-3,
     inversion_angle: float = pi,
-    channels: Channels = default_channels,
+    channels: Channels = Channels(ro="y", pe1="z", pe2="x"),
     system:Opts = default_system,
 ) -> tuple[pp.Sequence, list, list]:
     """Construct 3D turbo spin echo sequence.
@@ -95,7 +91,17 @@ def constructor(
     # Create a new sequence object
     seq = pp.Sequence(system)
     
-    
+    # # check if channel labels are valid
+    # channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
+
+    # # map fov and n_enc according to channels    
+    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
+    #                                                             channel_ro, channel_pe1, n_enc, fov
+    #                                                             )
+
+    # map fov and n_enc with channels  
+    n_enc, fov = seq_utils.map_fov_enc(channels, input_fov, input_enc)
+                                           
     # derived and modifed parameters
     delta_k_ro = 1/fov_ro
     adc_duration = raster(n_enc_ro / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time

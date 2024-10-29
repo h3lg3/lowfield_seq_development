@@ -83,6 +83,107 @@ class Trajectory(Enum):
     ASCENDING = 4
     # Define trajectories corresponding to https://colab.research.google.com/github/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/03_k_space_sampling/notebooks/01_cartesian_ordering_and_undersampling_solution.ipynb#scrollTo=zYC6t2eOCt_L
 
+
+def map_fov_enc(
+    channels, input_fov, input_enc
+    ) -> tuple[dict, dict]: 
+    # Dynamically access the n_enc and fov attributes using getattr
+    n_enc = {}
+    fov = {}
+    n_enc['ro'] = getattr(input_enc, channels.ro)
+    n_enc['pe1'] = getattr(input_enc, channels.pe1)
+    n_enc['pe2'] = getattr(input_enc, channels.pe2)
+    
+    fov['ro'] = getattr(input_fov, channels.ro)
+    fov['pe1'] = getattr(input_fov, channels.pe1)
+    fov['pe2'] = getattr(input_fov, channels.pe2)
+
+    return (n_enc, fov)
+
+def validate_inputs(
+    x: str, 
+    y: str, 
+    z: str
+) -> tuple[str, str, str]:   
+    """
+    Validates the input strings x, y, and z.
+    This function performs the following validations:
+    1. Converts each input to lowercase.
+    2. Ensures each variable is of length one.
+    3. Ensures each variable is one of 'x', 'y', or 'z'.
+    4. Ensures all variables are unique.
+    Parameters:
+    x (str): The first input string.
+    y (str): The second input string.
+    z (str): The third input string.
+    Returns:
+    tuple[str, str, str]: A tuple containing the validated and converted input strings.
+    Raises:
+    AssertionError: If any of the validation checks fail.
+    Example:
+    >>> validate_inputs("x", "y", "z")
+    ('x', 'y', 'z')
+    >>> validate_inputs("x", "y", "y")
+    AssertionError: y must be unique
+    """
+    # Convert each input to lowercase
+    x = x.lower()
+    y = y.lower()
+    z = z.lower()
+        
+    # Ensure each variable is of length one
+    assert len(x) == 1, "x must be of length 1"
+    assert len(y) == 1, "y must be of length 1"
+    assert len(z) == 1, "z must be of length 1"
+    
+    # Ensure each variable is one of 'a', 'b', or 'c'
+    allowed_values = {"x", "y", "z"}
+    assert x in allowed_values, "x must be one of 'x', 'y', or 'z'"
+    assert y in allowed_values, "y must be one of 'x', 'y', or 'z'"
+    assert z in allowed_values, "z must be one of 'x', 'y', or 'z'"
+    
+    # Ensure all variables are unique
+    assert len({x, y, z}) == 3, "x, y, and z must be unique"
+
+    print("All inputs are valid.")
+    
+    return x, y, z
+
+    # # Example usage:
+    # validate_inputs("x", "y", "z")  # This will pass validation.
+    # validate_inputs("x", "y", "y")  # This will raise an AssertionError.
+    
+def calculate_enc_fov_order(
+    channel_ro:str, 
+    channel_pe1:str, 
+    n_enc:Dimensions, 
+    fov:Dimensions
+    )-> tuple[int,float,int,float,int,float]:
+    # Dynamically access the n_enc and fov attributes using getattr
+    n_enc_ro = getattr(n_enc, channel_ro)
+    fov_ro = getattr(fov, channel_ro)
+
+    # Determine the remaining channel for pe2
+    remaining_channels = {"x", "y", "z"} - {channel_ro, channel_pe1}
+    channel_pe2 = remaining_channels.pop()
+
+    # Assign the values for pe1 and pe2
+    n_enc_pe1 = getattr(n_enc, channel_pe1)
+    fov_pe1 = getattr(fov, channel_pe1)
+    n_enc_pe2 = getattr(n_enc, channel_pe2)
+    fov_pe2 = getattr(fov, channel_pe2)
+
+    return (n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)
+
+    # # Example usage:
+    # n_enc = Dimensions(x=64, y=80, z=100)
+    # fov = Dimensions(x=200, y=220, z=240)
+
+    # channel_ro = "x"
+    # channel_pe1 = "y"
+    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = calculate_enc_fov(channel_ro, channel_pe1, n_enc, fov)
+    # print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
+    
 def get_traj(
     n_enc_pe1: int = 128,
     n_enc_pe2: int = 128,
@@ -209,90 +310,6 @@ def get_esp_etl(
     rec_etl = int(min(filtered_cc, key=lambda x: x[2])[0])     
 
     return dict({'min_esp':min_esp, 'max_etl':max_etl, 'rec_etl':rec_etl})
-
-def validate_inputs(
-    x: str, 
-    y: str, 
-    z: str
-) -> tuple[str, str, str]:   
-    """
-    Validates the input strings x, y, and z.
-    This function performs the following validations:
-    1. Converts each input to lowercase.
-    2. Ensures each variable is of length one.
-    3. Ensures each variable is one of 'x', 'y', or 'z'.
-    4. Ensures all variables are unique.
-    Parameters:
-    x (str): The first input string.
-    y (str): The second input string.
-    z (str): The third input string.
-    Returns:
-    tuple[str, str, str]: A tuple containing the validated and converted input strings.
-    Raises:
-    AssertionError: If any of the validation checks fail.
-    Example:
-    >>> validate_inputs("x", "y", "z")
-    ('x', 'y', 'z')
-    >>> validate_inputs("x", "y", "y")
-    AssertionError: y must be unique
-    """
-    # Convert each input to lowercase
-    x = x.lower()
-    y = y.lower()
-    z = z.lower()
-        
-    # Ensure each variable is of length one
-    assert len(x) == 1, "x must be of length 1"
-    assert len(y) == 1, "y must be of length 1"
-    assert len(z) == 1, "z must be of length 1"
-    
-    # Ensure each variable is one of 'a', 'b', or 'c'
-    allowed_values = {"x", "y", "z"}
-    assert x in allowed_values, "x must be one of 'x', 'y', or 'z'"
-    assert y in allowed_values, "y must be one of 'x', 'y', or 'z'"
-    assert z in allowed_values, "z must be one of 'x', 'y', or 'z'"
-    
-    # Ensure all variables are unique
-    assert len({x, y, z}) == 3, "x, y, and z must be unique"
-
-    print("All inputs are valid.")
-    
-    return x, y, z
-
-    # # Example usage:
-    # validate_inputs("x", "y", "z")  # This will pass validation.
-    # validate_inputs("x", "y", "y")  # This will raise an AssertionError.
-    
-def calculate_enc_fov_order(
-    channel_ro:str, 
-    channel_pe1:str, 
-    n_enc:Dimensions, 
-    fov:Dimensions
-    )-> tuple[int,float,int,float,int,float]:
-    # Dynamically access the n_enc and fov attributes using getattr
-    n_enc_ro = getattr(n_enc, channel_ro)
-    fov_ro = getattr(fov, channel_ro)
-
-    # Determine the remaining channel for pe2
-    remaining_channels = {"x", "y", "z"} - {channel_ro, channel_pe1}
-    channel_pe2 = remaining_channels.pop()
-
-    # Assign the values for pe1 and pe2
-    n_enc_pe1 = getattr(n_enc, channel_pe1)
-    fov_pe1 = getattr(fov, channel_pe1)
-    n_enc_pe2 = getattr(n_enc, channel_pe2)
-    fov_pe2 = getattr(fov, channel_pe2)
-
-    return (n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)
-
-    # # Example usage:
-    # n_enc = Dimensions(x=64, y=80, z=100)
-    # fov = Dimensions(x=200, y=220, z=240)
-
-    # channel_ro = "x"
-    # channel_pe1 = "y"
-    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = calculate_enc_fov(channel_ro, channel_pe1, n_enc, fov)
-    # print(n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2)    
     
 def calculate_acq_pos(
     k_traj_adc:np.array,
