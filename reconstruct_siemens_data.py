@@ -3,14 +3,16 @@
 import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
 
 import pypulseq as pp
+import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import glob
-import numpy as np
+
+from packages.mr_systems import lumina as system
 # %%
-data_path = r".\siemens_data\241029"
-seq_name = "tse_3d_lumina_alternate180"
+data_path = r".\siemens_data\241030"
+seq_name = "tse_3d_lumina_linear"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
@@ -21,8 +23,8 @@ if not data_files:
     raise FileNotFoundError(f"No files matching pattern {data_pattern}")
 data_file = data_files[0]  # Use the first matching file
 
-seq = pp.Sequence()
-seq.read(seq_file)
+seq = pp.Sequence(system=system)
+seq.read(seq_file, detect_rf_use = True)
  
 kdata_unsorted = utils.read_raw_data(data_file)
 kdata_sorted = utils.sort_data_labels(kdata_unsorted, seq)

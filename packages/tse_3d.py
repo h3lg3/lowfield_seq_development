@@ -86,7 +86,6 @@ def constructor(
     """
     # Sequence options
     disable_pe = False
-    alternate_refocussing_phase = False
     
     # Create a new sequence object
     seq = pp.Sequence(system)
@@ -215,11 +214,7 @@ def constructor(
                 precision=system.grad_raster_time
             )))
 
-    for train, position in zip(trains, trains_pos):
-        # Reset phase of 180° refocussing pulse if alternate refocussing phase is enabled
-        if alternate_refocussing_phase:
-            rf_180.phase_offset = refocussing_phase
-        
+    for train, position in zip(trains, trains_pos):     
         if inversion_pulse:
             seq.add_block(rf_inversion)
             seq.add_block(pp.make_delay(raster(
@@ -285,10 +280,6 @@ def constructor(
             )
 
             seq.add_block(pp.make_delay(tau_3))
-            
-            # Alternate refocussing phase by 180° each time
-            if alternate_refocussing_phase:
-                rf_180.phase_offset = (rf_180.phase_offset + pi) % (2 * pi)
 
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = raster(repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
