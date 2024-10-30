@@ -8,6 +8,7 @@ import os
 # %% Create phantom, simulate sequence, reconstruct image
 def simulate_seq(save: bool,
                 seq_filename: str,
+                system:pp.Opts,
                 seq_path: str = "./sequences/",
                 sim_path: str = "./simulation/",
                 fov:tuple = (256e-3, 256e-3, 256e-3), 
@@ -16,8 +17,8 @@ def simulate_seq(save: bool,
     sim_name = "sim_" + seq_filename
     seq_file = seq_path + seq_filename + ".seq"
 
-    seq = pp.Sequence()
-    seq.read(seq_file)
+    seq = pp.Sequence(system=system)
+    seq.read(seq_file, detect_rf_use = True)
     seq0 = mr0.Sequence.import_file(seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
@@ -59,21 +60,7 @@ def simulate_seq(save: bool,
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
-    # # Plot obj_p.PD along all entries in the third dimension
-    # import matplotlib.pyplot as plt
-
-    # num_slices = obj_p.PD.shape[2]
-    # fig, axes = plt.subplots(1, num_slices, figsize=(15, 5))
-
-    # for i in range(num_slices):
-    #     ax = axes[i]
-    #     ax.imshow(obj_p.PD[:, :, i], cmap='gray')
-    #     ax.set_title(f'Slice {i+1}')
-    #     ax.axis('off')
-
-    # plt.suptitle('PD along all entries in the third dimension')
-    # plt.show()
-    # plt.pause(1)
+    
     # SIMULATE the external.seq file and add acquired signal to ADC plot
     graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
     signal=mr0.execute_graph(graph, seq0, obj_sim)

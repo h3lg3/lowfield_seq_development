@@ -6,11 +6,11 @@ from packages.analyze_seq import analyze_seq
 # SEQUENCE
 # ======
 
-from write_tse_3d_demo import main as write_seq
-seq_name = "tse_3d_demo"
+# from write_tse_3d_demo import main as write_seq
+# seq_name = "tse_3d_demo"
 
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
@@ -35,8 +35,8 @@ n_enc = (64, 64, 8)
 
 write_sequence = True
 analyze_sequence = True
-simulate_sequence = False
-plot_simulation = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     if plot_simulation:
@@ -45,10 +45,10 @@ if write_sequence:
         write_seq(plot=True, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     
 if analyze_sequence:
-    analyze_seq(seq_filename=seq_name)
+    analyze_seq(seq_filename=seq_name, system=system)
             
 if simulate_sequence:
-    simulate_seq(save=True, seq_filename=seq_name, fov=fov, n_enc=n_enc)
+    simulate_seq(save=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     
 if plot_simulation:
     plot_sim(plot={
@@ -56,4 +56,4 @@ if plot_simulation:
         "seq": False,
         "kspace": False,
         "reco": True
-        }, seq_filename=seq_name) 
+        }, seq_filename=seq_name, system=system) 

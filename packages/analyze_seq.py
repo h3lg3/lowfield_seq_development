@@ -3,13 +3,12 @@
 import pypulseq as pp
 import matplotlib.pyplot as plt
 import numpy as np
-import pypulseq.utils.siemens as siemens
 
-def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
+def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/"):
 
     # Create a Sequence object and read the sequence file
-    seq = pp.Sequence()
-    seq.read(seq_path + seq_filename + ".seq")
+    seq = pp.Sequence(system=system)
+    seq.read(seq_path + seq_filename + ".seq", detect_rf_use = True)
     # %% Analyze sequence
     # Plot k-space trajectory
     k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
@@ -95,8 +94,8 @@ def analyze_seq(seq_filename: str, seq_path: str = "./sequences/"):
     # use PRISMA specs
     #seq.calculate_pns('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
     # %% Calculate mechanical resonances
-    asc_dict = siemens.readasc.readasc('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
-    resonances = siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
+    asc_dict = pp.utils.siemens.readasc.readasc('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
+    resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
     seq.calculate_gradient_spectrum(plot=True, acoustic_resonances=resonances)
     plt.show()
     # %%
