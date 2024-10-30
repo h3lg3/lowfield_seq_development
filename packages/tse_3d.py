@@ -154,7 +154,7 @@ def constructor(
     grad_ro_spr = pp.make_trapezoid(
         channel=channels.ro,
         system=system,
-        area=grad_ro.area,
+        area=grad_ro.area,  # grad_ro_spr.area = 0 why not same as set 0 here
         duration=pp.calc_duration(grad_ro),
         rise_time=ramp_duration)
     
@@ -180,14 +180,14 @@ def constructor(
     # Calculate delays
     # Note: RF dead-time is contained in RF delay
     # Delay duration center excitation (90 degree) and center refocussing (180 degree) RF pulse
-    tau_1 = raster(val=echo_time/2 - rf_90.shape_dur/2 - rf_90.ringdown_time - rf_180.shape_dur/2 - rf_180.delay - ro_pre_duration, precision=system.grad_raster_time)
+    tau_1 = raster(val=echo_time/2 - rf_duration/2 - rf_90.ringdown_time - rf_duration/2 - rf_180.delay - ro_pre_duration, precision=system.grad_raster_time)
     
     # Delay duration between center refocussing (180 degree) RF pulse and center readout
-    tau_2 = raster(echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.ringdown_time - 2*gradient_correction \
+    tau_2 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.ringdown_time - 2*gradient_correction \
         - ramp_duration - ro_pre_duration + echo_shift, precision=system.grad_raster_time)
 
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
-    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_180.shape_dur/2 - rf_180.delay  - ramp_duration - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
+    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.delay  - ramp_duration - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
 
     recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
     print(recommended_timing)

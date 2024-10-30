@@ -8,8 +8,8 @@ lumina = Opts(
     max_slew=75,
     slew_unit="T/m/s",
     
-    rf_dead_time=100e-6, # time delay at the end of RF event, SETS RF DELAY!
-    rf_ringdown_time=100e-6, # Time delay at the beginning of an RF event
+    rf_dead_time=100e-6, # time delay at the beginning of RF event, SETS RF DELAY!
+    rf_ringdown_time=100e-6, # Time delay at the end of an RF event
     rf_raster_time=1e-6,
     
     grad_raster_time=10e-6,
@@ -35,7 +35,7 @@ low_field = Opts(
     block_duration_raster=50.e-9,
     adc_raster_time=50.e-9,
 
-    # Time delay at the beginning of an RF event
+    # Time delay at the end of an RF event
     rf_ringdown_time=0.,
     
     # Time delay at the BEGINNING/END of ADC event, at beginning it is usually covered by delay

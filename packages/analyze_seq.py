@@ -10,13 +10,18 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     seq = pp.Sequence(system=system)
     seq.read(seq_path + seq_filename + ".seq", detect_rf_use = True)
     # %% Analyze sequence
+    # Plot sequence
+    seq.plot()
+    
     # Plot k-space trajectory
-    k_traj_adc, k_traj, t_excitation, t_refocusing, t_adc = seq.calculate_kspace()
+    k_traj_adc, k_traj = seq.calculate_kspace()[0:2]
 
     plt.figure()
     plt.title('full k-space trajectory ($k_{x}$ x $k_{y}$)')
     plt.plot(k_traj[0],k_traj[1])
     plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+    plt.xlabel(r'k_x [1/m]')
+    plt.ylabel(r'k_y [1/m]')
     plt.show()
     
     # # %% Analyze waveforms: Gradient amplitude and slew rates:: 
@@ -57,24 +62,29 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     # plt.legend(["x", "y", "z"])
     # plt.show()
     # Gradient amplitudes
-    plt.figure()
-    plt.plot(wf_interp['t'],wf_interp['gx'], c='r')
-    plt.plot(wf_interp['t'],wf_interp['gy'], c='g')
-    plt.plot(wf_interp['t'],wf_interp['gz'], c='b')
-    plt.plot(wf_interp['t'],wf_interp['g_norm'], c='k')
-    plt.xlabel("time [s]")
-    plt.ylabel("gradient amplitude [mT/m]")
-    plt.legend(["x", "y", "z", "norm"], loc= 'upper right')
-    plt.show()
+    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
+
+    # Gradient amplitudes
+    axs[0].plot(wf_interp['t'], wf_interp['gx'], c='r')
+    axs[0].plot(wf_interp['t'], wf_interp['gy'], c='g')
+    axs[0].plot(wf_interp['t'], wf_interp['gz'], c='b')
+    axs[0].plot(wf_interp['t'], wf_interp['g_norm'], c='k')
+    axs[0].set_xlabel("time [s]")
+    axs[0].set_ylabel("gradient amplitude [mT/m]")
+    axs[0].legend(["x", "y", "z", "norm"], loc='upper right')
+    axs[0].set_title('Gradient Amplitudes')
+
     # Slew rates
-    plt.figure()
-    plt.plot(wf_interp['t'][0:-1],wf_interp['slew_x'], c='r')
-    plt.plot(wf_interp['t'][0:-1],wf_interp['slew_y'], c='g')
-    plt.plot(wf_interp['t'][0:-1],wf_interp['slew_z'], c='b')
-    plt.plot(wf_interp['t'][0:-1],wf_interp['slew_norm'], c='k')
-    plt.xlabel("time [s]")
-    plt.ylabel("slew rate [T/m/s]")
-    plt.legend(["x", "y", "z", "norm"], loc= 'upper right')
+    axs[1].plot(wf_interp['t'][0:-1], wf_interp['slew_x'], c='r')
+    axs[1].plot(wf_interp['t'][0:-1], wf_interp['slew_y'], c='g')
+    axs[1].plot(wf_interp['t'][0:-1], wf_interp['slew_z'], c='b')
+    axs[1].plot(wf_interp['t'][0:-1], wf_interp['slew_norm'], c='k')
+    axs[1].set_xlabel("time [s]")
+    axs[1].set_ylabel("slew rate [T/m/s]")
+    axs[1].legend(["x", "y", "z", "norm"], loc='upper right')
+    axs[1].set_title('Slew Rates')
+
+    plt.tight_layout()
     plt.show()
     # %% Sequence test report
     # For the real TE, TR or for staying within slew-rate limits
