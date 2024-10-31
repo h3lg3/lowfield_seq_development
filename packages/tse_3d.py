@@ -3,9 +3,9 @@
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
 TODO: add optional inversion pulse
 TODO: add optional variable refocussing pulses (pass list rather than float)
-TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)?
-TODO: Alternate phase of 180 refocussing pulse by 180° each time to compensate imperfect excitaion (!=180 degree)
-TODO: Instead of mapping fov to fov_ro, fov_pe1, fov_pe2,,, just get indices (e.g.,rO=1,pe1=2,pe2=0), and index fov[id.ro],n_enc[id.ro] etc throughout the script
+TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)? IF TE:None is set, then use min TE
+TODO: Optimize gradients by gradient surgery
+TODO: REcalculate trajectory such that gradient scaling can be used in loop: Get max Grad Amp and scale according to encoding step: gs=pp.scale_grad(gs_max, sl_scale)
 """
 from math import pi
 import numpy as np
