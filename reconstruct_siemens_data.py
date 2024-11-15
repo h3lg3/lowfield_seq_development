@@ -11,8 +11,8 @@ import glob
 
 from packages.mr_systems import lumina as system
 # %%
-data_path = r".\siemens_data\241030"
-seq_name = "tse_3d_lumina_linear"
+data_path = r".\siemens_data\241113_aga"
+seq_name = "tse_3d_lumina"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
@@ -32,22 +32,14 @@ kdata_sorted = kdata_sorted.transpose(0,1,3,2)
 
 # %%
 axes = (-3, -2, -1)
-#fft_data_unsorted = np.fft.fftshift(np.fft.ifftn(np.fft.ifftshift(kdata_unsorted, axes=axes), axes=axes), axes=axes)
 
 image = np.fft.fftshift(np.fft.ifftn(np.fft.ifftshift(kdata_sorted, axes=axes), axes=axes), axes=axes)
 image_sos = np.sqrt((abs(image)**2).sum(axis=0))
+
 # Save image_sos to data_path with the name seq_name + "image.dat"
 output_file = f"{data_path}\\{seq_name}_image.dat"
 np.save(output_file, image_sos)
 
-
-# # # # Plot the first slice of fft_data_unsorted
-# plt.figure(figsize=(10, 8))
-# plt.imshow(image_sos[:, 4, :], cmap='gray')
-# plt.title('FFT Data Unsorted - Slice 0')
-# plt.axis('off')
-# plt.show()
-# plt.pause(0.1)
 # %%
 data2plot = image_sos
 

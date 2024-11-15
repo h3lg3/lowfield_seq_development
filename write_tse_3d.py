@@ -68,7 +68,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     if write_seq:
         seq.set_definition('Name', seq_filename)
         seq.write('./sequences/' + seq_filename)
-        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        # seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        

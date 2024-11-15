@@ -4,6 +4,7 @@
 *.mat
 *.pyc
 *.dat
+packages/__pycache__/utils.cpython-310.pyc
 
 ~*
 *.code-workspace
