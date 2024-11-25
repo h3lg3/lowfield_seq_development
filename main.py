@@ -27,9 +27,9 @@ seq_name = seq_name + '_lumina'
 # ======
 # FOV
 # ======
-fov = (256e-3, 256e-3, 256e-3)
-n = 64
-n_enc = (n, n, 8)
+fov = (250e-3, 250e-3, 250e-3)
+n = 32
+n_enc = (n, n, 16)
 
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)

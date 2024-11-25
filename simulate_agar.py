@@ -9,8 +9,7 @@ import torch
 import nibabel as nib
 
 from packages.mr_systems import lumina as system
-
-
+from matplotlib.widgets import Slider
 
 # choose flags
 FLAG_PLOTS = True
@@ -20,7 +19,7 @@ FLAG_SAVE = False
 seq_filename = "tse_3d_lumina"
 seq_path = "./sequences/"
 
-# define qMR data 
+# %%# define qMR data 
 qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom-Aga_20241113-174629/"
 qMR_mat = "qMR_data.mat"
 qMR_t2star = "T2star_map.nii"
@@ -31,9 +30,13 @@ sim_path: str = "./simulation/"
 
 # define simulation parameters
 fov = (250e-3, 250e-3, 250e-3)
-n_enc = (64, 64, 1)
+n_enc = (32, 32, 16)
+# for multi-slice simulation
+n_slices = (2, 5, 8, 12)
+n_slices = (7, 9, 11, 12)
+n_slices = (2, 6, 8, 12)
 
-
+n_slices = tuple(range(0, 16))
 # %% Create phantom, simulate sequence, reconstruct image
 
 seq_file = seq_path + seq_filename + ".seq"
@@ -44,9 +47,9 @@ seq.read(seq_file, detect_rf_use = True)
 seq0 = mr0.Sequence.import_file(seq_file)
 
 # load qMR data from mat file
-obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat) 
+obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat, size = [0.25, 0.25, 0.25]) 
 
-# load the T2star_map from nifti file
+# # load the T2star_map from nifti file
 nifti_file = qMR_path + qMR_t2star
 nifti_img = nib.load(nifti_file)
 nifti_data = nifti_img.get_fdata()
@@ -56,14 +59,55 @@ obj_p.T2dash = nifti_tensor
 # set diffusion to 0
 obj_p.D[:] = 0
 
+# obj_p = mr0.VoxelGridPhantom.brainweb("./data/subject05.npz")
+# obj_p.B0[:] = 0 # Remove B0 inhomogeneity
+# obj_p.D[:] = 0 # Remove diffusion
+# n_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
+
 if n_enc[2] == 1:
     center_slice = obj_p.PD.shape[2]//2
-    obj_p = obj_p.slices([center_slice])    # select center slice
+    obj_p = obj_p.slices([4])    # select center slice
     obj_p = obj_p.interpolate(n_enc[0], n_enc[1], 1)  # interpolate     
 else:
-    range_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
-    obj_p = obj_p.slices(range_slices)      # select slices within the range
-    obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])      # interpolate
+    obj_p = obj_p.slices(n_slices)                              # select slices within the range
+    obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])     # interpolate
+
+# reco = obj_p.PD
+# fig, ax = plt.subplots()
+# plt.subplots_adjust(left=0.25, bottom=0.25)
+
+# # Initial plot
+# slice_index = 0
+# img = ax.imshow(reco[:, :, slice_index].T.abs(), cmap='viridis', origin="lower")
+# ax.set_title(f'Slice {slice_index + 1}')
+# plt.colorbar(img, ax=ax)
+
+# # Create a slider axis and slider
+# ax_slider = plt.axes([0.25, 0.1, 0.65, 0.03])
+# slider = Slider(ax_slider, 'Slice', 0, reco.shape[2] - 1, valinit=slice_index, valstep=1)
+
+# # Update function for the slider
+# def update(val):
+#     slice_index = int(slider.val)
+#     img.set_data(reco[:, :, slice_index].T.abs())
+#     ax.set_title(f'Slice {slice_index + 1}')
+#     fig.canvas.draw_idle()
+
+# # Attach the update function to the slider
+# slider.on_changed(update)
+# # Create a slider axis and slider for contrast adjustment
+# ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
+# contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
+
+# # Update function for the contrast slider
+# def update_contrast(val):
+#     contrast = contrast_slider.val
+#     img.set_clim(vmin=0, vmax=reco[:, :, slice_index].T.abs().max() * contrast)
+#     fig.canvas.draw_idle()
+
+# # Attach the update function to the contrast slider
+# contrast_slider.on_changed(update_contrast)
+# plt.show()
 
 obj_sim = obj_p.build(PD_threshold=0.005)
 
@@ -71,31 +115,73 @@ obj_sim = obj_p.build(PD_threshold=0.005)
 graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
 signal=mr0.execute_graph(graph, seq0, obj_sim)
 reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+
 if FLAG_PLOTS:
-    # plt.imshow(reco.abs(), cmap='viridis', origin="lower")
-    # plt.show()  
     if reco.shape[2] > 1:
-        # Plot reco.T.abs() along the third dimension in one figure
-        fig, axes = plt.subplots(1, reco.shape[2], figsize=(15, 5))
-        
-        for i in range(reco.shape[2]):
-            axes[i].imshow(reco[:, :, i].abs(), cmap='viridis', origin="lower")
-            axes[i].set_title(f'Slice {i+1}')
-            axes[i].axis('off')  # Hide axes
-        
-        # Adjust layout to prevent overlap
-        plt.tight_layout()
+        # Create a figure and axis
+        fig, ax = plt.subplots()
+        plt.subplots_adjust(left=0.25, bottom=0.25)
+
+        # Initial plot
+        slice_index = 0
+        img = ax.imshow(reco[:, :, slice_index].T.abs(), cmap='viridis', origin="lower")
+        ax.set_title(f'Slice {slice_index + 1}')
+        plt.colorbar(img, ax=ax)
+
+        # Create a slider axis and slider
+        ax_slider = plt.axes([0.25, 0.1, 0.65, 0.03])
+        slider = Slider(ax_slider, 'Slice', 0, reco.shape[2] - 1, valinit=slice_index, valstep=1)
+
+        # Update function for the slider
+        def update(val):
+            slice_index = int(slider.val)
+            img.set_data(reco[:, :, slice_index].T.abs())
+            ax.set_title(f'Slice {slice_index + 1}')
+            fig.canvas.draw_idle()
+
+        # Attach the update function to the slider
+        slider.on_changed(update)
+        # Create a slider axis and slider for contrast adjustment
+        ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 1000.0, valinit=1.0, valstep=0.1)
+
+        # Update function for the contrast slider
+        def update_contrast(val):
+            contrast = contrast_slider.val
+            img.set_clim(vmin=0, vmax=reco[:, :, slice_index].T.abs().max() * contrast)
+            fig.canvas.draw_idle()
+
+        # Attach the update function to the contrast slider
+        contrast_slider.on_changed(update_contrast)
         plt.show()
+
     else:
-        plt.figure()
-        plt.subplot(121)
-        plt.title("Magnitude")
-        plt.imshow(reco[:, :, 0].abs(), origin="lower")
-        plt.colorbar()
-        plt.subplot(122)
-        plt.title("Phase")
-        plt.imshow(reco[:, :, 0].angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
-        plt.colorbar()
+        # Add adjustable contrast for magnitude and phase images
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        plt.subplots_adjust(left=0.25, bottom=0.25)
+
+        # Initial plots
+        img1 = ax1.imshow(reco[:, :, 0].abs(), origin="lower")
+        ax1.set_title("Magnitude")
+        plt.colorbar(img1, ax=ax1)
+
+        img2 = ax2.imshow(reco[:, :, 0].angle(), origin="lower", vmin=-np.pi, vmax=np.pi)
+        ax2.set_title("Phase")
+        plt.colorbar(img2, ax=ax2)
+
+        # Create a slider axis and slider for contrast adjustment
+        ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
+
+        # Update function for the contrast slider
+        def update_contrast(val):
+            contrast = contrast_slider.val
+            img1.set_clim(vmin=0, vmax=reco[:, :, 0].abs().max() * contrast)
+            img2.set_clim(vmin=-np.pi * contrast, vmax=np.pi * contrast)
+            fig.canvas.draw_idle()
+
+        # Attach the update function to the contrast slider
+        contrast_slider.on_changed(update_contrast)
         plt.show()
 
 # %% save results

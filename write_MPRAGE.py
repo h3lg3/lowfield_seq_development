@@ -13,7 +13,7 @@ def main(plot: bool,
         seq_filename: str = "mprage", 
         system:Opts = default_system, 
         fov:tuple = (256e-3, 256e-3, 256e-3), 
-        nk:tuple =(64, 64, 64)
+        n_enc:tuple =(64, 64, 64)
         ):
     # ======
     # SETUP
@@ -32,7 +32,7 @@ def main(plot: bool,
     ax = SimpleNamespace()  # Encoding axes
 
     fov = np.array([fov[0], fov[1], fov[2]])  # Define FOV and resolution
-    N = [nk[0], nk[1], nk[2]] # [x y z]
+    N = [n_enc[0], n_enc[1], n_enc[2]] # [x y z]
     ax.d1 = "z"  # Fastest dimension (readout)
     ax.d2 = "y"  # Second-fastest dimension (inner phase-encoding loop)
     xyz = ["x", "y", "z"]
