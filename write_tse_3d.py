@@ -2,9 +2,7 @@ from matplotlib import pyplot as plt
 from math import pi
 
 from packages import tse_3d
-from packages.seq_utils import Trajectory
-from packages.seq_utils import Dimensions
-from packages.seq_utils import Channels
+from packages.seq_utils import Trajectory, Dimensions, Channels
 from packages.mr_systems import low_field as default_system
 
 from pypulseq.opts import Opts
