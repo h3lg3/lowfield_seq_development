@@ -37,8 +37,8 @@ n_enc = (n, n, 1)
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation or analyze_sequence:

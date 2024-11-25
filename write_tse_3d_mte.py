@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 from math import pi
 
-from packages import tse_3d
+from packages import tse_3d_mte
 from packages.seq_utils import Trajectory, Dimensions, Channels
 from packages.mr_systems import low_field as default_system
 
@@ -12,7 +12,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          fov:tuple = (256e-3, 256e-3, 256e-3), 
          n_enc:tuple = (64, 64, 64)
          ):
-    seq = tse_3d.constructor(
+    seq = tse_3d_mte.constructor(
                             echo_time = 20e-3,
                             repetition_time = 2000e-3,  
                             etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
@@ -66,7 +66,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     if write_seq:
         seq.set_definition('Name', seq_filename)
         seq.write('./sequences/' + seq_filename)
-        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        #seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        

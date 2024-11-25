@@ -36,7 +36,6 @@ def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./s
         # plt.xlabel('sampling points')
         # plt.ylabel('RF signal')
         # plt.show()
-        
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
             
