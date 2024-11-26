@@ -1,13 +1,14 @@
 """Constructor for 3D TSE Imaging sequence.
 
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
-TODO: add optional inversion pulse
 TODO: add optional variable refocussing pulses (pass list rather than float)
 TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)? IF TE:None is set, then use min TE
 TODO: Optimize gradients by gradient surgery
-TODO: REcalculate trajectory such that gradient scaling can be used in loop: Get max Grad Amp and scale according to encoding step: gs=pp.scale_grad(gs_max, sl_scale)
+TODO: REcalculate trajectory such that gradient scaling can be used in loop: Get max Grad Amp and scale according to encoding step: gs=pp.scale_grad(grad_pe_2_max, pe_2_scale)
 """
 from math import pi
+import math
+
 import numpy as np
 
 import pypulseq as pp
@@ -18,6 +19,8 @@ from packages.seq_utils import Dimensions
 from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
+
+import warnings
 
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
@@ -31,15 +34,10 @@ def constructor(
     ro_oversampling: int = 5,
     input_fov: Dimensions = Dimensions(x=220e-3, y=220e-3, z=225e-3),
     input_enc: Dimensions = Dimensions(x=70, y=70, z=49),
-    echo_shift: float = 0.0,
-    trajectory: seq_utils.Trajectory = seq_utils.Trajectory.OUTIN,
     excitation_angle: float = pi / 2,
     excitation_phase: float = 0.,
     refocussing_angle: float = pi,
     refocussing_phase: float = pi / 2,
-    inversion_pulse: bool = False,
-    inversion_time: float = 50e-3,
-    inversion_angle: float = pi,
     channels: Channels = Channels(ro="y", pe1="z", pe2="x"),
     system:Opts = default_system,
 ) -> tuple[pp.Sequence, list, list]:
@@ -69,8 +67,6 @@ def constructor(
     n_enc, optional
         Number of encoding steps per dimension, by default default_encoding = Dimensions(x=70, y=70, z=49).
         If an encoding dimension is set to 1, the TSE sequence becomes a 2D sequence.
-    trajectroy, optional
-        The k-space trajectory, by default set to in-out, other currently implemented options are...
     excitation_angle, excitation_phase, optional
         set the flip angle and phase of the excitation pulse in radians, defaults to 90 degree flip angle, 0 phase
     refocussing_angle, refocussing_phase, optional
@@ -84,9 +80,13 @@ def constructor(
     -------
         Pulseq sequence and a list which describes the trajectory
     """
-    # Sequence options
-    disable_pe = False
-    
+    #  additional ADC samples to initialize decimation filters prior to the 'sampling_time'
+    nRD_pre = 0
+    nRD_post = 0
+
+    # HH1: If ramp_duration is added to adc.delay in the adc definition, then also uncomment this line, to have centered ADC for gradient_correction = 0
+    # gradient_correction = gradient_correction + ramp_duration
+
     # Create a new sequence object
     seq = pp.Sequence(system)
 
@@ -96,57 +96,45 @@ def constructor(
     # derived and modifed parameters
     delta_k_ro = 1/fov['ro']
     adc_duration = raster(n_enc['ro'] / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
-    grad_amplitude = n_enc['ro'] * delta_k_ro / adc_duration
+    ro_amplitude = n_enc['ro'] * delta_k_ro / adc_duration
     gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
 
-    pe_traj = seq_utils.get_traj(
-                n_enc=n_enc,
-                etl = etl,
-                trajectory = trajectory,
-                )
-    
-    trains, trains_pos = seq_utils.get_trains(
-                pe_traj = pe_traj,
-                n_enc=n_enc,
-                fov=fov,
-                etl = etl,
-                trajectory = trajectory,
-                )
+    echo_time = round(echo_time/system.grad_raster_time/2) * system.grad_raster_time * 2 # TE (=ESP) should be divisible to a double gradient raster, which simplifies calcuations
+    ro_flattop_time = adc_duration + 2*gradient_correction ; # duration of the flat top of the read gradient
+    rf_add = math.ceil(max(system.rf_dead_time,system.rf_ringdown_time)/system.grad_raster_time)*system.grad_raster_time # round up dead times to the gradient raster time to enable correct TE & ESP calculation
+    t_sp = round((0.5 * (echo_time - ro_flattop_time - rf_duration) - rf_add)/system.grad_raster_time)*system.grad_raster_time # the duration of gradient spoiler after the refocusing pulse
+    t_spex = round((0.5 * (echo_time - rf_duration - rf_duration) - 2*rf_add)/system.grad_raster_time)*system.grad_raster_time # the duration of readout prephaser after the excitation pulse. note: exclude the RF ringdown time of excitation pulse and rf dead time of refocusing pulse
 
     # Definition of RF pulses
-    rf_90 = pp.make_block_pulse(
+    rf_ex = pp.make_block_pulse(
         system=system,
         flip_angle=excitation_angle,
         phase_offset=excitation_phase,
         duration=rf_duration,
+        delay=rf_add,
         use="excitation"
     )
-    rf_180 = pp.make_block_pulse(
+    d_ex=pp.make_delay(rf_duration+rf_add*2)
+
+    rf_ref = pp.make_block_pulse(
         system=system,
         flip_angle=refocussing_angle,
         phase_offset=refocussing_phase,
         duration=rf_duration,
+        delay=rf_add,
         use="refocusing"
     )
-    
-    if inversion_pulse:
-        rf_inversion = pp.make_block_pulse(
-            system=system,
-            flip_angle=inversion_angle,
-            phase_offset=refocussing_phase,
-            duration=rf_duration,
-            use="refocusing"
-        )
+    d_ref=pp.make_delay(rf_duration+rf_add*2)
 
     # Define readout gradient, spoiler and prewinder
     grad_ro = pp.make_trapezoid(
         channel=channels.ro,
         system=system,
-        amplitude=grad_amplitude,
+        amplitude=ro_amplitude,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
-        # Add gradient correction time and ADC correction time
-        flat_time=adc_duration + 2 * gradient_correction # HH: why 2*gradient_correction?
+        flat_time=ro_flattop_time, # Add gradient correction time and ADC correction time
+        delay=t_sp
     )
     
     # Readout spoiler gradient
@@ -154,8 +142,9 @@ def constructor(
         channel=channels.ro,
         system=system,
         area=grad_ro.area,  # grad_ro_spr.area = 0 why not same as set 0 here
-        duration=pp.calc_duration(grad_ro),
-        rise_time=ramp_duration)
+        duration=t_sp,
+        rise_time=ramp_duration,
+        fall_time=ramp_duration)
     
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
@@ -164,172 +153,153 @@ def constructor(
         area=grad_ro.area / 2 + grad_ro_spr.area,
         rise_time=ramp_duration,
         fall_time=ramp_duration,
-        duration=pp.calc_duration(grad_ro),
+        duration=t_spex,
     )
-    ro_pre_duration = pp.calc_duration(grad_ro_pre) 
      
     adc = pp.make_adc(
         system=system,
-        num_samples=n_enc['ro']*ro_oversampling,
+        num_samples=(n_enc['ro']+nRD_pre+nRD_post) * ro_oversampling,
         duration=adc_duration,
-        # Add gradient correction time and ADC correction time
-        delay=2 * gradient_correction + grad_ro.rise_time
+        delay=t_sp-nRD_pre*adc_duration/n_enc['ro']# nRD_pre*sampling_time/nRD: delay for additional ADC samples to initialize decimation filters prior to the 'sampling_time'
+
+        #HH1: Since gradients on readout axis are glued together, no need to add ramp_duration to the delay. If you uncomment, this then add ramp_duration to gradient_correction (see above)
+        # otherwise 
+        # delay=t_sp+ramp_duration-nRD_pre*adc_duration/n_enc['ro']
     )
     
-    # Calculate delays
-    # Note: RF dead-time is contained in RF delay
-    # Delay duration center excitation (90 degree) and center refocussing (180 degree) RF pulse
-    tau_1 = raster(val=echo_time/2 - rf_duration/2 - rf_90.ringdown_time - rf_duration/2 - rf_180.delay - ro_pre_duration, precision=system.grad_raster_time)
-    
-    # Delay duration between center refocussing (180 degree) RF pulse and center readout
-    tau_2 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.ringdown_time - 2*gradient_correction \
-        - ramp_duration - ro_pre_duration + echo_shift, precision=system.grad_raster_time)
+    # Phase-encoding
+    delta_k_pe1 = 1 / fov['pe1']
+    grad_pe_1_max = pp.make_trapezoid(
+                    channel= channels.pe1,
+                    system=system,
+                    area=delta_k_pe1*n_enc['pe1']/2,
+                    duration=t_sp,
+                    rise_time=ramp_duration,
+                    fall_time=ramp_duration)
 
-    # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
-    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.delay  - ramp_duration - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
-
-    recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
-    print(recommended_timing)
+    # Partition encoding
+    delta_k_pe2 = 1 / fov['pe2']
+    grad_pe_2_max = pp.make_trapezoid(
+                    channel=channels.pe2,
+                    system=system,
+                    area=delta_k_pe2*n_enc['pe2']/2,
+                    duration=t_sp,
+                    rise_time=ramp_duration,
+                    fall_time=ramp_duration)
     
-    for _ in range(dummies):
-        if inversion_pulse:
-            seq.add_block(rf_inversion)
-            seq.add_block(pp.make_delay(raster(val=inversion_time - rf_duration, precision=system.grad_raster_time)))
-        seq.add_block(rf_90)
-        seq.add_block(pp.make_delay(raster(val=echo_time / 2 - rf_duration, precision=system.grad_raster_time)))
-        for _ in range(etl):
-            seq.add_block(rf_180)
-            seq.add_block(pp.make_delay(raster(
-                val=echo_time - rf_duration,
-                precision=system.grad_raster_time
-            )))
-        if inversion_pulse:
-            seq.add_block(pp.make_delay(raster(
-                val=repetition_time - (etl + 0.5) * echo_time - rf_duration - inversion_time,
-                precision=system.grad_raster_time
-            )))
+    # combine parts of the read gradient
+    gc_times = np.array(
+        [
+            0,
+            grad_ro_spr.rise_time,
+            grad_ro_spr.flat_time,
+            grad_ro_spr.fall_time,
+            grad_ro.flat_time,
+            grad_ro_spr.fall_time,
+            grad_ro_spr.flat_time,
+            grad_ro_spr.rise_time ] )
+    gc_times = np.cumsum(gc_times)
+
+    gr_amp = np.array([0, 
+                       grad_ro_spr.amplitude, 
+                       grad_ro_spr.amplitude,
+                       grad_ro.amplitude,
+                       grad_ro.amplitude,
+                       grad_ro_spr.amplitude,
+                       grad_ro_spr.amplitude,
+                       0])
+    gr = pp.make_extended_trapezoid(
+        channel=channels.ro, 
+        times=gc_times, 
+        amplitudes=gr_amp)
+
+    gp_amp = np.array([0,
+                       grad_pe_1_max.amplitude,
+                       grad_pe_1_max.amplitude, 
+                       0, 
+                       0, 
+                       -grad_pe_1_max.amplitude, 
+                       -grad_pe_1_max.amplitude, 
+                       0])
+    grad_pe_1_max = pp.make_extended_trapezoid(
+        channel=channels.pe1, 
+        times=gc_times, 
+        amplitudes=gp_amp)
+
+    gs_amp = np.array([0, 
+                       grad_pe_2_max.amplitude, 
+                       grad_pe_2_max.amplitude, 
+                       0, 
+                       0, 
+                       -grad_pe_2_max.amplitude, 
+                       -grad_pe_2_max.amplitude, 
+                       0])
+    grad_pe_2_max = pp.make_extended_trapezoid(
+        channel=channels.pe2, 
+        times=gc_times, 
+        amplitudes=gs_amp)
+    
+    # Fill-times
+    t_ex = pp.calc_duration(d_ex) + pp.calc_duration(grad_ro_pre)
+    t_ref = pp.calc_duration(d_ref) + pp.calc_duration(gr)
+
+    t_train = t_ex + etl * t_ref
+
+    TR_fill = repetition_time - t_train
+
+    # Round to gradient raster
+    TR_fill = system.grad_raster_time * np.round(TR_fill / system.grad_raster_time)
+    if TR_fill < 0:
+        TR_fill = 1e-3
+        warnings.warn(
+            f"TR too short, adapted to: {1000 * (t_train + TR_fill)} ms"
+        )
+    else:
+        print(f"TR fill: {1000 * TR_fill} ms")
+    delay_TR = pp.make_delay(TR_fill)
+
+    # ======
+    # CONSTRUCT SEQUENCE
+    # ======
+    for C_pe2 in range(-dummies, n_enc['pe2']):
+        if C_pe2 >= 0:
+            pe2_scale = (C_pe2 - n_enc['pe2']/2)/n_enc['pe2']*2; # from -1 to +1
+            n_pe1_range = range(n_enc['pe1'])
         else:
-            seq.add_block(pp.make_delay(raster(
-                val=repetition_time - (etl + 0.5) * echo_time - rf_duration,
-                precision=system.grad_raster_time
-            )))
+            pe2_scale = 0.0
+            n_pe1_range = range(1) # skip the nPH loop for dummy scan(s)
 
-    for train, position in zip(trains, trains_pos):     
-        if inversion_pulse:
-            seq.add_block(rf_inversion)
-            seq.add_block(pp.make_delay(raster(
-                val=inversion_time - rf_duration,
-                precision=system.grad_raster_time
-            )))
-        seq.add_block(rf_90)
-        seq.add_block(grad_ro_pre)
-        seq.add_block(pp.make_delay(tau_1))
-        
-        for echo, pe_indices in zip(train, position):
-            pe_1, pe_2 = echo
-            if disable_pe:
-                pe_1 = 0
-                pe_2 = 0
-            
-            seq.add_block(rf_180)
-            seq.add_block(
-                pp.make_trapezoid(
-                    channel=channels.pe1,
-                    area=pe_1,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                pp.make_trapezoid(
-                    channel=channels.pe2,
-                    area=pe_2,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                grad_ro_spr                
-            )          
+        g_pe2 = pp.scale_grad(grad_pe_2_max, pe2_scale)
 
-            seq.add_block(pp.make_delay(tau_2))
-            
-            # Cast index values from int32 to int, otherwise make_label function complains
-            label_pe1 = pp.make_label(type="SET", label="LIN", value=int(pe_indices[0]))
-            label_pe2 = pp.make_label(type="SET", label="PAR", value=int(pe_indices[1]))
-            seq.add_block(grad_ro, adc, label_pe1, label_pe2)
+        for C_pe1 in n_pe1_range:
+            seq.add_block(rf_ex, d_ex)
+            seq.add_block(grad_ro_pre)
 
-            seq.add_block(
-                pp.make_trapezoid(
-                    channel=channels.pe1,
-                    area=-pe_1,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                pp.make_trapezoid(
-                    channel=channels.pe2,
-                    area=-pe_2,
-                    duration=ro_pre_duration,
-                    system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
-                ),
-                grad_ro_spr
-            )
+            if C_pe2 >= 0:
+                pe1_scale = (C_pe1 - n_enc['pe1']/2)/n_enc['pe1']*2; # from -1 to 1
+            else:
+                pe1_scale = 0.0
 
-            seq.add_block(pp.make_delay(tau_3))
+            g_pe1 = pp.scale_grad(grad_pe_1_max, pe1_scale)
 
-        # recalculate TR each train because train length is not guaranteed to be constant
-        tr_delay = raster(repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration, precision=system.grad_raster_time)
+            for k_echo in range(etl):
 
-        if inversion_pulse:
-            tr_delay -= inversion_time
-        
-        seq.add_block(pp.make_delay(tr_delay))
-    
-    # Check labels
-    labels = seq.evaluate_labels(evolution="adc")
-    acq_pos = np.concatenate(trains_pos).T
-    
-    if not np.array_equal(labels["LIN"], acq_pos[0, :]):
-        raise ValueError("LIN labels don't match actual acquisition positions.")
-    if not np.array_equal(labels["PAR"], acq_pos[1, :]):
-        raise ValueError("PAR labels don't match actual acquisition positions.")
+                label_pe1 = pp.make_label(type="SET", label="LIN", value=int(C_pe1))
+                label_pe2 = pp.make_label(type="SET", label="PAR", value=int(C_pe2))
+                label_echo = pp.make_label(type="SET", label="PAR", value=int(k_echo))
+
+                seq.add_block(rf_ref, d_ref)
+                if C_pe2 >= 0:
+                    seq.add_block(g_pe2, g_pe1, gr, adc, label_pe1, label_pe2, label_echo)
+                else:
+                    seq.add_block(g_pe2, g_pe1, gr)
+
+            seq.add_block(delay_TR)
     
     header = seq_utils.create_ismrmd_header(
                 n_enc = n_enc,
                 fov = fov,
                 system = system
                 )
-        
-    # # Calculate some sequence measures
-    # train_duration_tr = (seq.duration()[0]) / len(trains)
-    # train_duration = train_duration_tr - tr_delay
-    
-    # # Add measures and definitions to sequence definition
-    # seq.set_definition("n_total_trains", len(trains))
-    # seq.set_definition("train_duration", train_duration)
-    # seq.set_definition("train_duration_tr", train_duration_tr)
-    # seq.set_definition("tr_delay", tr_delay)
-
-    # seq.set_definition("encoding_dim", [n_enc_ro, n_enc_pe1, n_enc_pe2])
-    # seq.set_definition("encoding_fov", [fov_ro, fov_pe1, fov_pe2])
-    # seq.set_definition("channel_order", [channel_ro, channel_pe1, channel_pe2])
 
     return (seq, header)
-
-    # # check if channel labels are valid
-    # channel_ro, channel_pe1, channel_pe2 = seq_utils.validate_inputs(channel_ro, channel_pe1, channel_pe2)
-
-    # # map fov and n_enc according to channels    
-    # n_enc_ro, fov_ro, n_enc_pe1, fov_pe1, n_enc_pe2, fov_pe2 = seq_utils.calculate_enc_fov_order(
-    #                                                             channel_ro, channel_pe1, n_enc, fov
-    #                                                             )
-
-    # # Map trajectory to PE1 + PE2 samples in format required by sort_kspace()
-    # # Commented because calculates the same as: np.concatenate(trains_pos).T
-    # k_traj_adc = seq.calculate_kspacePP()[0]
-    # acq_pos = seq_utils.calculate_acq_pos(k_traj_adc,n_enc_ro,channel_pe1,fov_pe1,channel_pe2,fov_pe2)

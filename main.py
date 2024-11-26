@@ -9,8 +9,11 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_3d_demo import main as write_seq
 # seq_name = "tse_3d_demo"
 
-from write_tse_3d import main as write_seq
-seq_name = "tse_3d"
+# from write_tse_3d import main as write_seq
+# seq_name = "tse_3d"
+
+from write_tse_3d_mte import main as write_seq
+seq_name = "tse_3d_mte"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
@@ -28,7 +31,7 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (250e-3, 250e-3, 250e-3)
-n = 32
+n = 64
 n_enc = (n, n, 1)
 
 # # Lumina test setting

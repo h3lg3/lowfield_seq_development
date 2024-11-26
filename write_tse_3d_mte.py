@@ -13,16 +13,15 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d_mte.constructor(
-                            echo_time = 20e-3,
-                            repetition_time = 2000e-3,  
-                            etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 5,    
-                            ro_bandwidth = 20e3,
+                            echo_time = 10e-3,
+                            repetition_time = 300e-3,  
+                            etl = 4, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                            dummies = 0,    
+                            ro_bandwidth = 10e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
-                            trajectory = Trajectory.ASCENDING,
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,

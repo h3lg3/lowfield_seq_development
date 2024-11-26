@@ -262,9 +262,9 @@ def get_trains(
     
     # Divide all PE steps into echo trains
     if trajectory.name == 'ASCENDING':
-        num_trains = int(np.ceil(n_enc['pe1']/etl))    # due to slice wise acquisition, only first pe direction is divided into trains
+        num_trains = int(np.ceil(n_enc['pe1']/etl))    # due to "slice wise" acquisition, only first pe direction is divided into trains
         temp = [pe_traj[k::num_trains] for k in range(num_trains)]
-        for k in np.arange(n_enc['pe2'])-n_enc['pe2']/2:
+        for k in np.arange(n_enc['pe2'])-n_enc['pe2']/2:    # add the second pe direction to the trains, but keep the order of pe1 steps in each train
             for i in np.arange(num_trains):
                 for j in np.arange(etl):
                     trains.append([temp[i][j]/fov['pe1'], k/fov['pe2']])
