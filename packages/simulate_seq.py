@@ -5,6 +5,12 @@ import MRzeroCore as mr0
 import pickle
 import os 
 
+custom_seq_definitons =  ('fov', 'slice_thickness', 'Name', 
+                          'Flipangle', 'number_of_readouts', 'k_space_encoding1', 'Nr', 'k_space_encoding2', 
+                          'slices', 'average', 'phase', 'contrast', 
+                          'repetition', 'set', 'segment', 'N_interleaves', 
+                          'delta', 'sampling_scheme', 'TE', 'TR', 'proj_mode')
+
 # %% Create phantom, simulate sequence, reconstruct image
 def simulate_seq(save: bool,
                 seq_filename: str,
@@ -16,10 +22,20 @@ def simulate_seq(save: bool,
                 ):
     sim_name = "sim_" + seq_filename
     seq_file = seq_path + seq_filename + ".seq"
+    temp_seq_file = seq_path + seq_filename + '_temp.seq'
 
     seq = pp.Sequence(system=system)
     seq.read(seq_file, detect_rf_use = True)
-    seq0 = mr0.Sequence.import_file(seq_file)
+
+    # Remove definitions from the sequence because they cause import error in mr0.Sequence.import_file
+    for definition in custom_seq_definitons:
+        seq.definitions.pop(definition, None)   
+
+    seq.write(temp_seq_file)
+    seq0 = mr0.Sequence.import_file(temp_seq_file)
+
+    # Delete the temporary sequence file
+    os.remove(temp_seq_file)
 
     # Setup spin system/object on which we can run the MR sequence
     sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel

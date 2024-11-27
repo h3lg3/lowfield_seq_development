@@ -31,17 +31,17 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (250e-3, 250e-3, 250e-3)
-n = 96  # 96
-n_enc = (n, n, 10) #42
+n = 32  # 96
+n_enc = (n, n, 1) #42
 
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
 # nk = (120, 120, 1)
 
-write_sequence = False
-analyze_sequence = True
-simulate_sequence = False
-plot_simulation = False
+write_sequence = True
+analyze_sequence = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     if plot_simulation or analyze_sequence:

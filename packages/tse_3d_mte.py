@@ -315,5 +315,4 @@ def constructor(
         TR=repetition_time,
     )
 
-    print('hello')
     return (seq, header)
