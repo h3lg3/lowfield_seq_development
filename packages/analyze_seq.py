@@ -3,15 +3,20 @@
 import pypulseq as pp
 import matplotlib.pyplot as plt
 import numpy as np
+from packages.write_seq_definitions import read_definitions
 
 def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/"):
 
     # Create a Sequence object and read the sequence file
     seq = pp.Sequence(system=system)
     seq.read(seq_path + seq_filename + ".seq", detect_rf_use = True)
-    # %% Analyze sequence
+# %% Analyze sequence
     # Plot sequence
-    seq.plot()
+    if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900:
+        print("Analyzing only first 20% of sequence")
+        seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
+    else:
+        seq.plot()
     
     # Plot k-space trajectory
     k_traj_adc, k_traj = seq.calculate_kspace()[0:2]
@@ -28,7 +33,11 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     # # Combined amplitudes and slew rate for case of oblique scanning interesting
     # # Values should stay below system specs even for oblique scanning
     wf = {}
-    wf_grad = seq.waveforms()
+    if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900:
+        wf_grad = seq.waveforms(time_range = (0, round(0.2*seq.duration()[0])))
+    else:
+        wf_grad = seq.waveforms()
+
     wf['t_gx'] = wf_grad[0][0]
     wf['t_gy'] = wf_grad[1][0]
     wf['t_gz'] = wf_grad[2][0]
