@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 from math import pi
 
 from packages import tse_3d_mte
-from packages.seq_utils import Trajectory, Dimensions, Channels
+from packages.seq_utils import Dimensions, Channels
 from packages.mr_systems import low_field as default_system
 
 from pypulseq.opts import Opts
@@ -13,11 +13,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d_mte.constructor(
-                            echo_time = 10e-3,
-                            repetition_time = 300e-3,  
-                            etl = 4, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 0,    
-                            ro_bandwidth = 10e3,
+                            echo_time = 15e-3, 
+                            repetition_time = 300e-3,  # 1000: but if seq gets too long, idea doesnt compile
+                            etl = 10,   # 16: but if seq gets too long, idea doesnt compile
+                            dummies = 5,    
+                            ro_bandwidth = 20e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
@@ -41,6 +41,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     (ok,error_report,) = seq.check_timing()  # Check whether the timing of the sequence is correct
     if ok:
         print("Timing check passed successfully")
+        print("Sequence duration is: ", round(seq.duration()[0]), "s")
     else:
         print("Timing check failed. Error listing follows:")
         [print(e) for e in error_report]        
@@ -57,7 +58,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
         plt.show()
                         
     if plot_seq:
-        seq.plot()
+        if n_enc[1]*n_enc[2] > 900:
+            print("Plotting only the first 20% of the sequence")
+            seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
+        else:
+            seq.plot()
         
     # =========
     # WRITE .SEQ
@@ -65,7 +70,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     if write_seq:
         seq.set_definition('Name', seq_filename)
         seq.write('./sequences/' + seq_filename)
-        #seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        

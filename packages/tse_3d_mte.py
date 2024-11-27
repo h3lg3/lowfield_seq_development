@@ -1,10 +1,7 @@
 """Constructor for 3D TSE Imaging sequence.
-
+QUESTIONS: Book Tofts p.159: Alternate echoes of 180 echo train with have error proportional to 180° imperfection and should not be used in fitting. 
 TODO: add sampling patterns (elliptical masks, partial fourier, CS)
 TODO: add optional variable refocussing pulses (pass list rather than float)
-TODO: Design goal: Allow for minimal TE/Echo spacing for maximal ETL (acceleration)? IF TE:None is set, then use min TE
-TODO: Optimize gradients by gradient surgery
-TODO: REcalculate trajectory such that gradient scaling can be used in loop: Get max Grad Amp and scale according to encoding step: gs=pp.scale_grad(grad_pe_2_max, pe_2_scale)
 """
 from math import pi
 import math
@@ -19,6 +16,7 @@ from packages.seq_utils import Dimensions
 from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
+from packages.write_seq_definitions import write_seq_definitions
 
 import warnings
 
@@ -301,5 +299,21 @@ def constructor(
                 fov = fov,
                 system = system
                 )
+    
+    # write all required parameters in the seq-file definitions.
+    write_seq_definitions(
+        seq=seq,
+        fov=fov['ro'],
+        name = "tse_3d_mte",
+        alpha = excitation_angle,
+        slice_thickness=fov['pe2']/n_enc['pe2'],
+        Nx=n_enc['ro'],
+        Ny=n_enc['ro'],
+        sampling_scheme='cartesian',
+        Nz=n_enc['pe2'],
+        TE=echo_time,
+        TR=repetition_time,
+    )
 
+    print('hello')
     return (seq, header)
