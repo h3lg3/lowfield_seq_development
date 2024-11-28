@@ -9,6 +9,7 @@ import torch
 import nibabel as nib
 from packages.seq_utils import plot_3d
 from packages.mr_systems import lumina as system
+from packages.write_seq_definitions import custom_seq_definitons
 
 # choose flags
 FLAG_PLOTS = True
@@ -21,7 +22,7 @@ seq_path = "./sequences/"
 # %%# define qMR data 
 qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom-Aga_20241113-174629/"
 qMR_mat = "qMR_data.mat"
-qMR_t2star = "T2star_map.nii"
+qMR_T2dash = "T2strich_map.nii"
 
 # define output filename
 sim_filename = "agar_tse_3d_lumina"
@@ -31,25 +32,30 @@ sim_path: str = "./simulation/"
 fov = (250e-3, 250e-3, 250e-3)
 n_enc = (32, 32, 16)
 # for multi-slice simulation
-n_slices = (2, 5, 8, 12)
-n_slices = (7, 9, 11, 12)
-n_slices = (2, 6, 8, 12)
 
 n_slices = tuple(range(0, 16))
 # %% Create phantom, simulate sequence, reconstruct image
-
 seq_file = seq_path + seq_filename + ".seq"
 sim_name = "sim_" + seq_filename
 
 seq = pp.Sequence(system=system)
 seq.read(seq_file, detect_rf_use = True)
-seq0 = mr0.Sequence.import_file(seq_file)
+
+# Remove definitions from the sequence because they cause import error in mr0.Sequence.import_file
+temp_seq_file = seq_path + seq_filename + '_temp.seq'
+for definition in custom_seq_definitons:
+    seq.definitions.pop(definition, None)   
+seq.write(temp_seq_file)
+# import the sequence with MRzero
+seq0 = mr0.Sequence.import_file(temp_seq_file)
+# Delete the temporary sequence file
+os.remove(temp_seq_file)
 
 # load qMR data from mat file
 obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat, size = [0.25, 0.25, 0.25]) 
 
-# # load the T2star_map from nifti file
-nifti_file = qMR_path + qMR_t2star
+# # load the T2dash_map from nifti file
+nifti_file = qMR_path + qMR_T2dash
 nifti_img = nib.load(nifti_file)
 nifti_data = nifti_img.get_fdata()
 nifti_tensor = torch.tensor(nifti_data, dtype=torch.float32)
@@ -57,11 +63,6 @@ obj_p.T2dash = nifti_tensor
 
 # set diffusion to 0
 obj_p.D[:] = 0
-
-# obj_p = mr0.VoxelGridPhantom.brainweb("./data/subject05.npz")
-# obj_p.B0[:] = 0 # Remove B0 inhomogeneity
-# obj_p.D[:] = 0 # Remove diffusion
-# n_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
 
 if n_enc[2] == 1:
     center_slice = obj_p.PD.shape[2]//2

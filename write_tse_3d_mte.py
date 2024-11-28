@@ -14,8 +14,8 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          ):
     seq = tse_3d_mte.constructor(
                             echo_time = 15e-3, 
-                            repetition_time = 300e-3,  # 1000: but if seq gets too long, idea doesnt compile
-                            etl = 10,   # 16: but if seq gets too long, idea doesnt compile
+                            repetition_time = 500e-3,  # 1000: but if seq gets too long, idea doesnt compile
+                            etl = 16,   # 16: but if seq gets too long, idea doesnt compile
                             dummies = 5,    
                             ro_bandwidth = 20e3,
                             ro_oversampling = 1, 

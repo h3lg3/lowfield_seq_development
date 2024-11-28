@@ -18,6 +18,7 @@ from packages.seq_utils import Dimensions
 from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
+from packages.write_seq_definitions import write_seq_definitions
 
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
@@ -299,25 +300,34 @@ def constructor(
     if not np.array_equal(labels["PAR"], acq_pos[1, :]):
         raise ValueError("PAR labels don't match actual acquisition positions.")
     
+    # # Calculate some sequence measures
+    train_duration_tr = (seq.duration()[0]) / len(trains)
+    train_duration = train_duration_tr - tr_delay
+    
     header = seq_utils.create_ismrmd_header(
                 n_enc = n_enc,
                 fov = fov,
                 system = system
                 )
         
-    # # Calculate some sequence measures
-    # train_duration_tr = (seq.duration()[0]) / len(trains)
-    # train_duration = train_duration_tr - tr_delay
-    
-    # # Add measures and definitions to sequence definition
-    # seq.set_definition("n_total_trains", len(trains))
-    # seq.set_definition("train_duration", train_duration)
-    # seq.set_definition("train_duration_tr", train_duration_tr)
-    # seq.set_definition("tr_delay", tr_delay)
-
-    # seq.set_definition("encoding_dim", [n_enc_ro, n_enc_pe1, n_enc_pe2])
-    # seq.set_definition("encoding_fov", [fov_ro, fov_pe1, fov_pe2])
-    # seq.set_definition("channel_order", [channel_ro, channel_pe1, channel_pe2])
+        # write all required parameters in the seq-file definitions.
+    write_seq_definitions(
+        seq=seq,
+        fov=fov['ro'],
+        name = "tse_3d",
+        alpha = excitation_angle,
+        slice_thickness=fov['pe2']/n_enc['pe2'],
+        Nx=n_enc['ro'],
+        Ny=n_enc['ro'],
+        sampling_scheme='cartesian',
+        Nz=n_enc['pe2'],
+        TE=echo_time,
+        TR=repetition_time,
+        train_duration = train_duration,
+        n_total_trains = len(trains),
+        tr_delay = tr_delay,
+        channel_order = (channels.ro, channels.pe1, channels.pe2),
+    )    
 
     return (seq, header)
 

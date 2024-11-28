@@ -5,15 +5,14 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # ======
-
-# from write_tse_3d_demo import main as write_seq
-# seq_name = "tse_3d_demo"
-
 # from write_tse_3d import main as write_seq
 # seq_name = "tse_3d"
 
 from write_tse_3d_mte import main as write_seq
 seq_name = "tse_3d_mte"
+
+# from write_tse_3d_demo import main as write_seq
+# seq_name = "tse_3d_demo"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
@@ -31,8 +30,8 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (250e-3, 250e-3, 250e-3)
-n = 32  # 96
-n_enc = (n, n, 1) #42
+n = 96  # 96
+n_enc = (n, n, 42) #42
 
 # # Lumina test setting
 # fov = (220e-3, 220e-3, 220e-3)
@@ -40,8 +39,8 @@ n_enc = (n, n, 1) #42
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = True
-plot_simulation = True
+simulate_sequence = False
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation or analyze_sequence:

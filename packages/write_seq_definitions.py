@@ -2,6 +2,12 @@
 
 from pypulseq.Sequence.sequence import Sequence
 
+custom_seq_definitons =  ('fov', 'slice_thickness', 'Name', 
+                          'Flipangle', 'number_of_readouts', 'k_space_encoding1', 'Nr', 'k_space_encoding2', 
+                          'slices', 'average', 'phase', 'contrast', 
+                          'repetition', 'set', 'segment', 'N_interleaves', 
+                          'delta', 'sampling_scheme', 'TE', 'TR', 'proj_mode', 'train_duration',
+                          'n_total_trains', 'tr_delay', 'channel_order')
 
 def write_seq_definitions(
     seq: Sequence,
@@ -26,6 +32,11 @@ def write_seq_definitions(
     TE: float = 0,
     TR: float = 0,
     proj_mode: bool = False,
+    train_duration: float = 0,
+    n_total_trains: int = 0,
+    tr_delay: float = 0,
+    channel_order: tuple = (),
+
 ) -> None:
     """Write sequence definitions into the sequence object."""
     if sampling_scheme not in ['radial', 'cartesian', 'spiral']:
@@ -70,6 +81,15 @@ def write_seq_definitions(
 
     if proj_mode:
         seq.set_definition('proj_mode', str(proj_mode))
+
+    if train_duration != 0:
+        seq.set_definition('train_duration', train_duration)
+    if n_total_trains != 0:
+        seq.set_definition('n_total_trains', n_total_trains)
+    if tr_delay != 0:
+        seq.set_definition('tr_delay', tr_delay)
+    if channel_order != ():
+        seq.set_definition('channel_order', channel_order)
 
 
 def read_definitions(seq):
