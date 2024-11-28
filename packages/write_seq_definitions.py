@@ -7,7 +7,7 @@ custom_seq_definitons =  ('fov', 'slice_thickness', 'Name',
                           'slices', 'average', 'phase', 'contrast', 
                           'repetition', 'set', 'segment', 'N_interleaves', 
                           'delta', 'sampling_scheme', 'TE', 'TR', 'proj_mode', 'train_duration',
-                          'n_total_trains', 'tr_delay', 'channel_order')
+                          'n_total_trains', 'tr_delay', 'channel_order', 'etl', 'ro_bandwidth')
 
 def write_seq_definitions(
     seq: Sequence,
@@ -36,7 +36,8 @@ def write_seq_definitions(
     n_total_trains: int = 0,
     tr_delay: float = 0,
     channel_order: tuple = (),
-
+    etl: int = 0,
+    ro_bandwidth: float = 0,
 ) -> None:
     """Write sequence definitions into the sequence object."""
     if sampling_scheme not in ['radial', 'cartesian', 'spiral']:
@@ -90,6 +91,10 @@ def write_seq_definitions(
         seq.set_definition('tr_delay', tr_delay)
     if channel_order != ():
         seq.set_definition('channel_order', channel_order)
+    if etl != 0:
+        seq.set_definition('etl', etl)        
+    if ro_bandwidth != 0:
+        seq.set_definition('ro_bandwidth', ro_bandwidth)           
 
 
 def read_definitions(seq):

@@ -312,21 +312,23 @@ def constructor(
         
         # write all required parameters in the seq-file definitions.
     write_seq_definitions(
-        seq=seq,
-        fov=fov['ro'],
+        seq = seq,
+        fov = fov['ro'],
         name = "tse_3d",
         alpha = excitation_angle,
-        slice_thickness=fov['pe2']/n_enc['pe2'],
-        Nx=n_enc['ro'],
-        Ny=n_enc['ro'],
-        sampling_scheme='cartesian',
-        Nz=n_enc['pe2'],
-        TE=echo_time,
-        TR=repetition_time,
+        slice_thickness = fov['pe2']/n_enc['pe2'],
+        Nx = n_enc['ro'],
+        Ny = n_enc['ro'],
+        sampling_scheme = 'cartesian',
+        Nz = n_enc['pe2'],
+        TE = echo_time,
+        TR = repetition_time,
         train_duration = train_duration,
         n_total_trains = len(trains),
         tr_delay = tr_delay,
         channel_order = (channels.ro, channels.pe1, channels.pe2),
+        etl = etl,
+        ro_bandwidth = ro_bandwidth
     )    
 
     return (seq, header)

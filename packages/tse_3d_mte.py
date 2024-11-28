@@ -23,7 +23,7 @@ import warnings
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
     repetition_time: float = 600e-3,
-    etl: int = 7,               # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
+    etl: int = 7,               # number of echoes in echo train, etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
     ramp_duration: float = 200e-6,
@@ -302,17 +302,19 @@ def constructor(
     
     # write all required parameters in the seq-file definitions.
     write_seq_definitions(
-        seq=seq,
-        fov=fov['ro'],
+        seq = seq,
+        fov = fov['ro'],
         name = "tse_3d_mte",
         alpha = excitation_angle,
-        slice_thickness=fov['pe2']/n_enc['pe2'],
-        Nx=n_enc['ro'],
-        Ny=n_enc['ro'],
-        sampling_scheme='cartesian',
-        Nz=n_enc['pe2'],
-        TE=echo_time,
-        TR=repetition_time,
+        slice_thickness = fov['pe2']/n_enc['pe2'],
+        Nx = n_enc['ro'],
+        Ny = n_enc['ro'],
+        sampling_scheme = 'cartesian',
+        Nz = n_enc['pe2'],
+        TE = echo_time,
+        TR = repetition_time,
+        etl = etl,
+        ro_bandwidth = ro_bandwidth
     )
 
     return (seq, header)
