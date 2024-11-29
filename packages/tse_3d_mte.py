@@ -93,7 +93,9 @@ def constructor(
                                            
     # derived and modifed parameters
     delta_k_ro = 1/fov['ro']
-    adc_duration = raster(n_enc['ro'] / ro_bandwidth, precision=system.grad_raster_time)   # sample everything on grad_raster_time
+    adc_dwell_time = raster(1 / ro_bandwidth, precision=system.grad_raster_time) # sample everything on grad_raster_time
+    adc_duration = n_enc['ro'] * adc_dwell_time    
+    #adc_duration = raster(n_enc['ro'] / ro_bandwidth, precision=system.grad_raster_time)   # seems more robust to use dwell time instead of duration due to rounding errors when 1/ro_bandwidth is calculated
     ro_amplitude = n_enc['ro'] * delta_k_ro / adc_duration
     gradient_correction = raster(gradient_correction, precision=system.grad_raster_time)
 
@@ -303,7 +305,7 @@ def constructor(
     # write all required parameters in the seq-file definitions.
     write_seq_definitions(
         seq = seq,
-        fov = fov['ro'],
+        fov = (fov["ro"], fov["pe1"], fov["pe2"]),
         name = "tse_3d_mte",
         alpha = excitation_angle,
         slice_thickness = fov['pe2']/n_enc['pe2'],
@@ -314,7 +316,8 @@ def constructor(
         TE = echo_time,
         TR = repetition_time,
         etl = etl,
-        ro_bandwidth = ro_bandwidth
+        ro_bandwidth = ro_bandwidth,
+        ro_oversampling = ro_oversampling
     )
 
     return (seq, header)

@@ -73,6 +73,7 @@ def raster(val: float, precision: float) -> float:
     # return np.round(val / precision) * precision
     val = np.round(val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
     gridded_val = math.ceil(val / precision) * precision
+    gridded_val = np.round(gridded_val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
     return gridded_val
     # decimals = abs(Decimal(str(precision)).as_tuple().exponent)
     # return round(gridded_val, ndigits=decimals)
@@ -437,7 +438,50 @@ def plot_3d(data: np.ndarray):
             data = torch.from_numpy(data)
     assert isinstance(data, torch.Tensor), "input data must be type torch.Tensor or np.ndarray"
 
-    if data.shape[2] > 1:
+
+    if data.dim() == 4:
+        # Create a figure and axis
+        fig, ax = plt.subplots()
+        plt.subplots_adjust(left=0.25, bottom=0.35)
+
+        # Initial plot
+        slice_index_3d = 0
+        slice_index_4d = 0
+        img = ax.imshow(data[:, :, slice_index_3d, slice_index_4d].abs(), cmap='viridis', origin="lower")
+        ax.set_title(f'Slice 3D {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
+        plt.colorbar(img, ax=ax)
+
+        # Create slider axes and sliders
+        ax_slider_3d = plt.axes([0.25, 0.2, 0.65, 0.03])
+        slider_3d = Slider(ax_slider_3d, 'Slice 3D', 0, data.shape[2] - 1, valinit=slice_index_3d, valstep=1)
+
+        ax_slider_4d = plt.axes([0.25, 0.1, 0.65, 0.03])
+        slider_4d = Slider(ax_slider_4d, 'Slice 4D', 0, data.shape[3] - 1, valinit=slice_index_4d, valstep=1)
+
+        ax_contrast_slider = plt.axes([0.25, 0.25, 0.65, 0.03])
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
+
+        # Update function for the sliders
+        def update(val):
+            slice_index_3d = int(slider_3d.val)
+            slice_index_4d = int(slider_4d.val)
+            img.set_data(data[:, :, slice_index_3d, slice_index_4d].abs())
+            ax.set_title(f'Slice 3D {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
+            fig.canvas.draw_idle()
+
+        # Update function for the contrast slider
+        def update_contrast(val):
+            contrast = contrast_slider.val
+            img.set_clim(vmin=0, vmax=data[:, :, slice_index_3d, slice_index_4d].abs().max() * contrast)
+            fig.canvas.draw_idle()
+
+        # Attach the update functions to the sliders
+        slider_3d.on_changed(update)
+        slider_4d.on_changed(update)
+        contrast_slider.on_changed(update_contrast)
+        plt.show()
+
+    elif data.dim() == 3:
         # Create a figure and axis
         fig, ax = plt.subplots()
         plt.subplots_adjust(left=0.25, bottom=0.25)
@@ -463,7 +507,7 @@ def plot_3d(data: np.ndarray):
         slider.on_changed(update)
         # Create a slider axis and slider for contrast adjustment
         ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
-        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 1000.0, valinit=1.0, valstep=0.1)
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
 
         # Update function for the contrast slider
         def update_contrast(val):

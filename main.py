@@ -5,13 +5,13 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # ======
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
-from write_tse_3d_mte import main as write_seq
-seq_name = "tse_3d_mte"
+# from write_tse_3d_mte import main as write_seq
+# seq_name = "tse_3d_mte"
 
-# from write_tse_3d_demo import main as write_seq
+# from write_tse_3d_demo import main as write_seq 
 # seq_name = "tse_3d_demo"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
@@ -30,17 +30,13 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (160e-3, 160e-3, 160e-3)
-n = 64
-n_enc = (n, n, 32)
+n = 32
+n_enc = (n, n, 6)
 
-# # Lumina test setting
-# fov = (220e-3, 220e-3, 220e-3)
-# nk = (120, 120, 1)
-
-write_sequence = True
-analyze_sequence = True
+write_sequence = False
+analyze_sequence = False
 simulate_sequence = False
-plot_simulation = False
+plot_simulation = True
 
 if write_sequence:
     if plot_simulation or analyze_sequence:
@@ -52,7 +48,7 @@ if analyze_sequence:
     analyze_seq(seq_filename=seq_name, system=system)
             
 if simulate_sequence:
-    simulate_seq(save=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
+    simulate_seq(save=True, seq_filename=seq_name, system=system)
     
 if plot_simulation:
     if analyze_sequence:
@@ -65,7 +61,7 @@ if plot_simulation:
     else:
         plot_sim(plot={
             "phantom": False,
-            "seq": True,
-            "kspace": True,
+            "seq": False,
+            "kspace": False,
             "reco": True
             }, seq_filename=seq_name, system=system) 

@@ -7,11 +7,11 @@ custom_seq_definitons =  ('fov', 'slice_thickness', 'Name',
                           'slices', 'average', 'phase', 'contrast', 
                           'repetition', 'set', 'segment', 'N_interleaves', 
                           'delta', 'sampling_scheme', 'TE', 'TR', 'proj_mode', 'train_duration',
-                          'n_total_trains', 'tr_delay', 'channel_order', 'etl', 'ro_bandwidth')
+                          'n_total_trains', 'tr_delay', 'channel_order', 'etl', 'ro_bandwidth', 'ro_oversampling')
 
 def write_seq_definitions(
     seq: Sequence,
-    fov: float,
+    fov: tuple,
     slice_thickness: float,
     name: str,
     alpha: float,
@@ -38,15 +38,18 @@ def write_seq_definitions(
     channel_order: tuple = (),
     etl: int = 0,
     ro_bandwidth: float = 0,
+    ro_oversampling: int = 1,
 ) -> None:
     """Write sequence definitions into the sequence object."""
     if sampling_scheme not in ['radial', 'cartesian', 'spiral']:
         raise TypeError('Unknown sampling scheme')
 
-    seq.set_definition('FOV', [fov, fov, slice_thickness])
+    seq.set_definition('FOV', fov)
+    seq.set_definition('slice_thickness', slice_thickness)
     seq.set_definition('name', name)
     seq.set_definition('Flipangle', alpha)
     seq.set_definition('number_of_readouts', int(Nx))
+    seq.set_definition('ro_oversampling', int(ro_oversampling))
 
     if sampling_scheme == 'radial' and Nr != 1:
         seq.set_definition('number_of_spokes', int(Nr))
@@ -70,7 +73,7 @@ def write_seq_definitions(
     if segment != 1:
         seq.set_definition('segment', segment)
     if Nz != 1:
-        seq.set_definition('k_space_encoding2', Nz)
+        seq.set_definition('k_space_encoding2', int(Nz))
     if delta != 0:
         seq.set_definition('delta', delta)
 

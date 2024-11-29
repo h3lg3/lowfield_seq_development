@@ -13,11 +13,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d.constructor(
-                            echo_time = 20e-3,
-                            repetition_time = 2000e-3,  
+                            echo_time = 17e-3,
+                            repetition_time = 1500e-3,  
                             etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 5,    
-                            ro_bandwidth = 20e3,
+                            dummies = 2,    
+                            ro_bandwidth = 14e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
@@ -42,6 +42,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     (ok,error_report,) = seq.check_timing()  # Check whether the timing of the sequence is correct
     if ok:
         print("Timing check passed successfully")
+        print("Sequence duration is: ", round(seq.duration()[0]), "s")
     else:
         print("Timing check failed. Error listing follows:")
         [print(e) for e in error_report]        

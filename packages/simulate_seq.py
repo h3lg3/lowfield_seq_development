@@ -12,14 +12,20 @@ def simulate_seq(save: bool,
                 system:pp.Opts,
                 seq_path: str = "./sequences/",
                 sim_path: str = "./simulation/",
-                fov:tuple = (256e-3, 256e-3, 256e-3), 
-                n_enc:tuple =(64, 64, 1)
+                add_noise: bool = False
                 ):
     sim_name = "sim_" + seq_filename
     seq_file = seq_path + seq_filename + ".seq"
 
     seq = pp.Sequence(system=system)
     seq.read(seq_file, detect_rf_use = True)
+
+    n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
+    n_enc = tuple(map(int, n_enc))
+
+    n_echo = int(seq.definitions['etl'])
+    fov = tuple(seq.definitions['FOV'])
+    ro_oversampling = int(seq.definitions['ro_oversampling'])
 
     # Remove definitions from the sequence because they cause import error in mr0.Sequence.import_file
     temp_seq_file = seq_path + seq_filename + '_temp.seq'
@@ -31,8 +37,11 @@ def simulate_seq(save: bool,
     # Delete the temporary sequence file
     os.remove(temp_seq_file)
 
+    # Reload seq file
+    seq.read(seq_file, detect_rf_use = True)
+
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
     if sel_phantom == 'simbrain' and n_enc[2] > 1:
         print('3D simulation is not supported for simbrain phantom - change to invivo phantom')
         sel_phantom = "invivo"
@@ -72,9 +81,25 @@ def simulate_seq(save: bool,
     obj_sim = obj_p.build()
     
     # SIMULATE the external.seq file and add acquired signal to ADC plot
-    graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
-    signal=mr0.execute_graph(graph, seq0, obj_sim)
-    reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+    graph = mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
+    signal = mr0.execute_graph(graph, seq0, obj_sim)
+    if add_noise:         # additional noise as simulation is ideal
+        signal = signal + 1e-6 * np.random.randn(signal.shape[0], 2).view(np.complex128)
+
+    if seq.definitions['name'] == 'tse_3d_mte':
+        # 3D FFT
+        def fft_3d(x):
+            return np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(x, axes=(0, 1, 3)), axes=(0, 1, 3)), axes=(0, 1, 3))
+
+        kspace = np.reshape(signal, (n_enc[2], n_enc[1], n_echo, ro_oversampling*(n_enc[0])))
+        kspace = kspace[:, :, :, 0:ro_oversampling*(n_enc[0])]
+
+        reco = fft_3d(kspace)
+        reco = reco[:, :, :, round(ro_oversampling*n_enc[0]/2 - n_enc[0]/2) : round(ro_oversampling*n_enc[0]/2 + n_enc[0]/2)]
+        reco = np.transpose(reco, (3, 1, 0, 2))
+    else:
+        reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+
     # %% save results
     if save:
         # Check if directory exists

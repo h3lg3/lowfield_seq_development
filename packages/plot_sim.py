@@ -39,8 +39,11 @@ def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./s
     if plot["kspace"]:
         seq0.plot_kspace_trajectory()
             
-    if plot["reco"]:  
-        plot_3d(reco)   
+    if plot["reco"]:   
+        plot_3d(reco)
+        #plot_3d(np.transpose(np.squeeze(reco[0, :, :, :]), (0, 2, 1)))
+
+    
         
 if __name__ == "__main__":
     plot_sim(plot={
