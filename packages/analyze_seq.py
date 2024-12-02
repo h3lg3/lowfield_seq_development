@@ -3,7 +3,6 @@
 import pypulseq as pp
 import matplotlib.pyplot as plt
 import numpy as np
-from packages.write_seq_definitions import read_definitions
 
 def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/"):
 

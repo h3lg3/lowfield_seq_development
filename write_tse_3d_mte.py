@@ -7,6 +7,9 @@ from packages.mr_systems import low_field as default_system
 
 from pypulseq.opts import Opts
 
+import os
+
+
 def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          system:Opts = default_system, 
          fov:tuple = (256e-3, 256e-3, 256e-3), 
@@ -70,7 +73,10 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
     if write_seq:
         seq.set_definition('Name', seq_filename)
         seq.write('./sequences/' + seq_filename)
-        seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        if os.path.exists(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq"):
+            seq.write(r"C:\Users\hhert\VirtualMachines\SharedFolder\pulseq\external.seq")
+        else:
+            print("Shared folder not found. Sequence not written to shared folder.")
 
 if __name__ == "__main__":
     main(plot=True, write_seq=True)        

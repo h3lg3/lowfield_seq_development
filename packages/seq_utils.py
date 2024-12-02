@@ -3,10 +3,14 @@ from enum import Enum
 import math
 from dataclasses import dataclass
 import ismrmrd
-from pypulseq.opts import Opts
+import pypulseq as pp
+
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
+
 import torch
+from scipy.optimize import curve_fit
+
 
 """Nexus Console Functions"""
 """Interface class for dimensions."""
@@ -346,7 +350,7 @@ def calculate_acq_pos(
 def create_ismrmd_header(
     n_enc: dict,
     fov: dict,
-    system:Opts
+    system:pp.Opts
     )->list:
 
 # Create ISMRMRD header
@@ -448,31 +452,31 @@ def plot_3d(data: np.ndarray):
         slice_index_3d = 0
         slice_index_4d = 0
         img = ax.imshow(data[:, :, slice_index_3d, slice_index_4d].abs(), cmap='viridis', origin="lower")
-        ax.set_title(f'Slice 3D {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
+        ax.set_title(f'Slice {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
         plt.colorbar(img, ax=ax)
 
         # Create slider axes and sliders
         ax_slider_3d = plt.axes([0.25, 0.2, 0.65, 0.03])
-        slider_3d = Slider(ax_slider_3d, 'Slice 3D', 0, data.shape[2] - 1, valinit=slice_index_3d, valstep=1)
+        slider_3d = Slider(ax_slider_3d, 'Slice', 0, data.shape[2] - 1, valinit=slice_index_3d, valstep=1)
 
         ax_slider_4d = plt.axes([0.25, 0.1, 0.65, 0.03])
         slider_4d = Slider(ax_slider_4d, 'Slice 4D', 0, data.shape[3] - 1, valinit=slice_index_4d, valstep=1)
 
         ax_contrast_slider = plt.axes([0.25, 0.25, 0.65, 0.03])
-        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 10.0, valinit=1.0, valstep=0.1)
 
         # Update function for the sliders
         def update(val):
             slice_index_3d = int(slider_3d.val)
             slice_index_4d = int(slider_4d.val)
             img.set_data(data[:, :, slice_index_3d, slice_index_4d].abs())
-            ax.set_title(f'Slice 3D {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
+            ax.set_title(f'Slice {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
             fig.canvas.draw_idle()
 
         # Update function for the contrast slider
         def update_contrast(val):
             contrast = contrast_slider.val
-            img.set_clim(vmin=0, vmax=data[:, :, slice_index_3d, slice_index_4d].abs().max() * contrast)
+            img.set_clim(vmin = 0, vmax = data[:, :, slice_index_3d, slice_index_4d].abs().max() * contrast)
             fig.canvas.draw_idle()
 
         # Attach the update functions to the sliders
@@ -507,7 +511,7 @@ def plot_3d(data: np.ndarray):
         slider.on_changed(update)
         # Create a slider axis and slider for contrast adjustment
         ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
-        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 10.0, valinit=1.0, valstep=0.1)
 
         # Update function for the contrast slider
         def update_contrast(val):
@@ -547,3 +551,33 @@ def plot_3d(data: np.ndarray):
         # Attach the update function to the contrast slider
         contrast_slider.on_changed(update_contrast)
         plt.show()
+
+ 
+def t2_fit(data: np.ndarray, seq: pp.Sequence) -> list[np.ndarray,  np.ndarray]:
+
+    nRD = int(seq.definitions['number_of_readouts'])
+    nPH1 = int(seq.definitions['k_space_encoding1'])
+    nPH2 = int(seq.definitions['k_space_encoding2'])
+
+    n_echo = int(seq.definitions['etl'])
+    TE = seq.definitions['TE']
+
+    def func(t, a, T2):
+        return a * np.exp(-t/T2)
+
+    t = (1+np.arange(n_echo)) * TE
+    S = np.abs(data)
+
+    a_map = np.zeros((nRD, nPH1, nPH2))
+    T2_map = np.ones((nRD, nPH1, nPH2))*0
+    for x in range(nRD):
+        for y in range(nPH1):
+            for z in range(nPH2):
+                if S[x, y, z, 0] > np.mean(S[x, y, z, 0].flatten())*0.4:
+                    popt, pcov = curve_fit(func, t, S[x, y, z, :], p0 = (S[x, y, z, 0], 0.08))
+                    a_map[x, y, z] = popt[0]
+                    T2_map[x, y, z] = popt[1]
+
+    T2_map = np.clip(T2_map, 0, 1)
+
+    return a_map, T2_map

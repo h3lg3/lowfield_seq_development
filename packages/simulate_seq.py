@@ -4,6 +4,7 @@ import pypulseq as pp
 import MRzeroCore as mr0
 import pickle
 import os 
+
 from packages.write_seq_definitions import custom_seq_definitons
 
 # %% Create phantom, simulate sequence, reconstruct image
@@ -97,6 +98,7 @@ def simulate_seq(save: bool,
         reco = fft_3d(kspace)
         reco = reco[:, :, :, round(ro_oversampling*n_enc[0]/2 - n_enc[0]/2) : round(ro_oversampling*n_enc[0]/2 + n_enc[0]/2)]
         reco = np.transpose(reco, (3, 1, 0, 2))
+
     else:
         reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
 

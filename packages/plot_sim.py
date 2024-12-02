@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import pypulseq as pp
 from matplotlib import pyplot as plt
-from packages.seq_utils import plot_3d
+from packages.seq_utils import t2_fit, plot_3d
 import MRzeroCore as mr0
 
 def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./simulation/"):
@@ -42,7 +42,11 @@ def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./s
     if plot["reco"]:   
         plot_3d(reco)
         #plot_3d(np.transpose(np.squeeze(reco[0, :, :, :]), (0, 2, 1)))
-
+    
+    if plot["T2fit"]:
+        a_map, T2_map = t2_fit(reco, seq) 
+        # plot_3d(a_map)
+        plot_3d(T2_map)
     
         
 if __name__ == "__main__":
