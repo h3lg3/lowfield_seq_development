@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 from math import pi
 
-from packages import se_t1mapping
+from packages import se_t1_mapping
 from packages.seq_utils import Dimensions, Channels
 from packages.mr_systems import low_field as default_system
 
@@ -12,19 +12,15 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          fov:tuple = (256e-3, 256e-3, 256e-3), 
          n_enc:tuple = (64, 64, 64)
          ):
-    seq = se_t1mapping.constructor(
+    seq = se_t1_mapping.constructor(
                             echo_time = 15e-3, 
-                            repetition_time = 300e-3,  # 1000: but if seq gets too long, idea doesnt compile
-                            etl = 8,   # 16: but if seq gets too long, idea doesnt compile, also careful with 180° trains
-                            dummies = 5,    
+                            repetition_time = 5000e-3,
+                            TI = [50e-3, 100e-3, 500e-3, 1500e-3, 4500e-3],
+                            slice_thickness = 8e-3,   
                             ro_bandwidth = 16e3,
                             ro_oversampling = 1, 
-                            rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
-                            refocussing_angle = pi,  
-                            excitation_phase = pi/2,
-                            refocussing_phase = 0,
                             channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
                             system = system
                             )[0]

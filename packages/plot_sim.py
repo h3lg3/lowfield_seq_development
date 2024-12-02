@@ -43,7 +43,7 @@ def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./s
         plot_3d(reco)
         #plot_3d(np.transpose(np.squeeze(reco[0, :, :, :]), (0, 2, 1)))
     
-    if plot["T2fit"]:
+    if seq.definitions.name == 'tse_3d_mte':
         a_map, T2_map = t2_fit(reco, seq) 
         # plot_3d(a_map)
         plot_3d(T2_map)

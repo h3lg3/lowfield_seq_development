@@ -7,23 +7,21 @@ from packages.analyze_seq import analyze_seq
 # ======
 # from write_tse_3d import main as write_seq
 # seq_name = "tse_3d"
-# t2fit = False
 
-from write_tse_3d_mte import main as write_seq
-seq_name = "tse_3d_mte"
-t2fit = True
+# from write_tse_3d_mte import main as write_seq
+# seq_name = "tse_3d_mte"
+
+from write_se_t1_mapping import main as write_seq
+seq_name = "se_t1_mapping"
 
 # from write_tse_3d_demo import main as write_seq 
 # seq_name = "tse_3d_demo"
-# t2fit = False
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
-# t2fit = False
 
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage"
-# t2fit = False
 
 # ======
 # SCANNER
@@ -62,7 +60,6 @@ if plot_simulation:
             "seq": False,
             "kspace": False,
             "reco": True,
-            "T2fit" : False
             }, seq_filename=seq_name, system=system) 
     else:
         plot_sim(plot={
@@ -70,5 +67,4 @@ if plot_simulation:
             "seq": False,
             "kspace": False,
             "reco": True,
-            "T2fit" : t2fit
             }, seq_filename=seq_name, system=system) 
