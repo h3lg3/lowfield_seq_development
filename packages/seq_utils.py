@@ -11,10 +11,6 @@ from matplotlib.widgets import Slider
 import torch
 from scipy.optimize import curve_fit
 
-
-"""Nexus Console Functions"""
-"""Interface class for dimensions."""
-
 @dataclass(frozen=True)
 class Dimensions:
     """Dataclass for definition of dimensional parameters."""

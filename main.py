@@ -29,23 +29,24 @@ seq_name = "se_t1_mapping"
 from packages.mr_systems import lumina as system
 seq_name = seq_name + '_lumina'
 
+# seq_name = 'tse_3d_mte_lumina_64_64_32_TR300'
 # ======
 # FOV
 # ======
 fov = (160e-3, 160e-3, 160e-3)
 n = 32
-n_enc = (n, n, 3)
+n_enc = (n, n, 1)
 
 write_sequence = False
-analyze_sequence = False
+analyze_sequence = True
 simulate_sequence = False
-plot_simulation = True
+plot_simulation = False
 
 if write_sequence:
     if plot_simulation or analyze_sequence:
         write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     else:
-        write_seq(plot=True, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
+        write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     
 if analyze_sequence:
     analyze_seq(seq_filename=seq_name, system=system)

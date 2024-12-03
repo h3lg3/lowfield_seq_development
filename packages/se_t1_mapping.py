@@ -104,7 +104,7 @@ def constructor(
             ##########################################################################################
             # SE module
             seq, TR, _,_,_ = SE_module(seq, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
-                                    TR = TR, ky_i = ky_i)
+                                    TR = TR, ky_i = ky_i, slice_thickness = slice_thickness)
             ##########################################################################################
 
 
@@ -113,13 +113,6 @@ def constructor(
                 fov = fov,
                 system = system
                 )
-    
-
-    seq.set_definition(key="FOV", value=fov)
-    seq.set_definition(key="Name", value="irse2d")
-    seq.set_definition(key="TE", value=TE)
-    seq.set_definition(key="ReconMatrixSize", value=[Nx, Ny, 1])
-    seq.set_definition(key="TR", value=TR)
 
     # write all required parameters in the seq-file definitions.
     write_seq_definitions(
@@ -141,7 +134,7 @@ def constructor(
     return (seq, header)
 
 def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
-              TR = 5000e-3, ky_i = 0, ETL = 1, adc_duration = 6.4e-3, system:Opts = default_system):
+              TR = 5000e-3, ky_i = 0, slice_thickness = 5e-3, ETL = 1, adc_duration = 6.4e-3, system:Opts = default_system):
     """
     Creates a Spin-echo module (SE) sequence and adds it
     to the seq object
@@ -164,7 +157,7 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     TR : float
         Repetition time
     Ny : float
-    time_remove_TI: foat
+    time_remove_TI: float
                     time for TI delay calculation
     remove_delayTR: float
                     time for TR delay calculation
@@ -177,27 +170,27 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     k_width = (Nx) * delta_k
     gx = pp.make_trapezoid(channel='x', system=system, flat_area=k_width,
                     flat_time = readout_time)
-    adc = make_adc(num_samples=Nx, duration=readout_time, delay=gx.rise_time)
+    adc = pp.make_adc(num_samples=Nx, duration=readout_time, delay=gx.rise_time)
 
-    gx_pre = make_trapezoid(channel='x', system=system, area=(gx.area) / 2)
-    gx_post = make_trapezoid(channel='x', system=system, area=3 * gx.area / 2)
+    gx_pre = pp.make_trapezoid(channel='x', system=system, area=(gx.area) / 2)
+    gx_post = pp.make_trapezoid(channel='x', system=system, area=3 * gx.area / 2)
 
     # Prephase and rephase
     phase_areas = np.linspace(-0.5*delta_k*Ny, 0.5*delta_k*Ny, Ny)
-    gy_pe_max = make_trapezoid(channel='y', system=system, area=np.max(np.abs(phase_areas)))
-    pe_duration = calc_duration(gy_pe_max)
+    gy_pe_max = pp.make_trapezoid(channel='y', system=system, area=np.max(np.abs(phase_areas)))
+    pe_duration = pp.calc_duration(gy_pe_max)
 
     rf_flip = 90
     rf_offset = 0
 
     flip90 = round(rf_flip * pi / 180, 3)
     flip180 = 180 * pi / 180
-    rf90, gz90, gz_reph = make_sinc_pulse(flip_angle=flip90, system=system, duration=2.5e-3,
-                                      slice_thickness=slice_thickness, apodization=0.5,
+    rf90, gz90, gz_reph = pp.make_sinc_pulse(flip_angle=flip90, system=system, duration=2.5e-3,
+                                      slice_thickness = slice_thickness, apodization=0.5,
                                       phase_offset=pi / 2,
                                       time_bw_product=4, return_gz=True, use="excitation")
 
-    rf180, gz180, _ = make_sinc_pulse(flip_angle=flip180, system=system,
+    rf180, gz180, _ = pp.make_sinc_pulse(flip_angle=flip180, system=system,
                                       duration=2.5e-3,
                                       slice_thickness=1.25 * slice_thickness,
                                       apodization=0.5,
@@ -208,7 +201,7 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
 
     # Spoiler
     gss_spoil_A = 4 / slice_thickness
-    gss_spoil = make_trapezoid(channel='z', system=system, area=gss_spoil_A)
+    gss_spoil = pp.make_trapezoid(channel='z', system=system, area=gss_spoil_A)
 
     gss_times = np.cumsum([0, gss_spoil.rise_time, gss_spoil.flat_time,
                            gss_spoil.fall_time - gz180.rise_time, gz180.flat_time,
@@ -219,21 +212,21 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
             [0, gss_spoil.amplitude, gss_spoil.amplitude, gz180.amplitude, gz180.amplitude, gss_spoil.amplitude,
              gss_spoil.amplitude, 0])
 
-    gss_spoil_add=make_extended_trapezoid(channel='z', amplitudes=gss_amps, times=gss_times, system=system)
+    gss_spoil_add = pp.make_extended_trapezoid(channel='z', amplitudes=gss_amps, times=gss_times, system=system)
 
     rf180.delay = gss_spoil.rise_time + gss_spoil.flat_time + gss_spoil.fall_time - gz180.rise_time
 
-    gss_spoil_duration = calc_duration(gss_spoil_add)
+    gss_spoil_duration = pp.calc_duration(gss_spoil_add)
 
     # End of TR spoiler
-    gz_spoil = make_trapezoid(channel='z', system=system, area=2 / slice_thickness)
+    gz_spoil = pp.make_trapezoid(channel='z', system=system, area=2 / slice_thickness)
     gz_spoil.id = seq.register_grad_event(gz_spoil)
 
     # Delays
     # Echo time (TE) and repetition time (TR)
     pre180d = (TE[0] / 2
-               - calc_duration(gz90) / 2
-               - calc_duration(gx_pre, gz_reph)
+               - pp.calc_duration(gz90) / 2
+               - pp.calc_duration(gx_pre, gz_reph)
                           - gss_spoil_duration / 2
                           )
     post180d = (TE[0] / 2
@@ -242,21 +235,22 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                 - (gx.rise_time + readout_time / 2)
                             )
 
-    pre180delay = make_delay(pre180d)
-    post180delay= make_delay(post180d)
+    pre180delay = pp.make_delay(pre180d)
+    post180delay= pp.make_delay(post180d)
 
-    gz_s = make_trapezoid(channel='z', system=seq.system, area=-4 / slice_thickness)
-    gx_s = make_trapezoid(channel='x', system=seq.system, area=-4 / slice_thickness)
-    gy_s = make_trapezoid(channel='y', system=seq.system, area=-4 / slice_thickness)
-
-
-    time_remove_TI=calc_duration(gz90) +calc_duration(gz_reph) + calc_duration(gz180) + calc_duration(gss_spoil_add)-gz180.rise_time -calc_duration(gx_s, gy_s, gz_s)
-    remove_delayTR =  time_remove_TI++calc_duration(gx_post)  + readout_time + pre180d
+    gz_s = pp.make_trapezoid(channel='z', system=seq.system, area=-4 / slice_thickness)
+    gx_s = pp.make_trapezoid(channel='x', system=seq.system, area=-4 / slice_thickness)
+    gy_s = pp.make_trapezoid(channel='y', system=seq.system, area=-4 / slice_thickness)
 
 
-    gy_pre= make_trapezoid(channel='y', system=system,
+    time_remove_TI = pp.calc_duration(gz90) + pp.calc_duration(gz_reph) + pp.calc_duration(gz180) \
+          + pp.calc_duration(gss_spoil_add) - gz180.rise_time - pp.calc_duration(gx_s, gy_s, gz_s)
+    remove_delayTR =  time_remove_TI+pp.calc_duration(gx_post)  + readout_time + pre180d
+
+
+    gy_pre = pp.make_trapezoid(channel='y', system=system,
                                  area=phase_areas[-ky_i - 1], duration=pe_duration)
-    gy_post= make_trapezoid(channel='y', system=system,
+    gy_post = pp.make_trapezoid(channel='y', system=system,
                                   area=-phase_areas[-ky_i - 1], duration=pe_duration)
 
     # Build sequence block SE

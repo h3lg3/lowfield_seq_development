@@ -13,14 +13,14 @@ from packages.write_seq_definitions import custom_seq_definitons
 
 # choose flags
 FLAG_PLOTS = True
-FLAG_SAVE = False
+FLAG_SAVE = True
 
 # define sequence filename
-seq_filename = "tse_3d_lumina"
+seq_filename = "tse_3d_lumina_phantom_250mm"
 seq_path = "./sequences/"
 
 # %%# define qMR data 
-qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom-Aga_20241113-174629/"
+qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom_Agar_small_FOV/"
 qMR_mat = "qMR_data.mat"
 qMR_T2dash = "T2strich_map.nii"
 
@@ -28,18 +28,19 @@ qMR_T2dash = "T2strich_map.nii"
 sim_filename = "agar_tse_3d_lumina"
 sim_path: str = "./simulation/"
 
-# define simulation parameters
-fov = (250e-3, 250e-3, 250e-3)
-n_enc = (32, 32, 16)
 # for multi-slice simulation
-
-n_slices = tuple(range(0, 16))
+n_slices = tuple(range(0, 32, 4))
 # %% Create phantom, simulate sequence, reconstruct image
 seq_file = seq_path + seq_filename + ".seq"
 sim_name = "sim_" + seq_filename
 
 seq = pp.Sequence(system=system)
 seq.read(seq_file, detect_rf_use = True)
+
+n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
+n_enc = tuple(map(int, n_enc))
+
+fov = tuple(seq.definitions['FOV'])
 
 # Remove definitions from the sequence because they cause import error in mr0.Sequence.import_file
 temp_seq_file = seq_path + seq_filename + '_temp.seq'
@@ -54,7 +55,7 @@ os.remove(temp_seq_file)
 # load qMR data from mat file
 obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat, size = [0.25, 0.25, 0.25]) 
 
-# # load the T2dash_map from nifti file
+# # # load the T2dash_map from nifti file
 nifti_file = qMR_path + qMR_T2dash
 nifti_img = nib.load(nifti_file)
 nifti_data = nifti_img.get_fdata()

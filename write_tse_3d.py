@@ -15,7 +15,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          ):
     seq = tse_3d.constructor(
                             echo_time = 17e-3,
-                            repetition_time = 1500e-3,  
+                            repetition_time = 500e-3,  
                             etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                             dummies = 2,    
                             ro_bandwidth = 14e3,
