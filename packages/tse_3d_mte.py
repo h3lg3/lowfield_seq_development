@@ -26,7 +26,6 @@ def constructor(
     etl: int = 7,               # number of echoes in echo train, etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
-    ramp_duration: float = 200e-6,
     gradient_correction: float = 0.,
     ro_bandwidth: float = 20e3,
     ro_oversampling: int = 5,
@@ -82,9 +81,6 @@ def constructor(
     nRD_pre = 0
     nRD_post = 0
 
-    # HH1: If ramp_duration is added to adc.delay in the adc definition, then also uncomment this line, to have centered ADC for gradient_correction = 0
-    # gradient_correction = gradient_correction + ramp_duration
-
     # Create a new sequence object
     seq = pp.Sequence(system)
 
@@ -131,8 +127,6 @@ def constructor(
         channel=channels.ro,
         system=system,
         amplitude=ro_amplitude,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration,
         flat_time=ro_flattop_time, # Add gradient correction time and ADC correction time
         delay=t_sp
     )
@@ -143,16 +137,13 @@ def constructor(
         system=system,
         area=grad_ro.area,  # grad_ro_spr.area = 0 why not same as set 0 here
         duration=t_sp,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration)
+        )
     
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
         channel=channels.ro,
         system=system,
         area=grad_ro.area / 2 + grad_ro_spr.area,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration,
         duration=t_spex,
     )
      
@@ -161,10 +152,6 @@ def constructor(
         num_samples=(n_enc['ro']+nRD_pre+nRD_post) * ro_oversampling,
         duration=adc_duration,
         delay=t_sp-nRD_pre*adc_duration/n_enc['ro']# nRD_pre*sampling_time/nRD: delay for additional ADC samples to initialize decimation filters prior to the 'sampling_time'
-
-        #HH1: Since gradients on readout axis are glued together, no need to add ramp_duration to the delay. If you uncomment, this then add ramp_duration to gradient_correction (see above)
-        # otherwise 
-        # delay=t_sp+ramp_duration-nRD_pre*adc_duration/n_enc['ro']
     )
     
     # Phase-encoding
@@ -174,8 +161,7 @@ def constructor(
                     system=system,
                     area=delta_k_pe1*n_enc['pe1']/2,
                     duration=t_sp,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration)
+                    )
 
     # Partition encoding
     delta_k_pe2 = 1 / fov['pe2']
@@ -183,9 +169,7 @@ def constructor(
                     channel=channels.pe2,
                     system=system,
                     area=delta_k_pe2*n_enc['pe2']/2,
-                    duration=t_sp,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration)
+                    duration=t_sp)
     
     # combine parts of the read gradient
     gc_times = np.array(

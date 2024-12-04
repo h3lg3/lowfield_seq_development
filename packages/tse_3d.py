@@ -26,7 +26,6 @@ def constructor(
     etl: int = 7,               # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
-    ramp_duration: float = 200e-6,
     gradient_correction: float = 0.,
     ro_bandwidth: float = 20e3,
     ro_oversampling: int = 5,
@@ -146,8 +145,6 @@ def constructor(
         channel=channels.ro,
         system=system,
         amplitude=grad_amplitude,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration,
         # Add gradient correction time and ADC correction time
         flat_time=adc_duration + 2 * gradient_correction # HH: why 2*gradient_correction?
     )
@@ -158,15 +155,13 @@ def constructor(
         system=system,
         area=grad_ro.area,  # grad_ro_spr.area = 0 why not same as set 0 here
         duration=pp.calc_duration(grad_ro),
-        rise_time=ramp_duration)
+        )
     
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
         channel=channels.ro,
         system=system,
         area=grad_ro.area / 2 + grad_ro_spr.area,
-        rise_time=ramp_duration,
-        fall_time=ramp_duration,
         duration=pp.calc_duration(grad_ro),
     )
     ro_pre_duration = pp.calc_duration(grad_ro_pre) 
@@ -186,10 +181,10 @@ def constructor(
     
     # Delay duration between center refocussing (180 degree) RF pulse and center readout
     tau_2 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.ringdown_time - 2*gradient_correction \
-        - ramp_duration - ro_pre_duration + echo_shift, precision=system.grad_raster_time)
+        - grad_ro.rise_time - ro_pre_duration + echo_shift, precision=system.grad_raster_time)
 
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
-    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.delay  - ramp_duration - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
+    tau_3 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.delay  - grad_ro.rise_time - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
 
     recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
     print(recommended_timing)
@@ -241,16 +236,12 @@ def constructor(
                     area=pe_1,
                     duration=ro_pre_duration,
                     system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
                 ),
                 pp.make_trapezoid(
                     channel=channels.pe2,
                     area=pe_2,
                     duration=ro_pre_duration,
                     system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
                 ),
                 grad_ro_spr                
             )          
@@ -268,16 +259,12 @@ def constructor(
                     area=-pe_1,
                     duration=ro_pre_duration,
                     system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
                 ),
                 pp.make_trapezoid(
                     channel=channels.pe2,
                     area=-pe_2,
                     duration=ro_pre_duration,
                     system=system,
-                    rise_time=ramp_duration,
-                    fall_time=ramp_duration
                 ),
                 grad_ro_spr
             )
@@ -286,7 +273,7 @@ def constructor(
 
         # recalculate TR each train because train length is not guaranteed to be constant
         tr_delay = raster(repetition_time - echo_time * len(train) - adc_duration / 2 - ro_pre_duration \
-            - tau_3 - rf_90.delay - rf_duration / 2 - ramp_duration, precision=system.grad_raster_time)
+            - tau_3 - rf_90.delay - rf_duration / 2 - grad_ro.rise_time, precision=system.grad_raster_time)
 
         if inversion_pulse:
             tr_delay -= inversion_time
