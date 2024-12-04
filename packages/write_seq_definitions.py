@@ -50,6 +50,7 @@ def write_seq_definitions(
     seq.set_definition('Flipangle', alpha)
     seq.set_definition('number_of_readouts', int(Nx))
     seq.set_definition('ro_oversampling', int(ro_oversampling))
+    seq.set_definition('k_space_encoding2', int(Nz))
 
     if sampling_scheme == 'radial' and Nr != 1:
         seq.set_definition('number_of_spokes', int(Nr))
@@ -72,8 +73,6 @@ def write_seq_definitions(
         seq.set_definition('set', set)
     if segment != 1:
         seq.set_definition('segment', segment)
-    if Nz != 1:
-        seq.set_definition('k_space_encoding2', int(Nz))
     if delta != 0:
         seq.set_definition('delta', delta)
 

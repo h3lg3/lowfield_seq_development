@@ -112,7 +112,7 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     # use PRISMA specs
     #seq.calculate_pns('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
     # %% Calculate mechanical resonances
-    asc_dict = pp.utils.siemens.readasc.readasc('.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
+    asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
     resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
     seq.calculate_gradient_spectrum(plot=True, acoustic_resonances=resonances)
     plt.show()

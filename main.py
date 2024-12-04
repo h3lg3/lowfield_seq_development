@@ -33,12 +33,12 @@ seq_name = seq_name + '_lumina'
 # ======
 # FOV
 # ======
-fov = (160e-3, 160e-3, 160e-3)
+fov = (256e-3, 256e-3, 8e-3)
 n = 32
-n_enc = (n, n, 1)
+n_enc = (n, n, 1) 
 
-write_sequence = False
-analyze_sequence = True
+write_sequence = True
+analyze_sequence = False
 simulate_sequence = False
 plot_simulation = False
 

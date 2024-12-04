@@ -3,9 +3,9 @@
 from pypulseq.opts import Opts
 
 lumina = Opts(
-    max_grad=24,    # 24*system.gamma*1e-3
+    max_grad=20,    # 24*system.gamma*1e-3
     grad_unit="mT/m",
-    max_slew=75,
+    max_slew=40,
     slew_unit="T/m/s",
     
     rf_dead_time=100e-6, # time delay at the beginning of RF event, SETS RF DELAY!
