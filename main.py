@@ -5,8 +5,8 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # ======
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
 # from write_tse_3d_mte import main as write_seq
 # seq_name = "tse_3d_mte"
@@ -29,12 +29,12 @@ seq_name = "se_t1_mapping"
 from packages.mr_systems import lumina as system
 seq_name = seq_name + '_lumina'
 
-# seq_name = 'tse_3d_mte_lumina_64_64_32_TR300'
+#seq_name = 'tse_3d_lumina_64_64_32_TR1500'
 # ======
 # FOV
 # ======
-fov = (256e-3, 256e-3, 8e-3)
-n = 32
+fov = (160e-3, 160e-3, 8e-3)
+n = 64
 n_enc = (n, n, 1) 
 
 write_sequence = True
