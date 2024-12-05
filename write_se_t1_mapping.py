@@ -13,11 +13,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = se_t1_mapping.constructor(
-                            echo_time = 15e-3, 
-                            repetition_time = 5000e-3,
-                            TI = [50e-3, 100e-3, 500e-3, 1500e-3, 4500e-3],
+                            echo_time = 20e-3, 
+                            repetition_time = 2000e-3,
+                            TI = [50e-3, 100e-3, 500e-3, 1500e-3], # , 4500e-3
                             slice_thickness = 8e-3,   
-                            ro_bandwidth = 20e3,
+                            ro_bandwidth = 10e3,
                             ro_oversampling = 1, 
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
@@ -54,7 +54,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
         plt.show()
                         
     if plot_seq:
-        if n_enc[1]*n_enc[2] > 900:
+        if n_enc[1]*n_enc[2] > 900 or seq.duration()[0] > 600:
             print("Plotting only the first 20% of the sequence")
             seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
         else:

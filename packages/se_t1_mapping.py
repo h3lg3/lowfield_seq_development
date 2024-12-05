@@ -92,9 +92,13 @@ def constructor(
     # Inversion Pulse
     rf180inv, gz180inv, _ = pp.make_adiabatic_pulse(
         pulse_type = 'hypsec',
-        duration = 8e-3, beta = 800,
-        slice_thickness = slice_thickness, mu = 4.9,
-        return_gz = True, system = seq.system, use = "inversion"
+        duration = 8e-3, 
+        beta = 800,
+        slice_thickness = slice_thickness, 
+        mu = 4.9,
+        return_gz = True, 
+        system = seq.system, 
+        use = "inversion"
         )
 
 
@@ -106,7 +110,7 @@ def constructor(
             ##########################################################################################
             # SE module
             seq, TR, _,_,_ = SE_module(seq, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
-                                TR = TR, ky_i = 0, ETL = etl, adc_duration = adc_duration, system = system,
+                                TR = TR, ky_i = ky_i, ETL = etl, adc_duration = adc_duration, system = system,
                                 channels = channels)
             ##########################################################################################
 
@@ -174,6 +178,7 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     delta_kx = 1 / fov["ro"]
     delta_ky = 1 / fov["pe1"]
     kx_width = (Nx) * delta_kx
+
     gx = pp.make_trapezoid(channel = channels.ro, system = system, flat_area = kx_width,
                     flat_time = readout_time)
     adc = pp.make_adc(num_samples = Nx, duration = readout_time, delay = gx.rise_time)
@@ -191,7 +196,8 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
 
     flip90 = round(rf_flip * pi / 180, 3)
     flip180 = 180 * pi / 180
-    rf90, gz90, gz_reph = pp.make_sinc_pulse(flip_angle = flip90, system = system, 
+    rf90, gz90, gz_reph = pp.make_sinc_pulse(flip_angle = flip90, 
+                                             system = system, 
                                              duration = 2.5e-3,
                                              slice_thickness = slice_thickness, 
                                              apodization = 0.5,
@@ -200,39 +206,59 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                                              return_gz = True, 
                                              use = "excitation")
 
-    rf180, gz180, _ = pp.make_sinc_pulse(flip_angle = flip180, system = system,
-                                      duration = 2.5e-3,
-                                      slice_thickness = 1.25 * slice_thickness,
-                                      apodization = 0.5,
-                                      time_bw_product = 4, 
-                                      phase_offset = 0,
-                                      return_gz = True, 
-                                      use = "refocusing")
+    rf180, gz180, _ = pp.make_sinc_pulse(flip_angle = flip180, 
+                                         system = system,
+                                         duration = 2.5e-3,
+                                         slice_thickness = 1.25 * slice_thickness,
+                                         apodization = 0.5,
+                                         time_bw_product = 4, 
+                                         phase_offset = 0,
+                                         return_gz = True, 
+                                         use = "refocusing")
 
     # Spoiler
     gss_spoil_A = 4 / slice_thickness
     gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A)
 
-    gss_times = np.cumsum([0, gss_spoil.rise_time, gss_spoil.flat_time,
-                           gss_spoil.fall_time - gz180.rise_time, gz180.flat_time,
+    gss_times = np.cumsum([0, 
+                           gss_spoil.rise_time, 
+                           gss_spoil.flat_time,
+                           gss_spoil.fall_time - gz180.rise_time, 
+                           gz180.flat_time,
                            gss_spoil.rise_time - gz180.fall_time,
-                           gss_spoil.flat_time, gss_spoil.fall_time])
+                           gss_spoil.flat_time, 
+                           gss_spoil.fall_time])
 
-    gss_amps = np.array(
-            [0, gss_spoil.amplitude, gss_spoil.amplitude, gz180.amplitude, gz180.amplitude, gss_spoil.amplitude,
-             gss_spoil.amplitude, 0])
+    gss_amps = np.array([0, 
+                         gss_spoil.amplitude, 
+                         gss_spoil.amplitude, 
+                         gz180.amplitude, 
+                         gz180.amplitude, 
+                         gss_spoil.amplitude, 
+                         gss_spoil.amplitude, 
+                         0])
 
-    gss_spoil_add = pp.make_extended_trapezoid(channel = channels.pe2, amplitudes=gss_amps, times=gss_times, system=system)
-
-    rf180.delay = gss_spoil.rise_time + gss_spoil.flat_time + gss_spoil.fall_time - gz180.rise_time
-
+    gss_spoil_add = pp.make_extended_trapezoid(channel = channels.pe2, amplitudes = gss_amps, times = gss_times, system = system, convert_to_arbitrary=True)
     gss_spoil_duration = pp.calc_duration(gss_spoil_add)
 
     # End of TR spoiler
     gz_spoil = pp.make_trapezoid(channel = channels.pe2, system=system, area=2 / slice_thickness)
     gz_spoil.id = seq.register_grad_event(gz_spoil)
 
-    # Delays
+    # Spoiler on all axes
+    gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = -4 / slice_thickness)
+    gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = -4 / slice_thickness)
+    gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = -4 / slice_thickness)
+
+    # Phase encoding
+    gy_pre = pp.make_trapezoid(channel = channels.pe1, system = system,
+                                 area = phase_areas[-ky_i - 1], duration = pe_duration)
+    gy_post = pp.make_trapezoid(channel = channels.pe1, system = system,
+                                  area = -phase_areas[-ky_i - 1], duration = pe_duration)
+
+    # Calculate timing for delays
+    rf180.delay = gss_spoil.rise_time + gss_spoil.flat_time + gss_spoil.fall_time - gz180.rise_time
+
     # Echo time (TE) and repetition time (TR)
     pre180d = (TE[0] / 2
                - pp.calc_duration(gz90) / 2
@@ -244,25 +270,13 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                 - pe_duration
                 - (gx.rise_time + readout_time / 2)
                 )
-
     pre180delay = pp.make_delay(pre180d)
     post180delay= pp.make_delay(post180d)
 
-    # Spoiler on all axes
-    gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = -4 / slice_thickness)
-    gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = -4 / slice_thickness)
-    gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = -4 / slice_thickness)
-
-
+    # TI delay and TR delay
     time_remove_TI = pp.calc_duration(gz90) + pp.calc_duration(gz_reph) + pp.calc_duration(gz180) \
           + pp.calc_duration(gss_spoil_add) - gz180.rise_time - pp.calc_duration(gx_s, gy_s, gz_s)
     remove_delayTR = time_remove_TI + pp.calc_duration(gx_post) + readout_time + pre180d
-
-
-    gy_pre = pp.make_trapezoid(channel = channels.pe1, system = system,
-                                 area = phase_areas[-ky_i - 1], duration = pe_duration)
-    gy_post = pp.make_trapezoid(channel = channels.pe1, system = system,
-                                  area = -phase_areas[-ky_i - 1], duration = pe_duration)
 
     # Build sequence block SE
     seq.add_block(gz_s, gx_s, gy_s)
@@ -272,7 +286,6 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     seq.add_block(pre180delay)
     seq.add_block(rf180, gss_spoil_add)
     seq.add_block(post180delay)
-
 
     seq.add_block(gy_pre)
 

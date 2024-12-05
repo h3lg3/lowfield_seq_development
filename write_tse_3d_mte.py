@@ -61,7 +61,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
         plt.show()
                         
     if plot_seq:
-        if n_enc[1]*n_enc[2] > 900:
+        if n_enc[1]*n_enc[2] > 900  or seq.duration()[0] > 600:
             print("Plotting only the first 20% of the sequence")
             seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
         else:
