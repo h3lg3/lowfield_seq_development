@@ -71,24 +71,6 @@ def constructor(
     adc_dwell_time = raster(1 / ro_bandwidth, precision=system.grad_raster_time) # sample everything on grad_raster_time
     adc_duration = n_enc['ro'] * adc_dwell_time    
 
-    # Delay
-    seqa = pp.Sequence(system)
-
-    # Export delays for TR and TI
-    _, _, _, time_remove_TI, remove_delayTR = SE_module(seqa, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
-                                TR = TR, ky_i = 0, ETL = etl, adc_duration = adc_duration, system = system,
-                                channels = channels)
-
-    time_remove_TI = np.ceil(time_remove_TI/system.grad_raster_time)*system.grad_raster_time 
-    remove_delayTR = np.ceil(remove_delayTR/system.grad_raster_time)*system.grad_raster_time 
-
-
-    delay_TR = TR - remove_delayTR
-    TId = TI - time_remove_TI
-
-    # Generate sequence
-    seq = pp.Sequence(system)
-
     # Inversion Pulse
     rf180inv, gz180inv, _ = pp.make_adiabatic_pulse(
         pulse_type = 'hypsec',
@@ -99,8 +81,28 @@ def constructor(
         return_gz = True, 
         system = seq.system, 
         use = "inversion"
-        )
+        )    
 
+    # Generate sequence
+    seq = pp.Sequence(system)
+
+    # Sequence to calculate delay
+    seqa = pp.Sequence(system)
+
+    # Export delays for TR and TI
+    _, _, _, time_remove_TI, remove_delayTR = SE_module(seqa, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
+                                TR = TR, ky_i = 0, ETL = etl, adc_duration = adc_duration, system = system,
+                                channels = channels)
+
+    
+    time_remove_TI = time_remove_TI + pp.calc_duration(gz180inv)/2 
+    remove_delayTR = remove_delayTR + pp.calc_duration(gz180inv)
+
+    time_remove_TI = np.ceil(time_remove_TI/system.grad_raster_time)*system.grad_raster_time 
+    remove_delayTR = np.ceil(remove_delayTR/system.grad_raster_time)*system.grad_raster_time 
+
+    delay_TR = TR - remove_delayTR
+    TId = TI - time_remove_TI
 
     for nTI in TId:
         for ky_i in range(Ny):
@@ -238,7 +240,7 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                          gss_spoil.amplitude, 
                          0])
 
-    gss_spoil_add = pp.make_extended_trapezoid(channel = channels.pe2, amplitudes = gss_amps, times = gss_times, system = system, convert_to_arbitrary=True)
+    gss_spoil_add = pp.make_extended_trapezoid(channel = channels.pe2, amplitudes = gss_amps, times = gss_times, system = system)
     gss_spoil_duration = pp.calc_duration(gss_spoil_add)
 
     # End of TR spoiler
@@ -274,9 +276,14 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     post180delay= pp.make_delay(post180d)
 
     # TI delay and TR delay
-    time_remove_TI = pp.calc_duration(gz90) + pp.calc_duration(gz_reph) + pp.calc_duration(gz180) \
-          + pp.calc_duration(gss_spoil_add) - gz180.rise_time - pp.calc_duration(gx_s, gy_s, gz_s)
-    remove_delayTR = time_remove_TI + pp.calc_duration(gx_post) + readout_time + pre180d
+    # time_remove_TI = pp.calc_duration(gz90) + pp.calc_duration(gz_reph) + pp.calc_duration(gz180) \
+    #       + pp.calc_duration(gss_spoil_add) - gz180.rise_time - pp.calc_duration(gx_s, gy_s, gz_s)
+    
+    # remove_delayTR = time_remove_TI + pp.calc_duration(gx_post) + readout_time + pre180d
+
+    time_remove_TI = pp.calc_duration(gx_s, gy_s, gz_s) + pp.calc_duration(gz90)/2
+    remove_delayTR = time_remove_TI + TE[0] + pp.calc_duration(gx)/2 + pp.calc_duration(gy_post) + pp.calc_duration(gx_post, gz_spoil)
+
 
     # Build sequence block SE
     seq.add_block(gz_s, gx_s, gy_s)
