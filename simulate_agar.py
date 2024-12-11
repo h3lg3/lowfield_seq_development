@@ -5,8 +5,12 @@ import pypulseq as pp
 import MRzeroCore as mr0
 import pickle
 import os 
+
 import torch
+from torch.nn.functional import normalize
+
 import nibabel as nib
+
 from packages.seq_utils import plot_3d
 from packages.mr_systems import lumina as system
 from packages.write_seq_definitions import custom_seq_definitons
@@ -16,20 +20,20 @@ FLAG_PLOTS = True
 FLAG_SAVE = True
 
 # define sequence filename
-seq_filename = "tse_3d_lumina_phantom_250mm"
+seq_filename = "tse_3d_lumina_32_32_16_160mm"
 seq_path = "./sequences/"
 
 # %%# define qMR data 
-qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom_Agar_small_FOV/"
+qMR_path = "E:/MATLAB/Projekte/Phantome/Results/Phantom_Agar_coronal_160mm/"
 qMR_mat = "qMR_data.mat"
 qMR_T2dash = "T2strich_map.nii"
 
 # define output filename
-sim_filename = "agar_tse_3d_lumina"
+sim_filename = "agar_tse_3d_lumina_160mm"
 sim_path: str = "./simulation/"
 
 # for multi-slice simulation
-n_slices = tuple(range(0, 32, 4))
+n_slices = tuple(range(12, 29, 1))
 # %% Create phantom, simulate sequence, reconstruct image
 seq_file = seq_path + seq_filename + ".seq"
 sim_name = "sim_" + seq_filename
@@ -53,7 +57,7 @@ seq0 = mr0.Sequence.import_file(temp_seq_file)
 os.remove(temp_seq_file)
 
 # load qMR data from mat file
-obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat, size = [0.25, 0.25, 0.25]) 
+obj_p = mr0.VoxelGridPhantom.load_mat(qMR_path + qMR_mat, size = [0.16, 0.16, 0.16]) 
 
 # # # load the T2dash_map from nifti file
 nifti_file = qMR_path + qMR_T2dash
@@ -73,7 +77,10 @@ else:
     obj_p = obj_p.slices(n_slices)                              # select slices within the range
     obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])     # interpolate
 
-plot_3d(obj_p.PD)
+# plot_3d(obj_p.PD)
+# plot_3d(obj_p.T1)
+# plot_3d(obj_p.T2)
+# plot_3d(obj_p.T2dash)
 
 obj_sim = obj_p.build(PD_threshold=0.005)
 
@@ -81,6 +88,9 @@ obj_sim = obj_p.build(PD_threshold=0.005)
 graph=mr0.compute_graph(seq0, obj_sim, 200, 1e-3)
 signal=mr0.execute_graph(graph, seq0, obj_sim)
 reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+
+# Normalize reco by its max value
+reco = normalize(reco)
 
 if FLAG_PLOTS:
     plot_3d(reco)

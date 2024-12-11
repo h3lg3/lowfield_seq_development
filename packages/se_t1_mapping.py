@@ -7,7 +7,6 @@ Source: https://github.com/mritogether/ESMRMB2024_Hardware_to_Map/blob/main/02_s
 # TODO: Add multi-TI readouts: Is it possible to acquire the same k-space line for all inversion times (TI) after one inversion pulse? 
 
 from math import pi
-import math
 
 import numpy as np
 

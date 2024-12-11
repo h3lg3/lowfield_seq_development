@@ -507,7 +507,7 @@ def plot_3d(data: np.ndarray):
         slider.on_changed(update)
         # Create a slider axis and slider for contrast adjustment
         ax_contrast_slider = plt.axes([0.25, 0.15, 0.65, 0.03])
-        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 10.0, valinit=1.0, valstep=0.1)
+        contrast_slider = Slider(ax_contrast_slider, 'Contrast', 0.1, 100.0, valinit=1.0, valstep=0.1)
 
         # Update function for the contrast slider
         def update_contrast(val):
