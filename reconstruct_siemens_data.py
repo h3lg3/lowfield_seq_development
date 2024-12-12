@@ -1,18 +1,15 @@
 # Reconstruct Siemens data
-# %%
-import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
-
 import pypulseq as pp
 import numpy as np
-
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
 import glob
+import nibabel as nib
 
+import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
 from packages.mr_systems import lumina as system
-# %%
-data_path = r".\siemens_data\241113_aga"
-seq_name = "tse_3d_lumina"
+from packages.seq_utils import plot_3d
+
+data_path = r".\siemens_data\241205"
+seq_name = "tse_3d_lumina_64_64_64_TR500"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
@@ -23,66 +20,38 @@ if not data_files:
     raise FileNotFoundError(f"No files matching pattern {data_pattern}")
 data_file = data_files[0]  # Use the first matching file
 
+# import sequence and data
 seq = pp.Sequence(system=system)
 seq.read(seq_file, detect_rf_use = True)
  
 kdata_unsorted = utils.read_raw_data(data_file)
-kdata_sorted = utils.sort_data_labels(kdata_unsorted, seq)
-kdata_sorted = kdata_sorted.transpose(0,1,3,2)
+kdata_sorted = utils.sort_data_labels(kdata_unsorted, seq)  # order: 'COIL', 'LIN', 'PAR', 'ADC' or order: 'COIL', 'REP', 'LIN', 'PAR', 'ADC'
 
-# %%
-axes = (-3, -2, -1)
-
-image = np.fft.fftshift(np.fft.ifftn(np.fft.ifftshift(kdata_sorted, axes=axes), axes=axes), axes=axes)
+# Reconstruct image
+image = utils.ifft_3d(kdata_sorted)
 image_sos = np.sqrt((abs(image)**2).sum(axis=0))
+image_sos = image_sos.transpose(2, 0, 1)                # order: 'ADC', 'LIN', 'PAR' or order: 'ADC', 'LIN', 'PAR', 'REP'
 
 # Save image_sos to data_path with the name seq_name + "image.dat"
 output_file = f"{data_path}\\{seq_name}_image.dat"
 np.save(output_file, image_sos)
 
-# %%
-data2plot = image_sos
+# Plot image
+# plot_3d(image_sos)
 
-# Create a figure and axis
-fig, ax = plt.subplots(figsize=(10, 8))
-plt.subplots_adjust(left=0.25, bottom=0.25)
+# Save image_sos as a nifti file
+dx = seq.definitions['FOV'][0]/seq.definitions['number_of_readouts']*1000
+dy = seq.definitions['FOV'][1]/seq.definitions['k_space_encoding1']*1000
+dz = seq.definitions['FOV'][2]/seq.definitions['k_space_encoding2']*1000
 
-# Initial contrast limits
-vmin = 0
-vmax = abs(data2plot).max()
+voxel_size = [dx, dy, dz]
+nifti_img = nib.Nifti1Image(image_sos, np.diag(voxel_size + [1]))
+nifti_output_file = f"{data_path}\\{seq_name}_image.nii"
 
-# Plot the initial image
-im = ax.imshow(abs(data2plot[:, :, 0]), cmap='gray', vmin=vmin, vmax=vmax)
-ax.set_title('Slice 0')
-ax.axis('off')
+# # Add voxel size information
+nifti_img.header.set_zooms(tuple(voxel_size))
 
-# Create sliders for contrast adjustment
-axcolor = 'lightgoldenrodyellow'
-ax_vmin = plt.axes([0.25, 0.1, 0.65, 0.03], facecolor=axcolor)
-ax_vmax = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
+# Add field-of-view information
+nifti_img.header['dim'][1:4] = tuple(seq.definitions['FOV']*1000)
 
-s_vmin = Slider(ax_vmin, 'Min', 0, abs(data2plot).max(), valinit=vmin)
-s_vmax = Slider(ax_vmax, 'Max', 0, abs(data2plot).max(), valinit=vmax)
-
-# Update function for sliders
-def update(val):
-    im.set_clim([s_vmin.val, s_vmax.val])
-    fig.canvas.draw_idle()
-
-s_vmin.on_changed(update)
-s_vmax.on_changed(update)
-
-# Create a slider for slice selection
-ax_slice = plt.axes([0.25, 0.05, 0.65, 0.03], facecolor=axcolor)
-s_slice = Slider(ax_slice, 'Slice', 0, data2plot.shape[2] - 1, valinit=0, valstep=1)
-
-# Update function for slice selection
-def update_slice(val):
-    slice_idx = int(s_slice.val)
-    im.set_data(abs(data2plot[:, :, slice_idx]))
-    ax.set_title(f'Slice {slice_idx}')
-    fig.canvas.draw_idle()
-
-s_slice.on_changed(update_slice)
-
-plt.show()
+nib.save(nifti_img, nifti_output_file)

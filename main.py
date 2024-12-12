@@ -4,12 +4,12 @@ from packages.analyze_seq import analyze_seq
 
 # ======
 # SEQUENCE
-# ======
-from write_tse_3d import main as write_seq
-seq_name = "tse_3d"
+# # ======
+# from write_tse_3d import main as write_seq
+# seq_name = "tse_3d"
 
-# from write_tse_3d_mte import main as write_seq
-# seq_name = "tse_3d_mte"
+from write_tse_3d_mte import main as write_seq
+seq_name = "tse_3d_mte"
 
 # from write_se_t1_mapping import main as write_seq
 # seq_name = "se_t1_mapping"
@@ -34,8 +34,8 @@ seq_name = seq_name + '_lumina'
 # FOV
 # ======
 fov = (160e-3, 160e-3, 160e-3)
-n = 32
-n_enc = (n, n, 1) 
+n = 64
+n_enc = (n, n, 32) 
 
 write_sequence = True
 analyze_sequence = False
@@ -46,7 +46,7 @@ if write_sequence:
     if plot_simulation or analyze_sequence:
         write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     else:
-        write_seq(plot=False, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
+        write_seq(plot=True, write_seq=True, seq_filename=seq_name, system=system, fov=fov, n_enc=n_enc)
     
 if analyze_sequence:
     analyze_seq(seq_filename=seq_name, system=system)
