@@ -270,7 +270,7 @@ def constructor(
 
                 label_pe1 = pp.make_label(type="SET", label="LIN", value=int(C_pe1))
                 label_pe2 = pp.make_label(type="SET", label="PAR", value=int(C_pe2))
-                label_echo = pp.make_label(type="SET", label="PAR", value=int(k_echo))
+                label_echo = pp.make_label(type="SET", label="REP", value=int(k_echo))
 
                 seq.add_block(rf_ref, d_ref)
                 if C_pe2 >= 0:
