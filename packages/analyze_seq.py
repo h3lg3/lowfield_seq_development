@@ -6,11 +6,11 @@ import numpy as np
 
 def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/"):
 
-    # Create a Sequence object and read the sequence file
+#     # Create a Sequence object and read the sequence file
     seq = pp.Sequence(system=system)
     seq.read(seq_path + seq_filename + ".seq", detect_rf_use = True)
-# %% Analyze sequence
-    #Plot sequence
+# # %% Analyze sequence
+#     #Plot sequence
     if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900 or seq.duration()[0] > 600:
         print("Analyzing only first 20% of sequence")
         seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
@@ -114,7 +114,12 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     # %% Calculate mechanical resonances
     asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
     resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
-    seq.calculate_gradient_spectrum(plot=True, acoustic_resonances=resonances)
+    if seq.duration()[0] > 300:
+        print("Spectral analysis for first 50% of sequence")
+        seq.calculate_gradient_spectrum(plot=True, time_range= [0, round(0.5*seq.duration()[0])], acoustic_resonances = resonances)
+    else:
+        seq.calculate_gradient_spectrum(plot=True, acoustic_resonances = resonances)
+
     plt.show()
     # %%
 if __name__ == "__main__":
