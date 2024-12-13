@@ -24,7 +24,9 @@ def simulate_seq(save: bool,
     n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
     n_enc = tuple(map(int, n_enc))
 
-    n_echo = int(seq.definitions['etl'])
+    if seq.definitions['name'] == 'tse_3d_mte':
+        n_echo = int(seq.definitions['etl'])
+        
     fov = tuple(seq.definitions['FOV'])
     ro_oversampling = int(seq.definitions['ro_oversampling'])
 
