@@ -106,11 +106,15 @@ def constructor(
     delay_TR = TR - remove_delayTR
     TId = TI - time_remove_TI
 
-    for nTI in TId:
+    for idx, nTI in enumerate(TId):
         for ky_i in range(Ny):
+            # Cast index values from int32 to int, otherwise make_label function complains
+            label_PE = pp.make_label(type = "SET", label = "LIN", value = idx)
+            label_TI = pp.make_label(type = "SET", label = "REP", value = Ny-1 - ky_i) # PE goes from max (31) to min (-32), therefore order needs to be reversed here, such that the min line is at 0 index of array
+
             seq.add_block(pp.make_delay(round(delay_TR - nTI, 9)))
             seq.add_block(rf180inv, gz180inv)
-            seq.add_block(pp.make_delay(nTI))
+            seq.add_block(pp.make_delay(nTI), label_PE, label_TI)
             ##########################################################################################
             # SE module
             seq, TR, _,_,_ = SE_module(seq, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
@@ -192,7 +196,7 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     gx_post = pp.make_trapezoid(channel = channels.ro, system = system, area = 3 * gx.area / 2)
 
     # Prephase and rephase
-    phase_areas = np.linspace(-0.5*delta_ky*Ny, 0.5*delta_ky*Ny, Ny)
+    phase_areas = np.linspace(-0.5*Ny * delta_ky, (0.5*Ny-1) * delta_ky, Ny) # scale from -Ny/2 to Ny/2-1
     gy_pe_max = pp.make_trapezoid(channel = channels.pe1, system = system, area = np.max(np.abs(phase_areas)))
     pe_duration = pp.calc_duration(gy_pe_max)    
 

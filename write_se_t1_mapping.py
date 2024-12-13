@@ -60,7 +60,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
             print("Plotting only the first 20% of the sequence")
             seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
         else:
-            seq.plot()
+            seq.plot(label='LIN, REP')
         
     # =========
     # WRITE .SEQ
