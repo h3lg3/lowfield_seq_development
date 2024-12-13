@@ -5,11 +5,11 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # # ======
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
-from write_tse_3d_mte import main as write_seq
-seq_name = "tse_3d_mte"
+# from write_tse_3d_mte import main as write_seq
+# seq_name = "tse_3d_mte"
 
 # from write_se_t1_mapping import main as write_seq
 # seq_name = "se_t1_mapping"
@@ -38,7 +38,7 @@ n = 64
 n_enc = (n, n, 32) 
 
 write_sequence = True
-analyze_sequence = False
+analyze_sequence = True
 simulate_sequence = False
 plot_simulation = False
 

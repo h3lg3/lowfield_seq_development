@@ -279,6 +279,8 @@ def constructor(
             tr_delay -= inversion_time
         
         seq.add_block(pp.make_delay(tr_delay))
+
+    print(f"TR fill: {1000 * tr_delay} ms")
     
     # Check labels
     labels = seq.evaluate_labels(evolution="adc")
