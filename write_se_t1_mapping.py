@@ -16,7 +16,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          ):
     seq = se_t1_mapping.constructor(
                             echo_time = 15e-3, 
-                            repetition_time = 5000e-3,
+                            repetition_time = 4000e-3,  
                             TI = [50e-3, 100e-3, 500e-3, 1500e-3],
                             slice_thickness = 8e-3,   
                             ro_bandwidth = 10e3,

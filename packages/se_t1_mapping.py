@@ -247,7 +247,10 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     gss_spoil_duration = pp.calc_duration(gss_spoil_add)
 
     # End of TR spoiler
-    gz_spoil = pp.make_trapezoid(channel = channels.pe2, system=system, area=2 / slice_thickness)
+    temp = pp.make_trapezoid(channel = channels.pe2, system=system, area=2 / slice_thickness)
+    gz_spoil = pp.make_trapezoid(channel = channels.pe2, system=system, area=2 / slice_thickness, duration = 3*pp.calc_duration(temp))
+
+    # gz_spoil = pp.make_trapezoid(channel = channels.pe2, system=system, area=2 / slice_thickness)
     gz_spoil.id = seq.register_grad_event(gz_spoil)
 
     # Spoiler on all axes
