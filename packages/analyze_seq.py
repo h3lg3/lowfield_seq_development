@@ -94,31 +94,31 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
 
     # plt.tight_layout()
     # plt.show()
-    # # %% Sequence test report
-    # # For the real TE, TR or for staying within slew-rate limits
-    # rep = seq.test_report()
-    # print(rep)
+    # %% Sequence test report
+    # For the real TE, TR or for staying within slew-rate limits
+    rep = seq.test_report()
+    print(rep)
     # %% Simulate slice profile
     # https://github.com/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/02_rf_pulses/notebooks/se2d_sliceprofile_exercise.ipynb
     
     # # REQUIRES SEQUENCES COMPILED WITH PYPULSEQ Version > 1.4.0
     # # %% Calculate SAR
-    pp.SAR.SAR_calc.calc_SAR(seq)
+    # pp.SAR.SAR_calc.calc_SAR(seq)
     # %% Calculate PNS
     # # use example specs
     # # seq.calculate_pns(pp.utils.safe_pns_prediction.safe_example_hw(), do_plots=True) 
-    # # use PRISMA specs
+    # # use Lumina specs
     # seq.calculate_pns(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
     # # %% Calculate mechanical resonances
-    # asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
-    # resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
-    # if seq.duration()[0] > 300:
-    #     print("Spectral analysis for first 50% of sequence")
-    #     seq.calculate_gradient_spectrum(plot=True, time_range= [0, round(0.5*seq.duration()[0])], acoustic_resonances = resonances)
-    # else:
-    #     seq.calculate_gradient_spectrum(plot=True, acoustic_resonances = resonances)
+    asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
+    resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
+    if seq.duration()[0] > 300:
+        print("Spectral analysis for first 50% of sequence")
+        seq.calculate_gradient_spectrum(plot=True, time_range= [0, round(0.5*seq.duration()[0])], acoustic_resonances = resonances)
+    else:
+        seq.calculate_gradient_spectrum(plot=True, acoustic_resonances = resonances)
 
-    # plt.show()
+    plt.show()
     # %%
 if __name__ == "__main__":
     analyze_seq(seq_filename = "tse_pypulseq")    

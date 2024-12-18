@@ -14,11 +14,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d.constructor(
-                            echo_time = 20e-3,
-                            repetition_time = 1500e-3,  
-                            etl = 8, # define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 2,    
-                            ro_bandwidth = 10e3,
+                            echo_time = 15e-3,  # 20
+                            repetition_time = 350e-3,  #1500
+                            etl = 16, # 8, define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                            dummies = 5,    
+                            ro_bandwidth = 15e3, # 10
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
