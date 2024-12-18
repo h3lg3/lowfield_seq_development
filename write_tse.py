@@ -25,15 +25,15 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
 
     seq = pp.Sequence(system)  # Create a new sequence object
     fov = 256e-3  # Define FOV and resolution
-    Nx, Ny = 128, 128
+    Nx, Ny = 64, 64 
     n_echo = 16  # Number of echoes
-    n_slices = 15
+    n_slices = 16
     rf_flip = 180  # Flip angle
     if isinstance(rf_flip, int):
         rf_flip = np.zeros(n_echo) + rf_flip
     slice_thickness = 5e-3
     TE = 12e-3  # Echo time
-    TR = 4500e-3  # Repetition time
+    TR = 5000e-3  # Repetition time
 
     sampling_time = 6.4e-3
     readout_time = sampling_time + 2 * system.adc_dead_time
@@ -226,7 +226,9 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
     # ======
     # CONSTRUCT SEQUENCE
     # ======
-    for k_ex in range(n_ex + 1):
+    for k_ex in range(n_ex):
+        # deactivate dummies
+    # for k_ex in range(n_ex + 1):
         for s in range(n_slices):
             rf_ex.freq_offset = gs_ex.amplitude * slice_thickness * (s - (n_slices - 1) / 2)
             rf_ref.freq_offset = gs_ref.amplitude * slice_thickness * (s - (n_slices - 1) / 2)
@@ -238,10 +240,12 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
             seq.add_block(gs3, gr3)
 
             for k_echo in range(n_echo):
-                if k_ex > 0:
-                    phase_area = phase_areas[k_echo, k_ex - 1]
-                else:
-                    phase_area = 0.0  # 0.0 and not 0 because -phase_area should successfully result in negative zero
+                phase_area = phase_areas[k_echo, k_ex - 1]
+                # deactivate dummies
+                # if k_ex > 0:
+                #     phase_area = phase_areas[k_echo, k_ex - 1]
+                # else:
+                #     phase_area = 0.0  # 0.0 and not 0 because -phase_area should successfully result in negative zero
 
                 gp_pre = pp.make_trapezoid(
                     channel='y',
@@ -259,10 +263,12 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
                 )
                 seq.add_block(gs4, rf_ref)
                 seq.add_block(gs5, gr5, gp_pre)
-                if k_ex > 0:
-                    seq.add_block(gr6, adc)
-                else:
-                    seq.add_block(gr6)
+                # deactivate dummies
+                # if k_ex > 0:
+                #     seq.add_block(gr6, adc)
+                # else:
+                #     seq.add_block(gr6)
+                seq.add_block(gr6, adc)                
 
                 seq.add_block(gs7, gr7, gp_rew)
 
@@ -295,4 +301,4 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
     pp.SAR.SAR_calc.calc_SAR(seq)
 
 if __name__ == '__main__':
-    main(plot=False, write_seq=False)
+    main(plot=False, write_seq=True)
