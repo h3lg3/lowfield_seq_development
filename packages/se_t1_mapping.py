@@ -5,6 +5,7 @@ Source: https://github.com/mritogether/ESMRMB2024_Hardware_to_Map/blob/main/02_s
 # TODO: Add multi-slice capability
 # TODO: Add multi-echo capability: Does it affect T1 mapping if multiple echoes are used?
 # TODO: Add multi-TI readouts: Is it possible to acquire the same k-space line for all inversion times (TI) after one inversion pulse? 
+# TODO: RF gradients are automatically set to z-channel. Add option to set the channel for RF gradients.
 
 from math import pi
 
@@ -214,6 +215,8 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                                              time_bw_product = 4, 
                                              return_gz = True, 
                                              use = "excitation")
+    # increase duration to relax the gradient
+    gz_reph = pp.make_trapezoid(channel = gz_reph.channel, system = system, area = gz_reph.area, duration = 1.5*pp.calc_duration(gz_reph))
 
     rf180, gz180, _ = pp.make_sinc_pulse(flip_angle = flip180, 
                                          system = system,
@@ -224,10 +227,12 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                                          phase_offset = 0,
                                          return_gz = True, 
                                          use = "refocusing")
-
+    
     # Spoiler
     gss_spoil_A = 4 / slice_thickness
     gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A)
+    # increase duration to relax the gradient
+    gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A, duration = 2*pp.calc_duration(gss_spoil))
 
     gss_times = np.cumsum([0, 
                            gss_spoil.rise_time, 
@@ -258,9 +263,10 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     gz_spoil.id = seq.register_grad_event(gz_spoil)
 
     # Spoiler on all axes
-    gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = -4 / slice_thickness)
-    gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = -4 / slice_thickness)
-    gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = -4 / slice_thickness)
+    g_spoil_A = - 4/slice_thickness
+    gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = g_spoil_A)
+    gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = g_spoil_A)
+    gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = g_spoil_A)
 
     spoiler_duration = pp.calc_duration(gz_s)
 
@@ -270,9 +276,9 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
 
     # Make spoiler longer if there is enough time between inversion pulse and excitation pulse
     if 2*spoiler_duration < dTI:
-            gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = -4 / slice_thickness, duration = 2*spoiler_duration)
-            gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = -4 / slice_thickness, duration = 2*spoiler_duration)
-            gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = -4 / slice_thickness, duration = 2*spoiler_duration)
+            gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
+            gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
+            gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
             time_remove_TI = pp.calc_duration(gx_s, gy_s, gz_s) + pp.calc_duration(gz90)/2 + rf_inv_dur/2
 
     # Phase encoding
