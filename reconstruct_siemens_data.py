@@ -8,8 +8,8 @@ import packages.utils as utils  # from MR-Physics-with-Pulseq\Tutorials\utils
 from packages.mr_systems import lumina as system
 from packages.seq_utils import plot_3d
 
-data_path = r".\siemens_data\241205"
-seq_name = "tse_3d_lumina_64_64_64_TR500"
+data_path = r".\siemens_data\241218"
+seq_name = "se_t1_mapping_lumina_32_32_1_TR4000"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"
@@ -30,28 +30,31 @@ kdata_sorted = utils.sort_data_labels(kdata_unsorted, seq)  # order: 'COIL', 'LI
 # Reconstruct image
 image = utils.ifft_3d(kdata_sorted)
 image_sos = np.sqrt((abs(image)**2).sum(axis=0))
-image_sos = image_sos.transpose(2, 0, 1)                # order: 'ADC', 'LIN', 'PAR' or order: 'ADC', 'LIN', 'PAR', 'REP'
+if image_sos.ndim == 4:
+    image_sos =  image_sos.transpose(3, 1, 2, 0)                # order: 'ADC', 'LIN', 'PAR', 'REP'
+    plot_3d(image_sos)
+else:
+    image_sos = image_sos.transpose(2, 0, 1)                # order: 'ADC', 'LIN', 'PAR'
+    # Save image_sos to data_path with the name seq_name + "image.dat"
+    output_file = f"{data_path}\\{seq_name}_image.dat"
+    np.save(output_file, image_sos)
 
-# Save image_sos to data_path with the name seq_name + "image.dat"
-output_file = f"{data_path}\\{seq_name}_image.dat"
-np.save(output_file, image_sos)
+    # Plot image
+    # plot_3d(image_sos)
 
-# Plot image
-# plot_3d(image_sos)
+    # Save image_sos as a nifti file
+    dx = seq.definitions['FOV'][0]/seq.definitions['number_of_readouts']*1000
+    dy = seq.definitions['FOV'][1]/seq.definitions['k_space_encoding1']*1000
+    dz = seq.definitions['FOV'][2]/seq.definitions['k_space_encoding2']*1000
 
-# Save image_sos as a nifti file
-dx = seq.definitions['FOV'][0]/seq.definitions['number_of_readouts']*1000
-dy = seq.definitions['FOV'][1]/seq.definitions['k_space_encoding1']*1000
-dz = seq.definitions['FOV'][2]/seq.definitions['k_space_encoding2']*1000
+    voxel_size = [dx, dy, dz]
+    nifti_img = nib.Nifti1Image(image_sos, np.diag(voxel_size + [1]))
+    nifti_output_file = f"{data_path}\\{seq_name}_image.nii"
 
-voxel_size = [dx, dy, dz]
-nifti_img = nib.Nifti1Image(image_sos, np.diag(voxel_size + [1]))
-nifti_output_file = f"{data_path}\\{seq_name}_image.nii"
+    # # Add voxel size information
+    nifti_img.header.set_zooms(tuple(voxel_size))
 
-# # Add voxel size information
-nifti_img.header.set_zooms(tuple(voxel_size))
+    # Add field-of-view information
+    nifti_img.header['dim'][1:4] = tuple(seq.definitions['FOV']*1000)
 
-# Add field-of-view information
-nifti_img.header['dim'][1:4] = tuple(seq.definitions['FOV']*1000)
-
-nib.save(nifti_img, nifti_output_file)
+    nib.save(nifti_img, nifti_output_file)
