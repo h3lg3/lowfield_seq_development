@@ -193,6 +193,7 @@ def constructor(
                        grad_ro_spr.amplitude,
                        0])
     gr = pp.make_extended_trapezoid(
+        system=system,
         channel=channels.ro, 
         times=gc_times, 
         amplitudes=gr_amp)
@@ -206,6 +207,7 @@ def constructor(
                        -grad_pe_1_max.amplitude, 
                        0])
     grad_pe_1_max = pp.make_extended_trapezoid(
+        system=system,
         channel=channels.pe1, 
         times=gc_times, 
         amplitudes=gp_amp)
@@ -219,6 +221,7 @@ def constructor(
                        -grad_pe_2_max.amplitude, 
                        0])
     grad_pe_2_max = pp.make_extended_trapezoid(
+        system=system,
         channel=channels.pe2, 
         times=gc_times, 
         amplitudes=gs_amp)
