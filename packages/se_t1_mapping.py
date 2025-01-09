@@ -33,7 +33,7 @@ def constructor(
     input_fov: Dimensions = Dimensions(x=220e-3, y=220e-3, z=225e-3),
     input_enc: Dimensions = Dimensions(x=70, y=70, z=49),
     excitation_angle: float = pi / 2,
-    channels: Channels = Channels(ro="x", pe1="y", pe2="z"),
+    channels: Channels = Channels(ro="x", pe1="y", pe2="z"),    # channel pe2 is used for slice selection
     system:Opts = default_system,
 ) -> tuple[pp.Sequence, list, list]:
     """Construct 3D turbo spin echo sequence.
@@ -61,6 +61,9 @@ def constructor(
         Pulseq sequence and a list which describes the trajectory
     """
 
+    # increase gradient duration to relax performance
+    SILENT_MODE = False
+
     # Create a new sequence object
     seq = pp.Sequence(system)
 
@@ -87,6 +90,8 @@ def constructor(
         system = seq.system, 
         use = "inversion"
         )    
+    gz180inv.channel = channels.pe2 # change channel to pe2 (slice selection)
+    
     rf_inv_dur = pp.calc_duration(gz180inv)
 
     # Generate sequence
@@ -99,7 +104,7 @@ def constructor(
     _, _, _, time_remove_TI, remove_delayTR = SE_module(seqa, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
                                 TR = TR, TI = TI[0], rf_inv_dur = rf_inv_dur, ky_i = 0, 
                                 ETL = etl, adc_duration = adc_duration, system = system,
-                                channels = channels)
+                                channels = channels, silent_mode = SILENT_MODE)
 
     time_remove_TI = np.ceil(time_remove_TI/system.grad_raster_time)*system.grad_raster_time 
     remove_delayTR = np.ceil(remove_delayTR/system.grad_raster_time)*system.grad_raster_time 
@@ -121,7 +126,7 @@ def constructor(
             seq, TR, _,_,_ = SE_module(seq, fov = fov, Nx = Nx, Nz = Nz, Ny = Ny, TE = TE,
                                 TR = TR, TI = TI[0], rf_inv_dur = rf_inv_dur, ky_i = ky_i, 
                                 ETL = etl, adc_duration = adc_duration, system = system,
-                                channels = channels)
+                                channels = channels, silent_mode = SILENT_MODE)
             ##########################################################################################
 
 
@@ -153,7 +158,7 @@ def constructor(
 def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
               TR = 5000e-3, TI = 50e-3, rf_inv_dur = 1e-3, ky_i = 0, slice_thickness = 5e-3, ETL = 1, 
               adc_duration = 6.4e-3, system:Opts = default_system,
-              channels: Channels = Channels(ro="x", pe1="y", pe2="z"),):
+              channels: Channels = Channels(ro="x", pe1="y", pe2="z"), silent_mode = True):
     """
     Creates a Spin-echo module (SE) sequence and adds it
     to the seq object
@@ -215,8 +220,12 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                                              time_bw_product = 4, 
                                              return_gz = True, 
                                              use = "excitation")
+    gz90.channel = channels.pe2 # change channel to pe2 (slice selection)
+    gz_reph.channel = channels.pe2 # change channel to pe2 (slice selection)
+
     # increase duration to relax the gradient
-    gz_reph = pp.make_trapezoid(channel = gz_reph.channel, system = system, area = gz_reph.area, duration = 1.5*pp.calc_duration(gz_reph))
+    if silent_mode:
+        gz_reph = pp.make_trapezoid(channel = gz_reph.channel, system = system, area = gz_reph.area, duration = 1.5*pp.calc_duration(gz_reph))
 
     rf180, gz180, _ = pp.make_sinc_pulse(flip_angle = flip180, 
                                          system = system,
@@ -227,12 +236,14 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
                                          phase_offset = 0,
                                          return_gz = True, 
                                          use = "refocusing")
+    gz180.channel = channels.pe2 # change channel to pe2 (slice selection)
     
     # Spoiler
     gss_spoil_A = 4 / slice_thickness
     gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A)
     # increase duration to relax the gradient
-    gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A, duration = 2*pp.calc_duration(gss_spoil))
+    if silent_mode:
+        gss_spoil = pp.make_trapezoid(channel = channels.pe2, system = system, area = gss_spoil_A, duration = 2*pp.calc_duration(gss_spoil))
 
     gss_times = np.cumsum([0, 
                            gss_spoil.rise_time, 
@@ -275,11 +286,12 @@ def SE_module(seq, fov = 200e-3, Nx = 128, Nz = 1, Ny = 128, TE = 15e-3,
     dTI = TI - time_remove_TI
 
     # Make spoiler longer if there is enough time between inversion pulse and excitation pulse
-    if 2*spoiler_duration < dTI:
-            gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
-            gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
-            gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
-            time_remove_TI = pp.calc_duration(gx_s, gy_s, gz_s) + pp.calc_duration(gz90)/2 + rf_inv_dur/2
+    if silent_mode:
+        if 2*spoiler_duration < dTI:
+                gz_s = pp.make_trapezoid(channel = channels.pe2, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
+                gx_s = pp.make_trapezoid(channel = channels.ro, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
+                gy_s = pp.make_trapezoid(channel = channels.pe1, system = seq.system, area = g_spoil_A, duration = 2*spoiler_duration)
+                time_remove_TI = pp.calc_duration(gx_s, gy_s, gz_s) + pp.calc_duration(gz90)/2 + rf_inv_dur/2
 
     # Phase encoding
     gy_pre = pp.make_trapezoid(channel = channels.pe1, system = system,
