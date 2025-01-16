@@ -21,11 +21,19 @@ def simulate_seq(save: bool,
     seq = pp.Sequence(system=system)
     seq.read(seq_file, detect_rf_use = True)
 
+    if 'k_space_encoding2' not in seq.definitions:
+        seq.definitions['k_space_encoding2'] = 1
+    if 'ro_oversampling' not in seq.definitions:
+        seq.definitions['ro_oversampling'] = 1
+
     n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
     n_enc = tuple(map(int, n_enc))
 
     if seq.definitions['name'] == 'tse_3d_mte':
         n_echo = int(seq.definitions['etl'])
+
+    if 'multi_echo' in seq.definitions['name']:
+        n_echo = int(seq.definitions['repetition'])
         
     fov = tuple(seq.definitions['FOV'])
     ro_oversampling = int(seq.definitions['ro_oversampling'])
@@ -89,7 +97,8 @@ def simulate_seq(save: bool,
     if add_noise:         # additional noise as simulation is ideal
         signal = signal + 1e-6 * np.random.randn(signal.shape[0], 2).view(np.complex128)
 
-    if seq.definitions['name'] == 'tse_3d_mte':
+# check if field seq.definitions['name'] contains 'multi_echo' or 'tse_3d_mte'
+    if 'tse_3d_mte' in seq.definitions['name']:
         # 3D FFT
         def fft_3d(x):
             return np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(x, axes=(0, 1, 3)), axes=(0, 1, 3)), axes=(0, 1, 3))
