@@ -9,7 +9,7 @@ from packages.mr_systems import lumina as system
 from packages.seq_utils import plot_3d
 
 data_path = r".\siemens_data\241218"
-seq_name = "se_t1_mapping_lumina_32_32_1_TR4000"
+seq_name = "tse_3d_mte_lumina_64_64_32_TR300"
 
 seq_file = f"{data_path}\\{seq_name}.seq"
 data_pattern = f"{data_path}\\meas_*_{seq_name}.dat"

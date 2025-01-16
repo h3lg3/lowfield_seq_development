@@ -8,11 +8,14 @@ from packages.analyze_seq import analyze_seq
 # from write_tse_3d import main as write_seq
 # seq_name = "tse_3d"
 
-# from write_tse_3d_mte import main as write_seq
-# seq_name = "tse_3d_mte"
+from write_tse_3d_mte import main as write_seq
+seq_name = "tse_3d_mte"
 
-from write_se_t1_mapping import main as write_seq
-seq_name = "se_t1_mapping"
+# from write_se_t1_mapping import main as write_seq
+# seq_name = "se_t1_mapping"
+# fov = (160e-3, 160e-3, 8e-3)
+# n = 32 
+# n_enc = (n, n, 1) 
 
 # from write_tse_3d_demo import main as write_seq 
 # seq_name = "tse_3d_demo"
@@ -27,18 +30,25 @@ seq_name = "se_t1_mapping"
 # SCANNER
 # ======
 from packages.mr_systems import lumina as system
-seq_name = seq_name + '_lumina'
+seq_name = seq_name + '_lowfield'
 
-#seq_name = 'tse_3d_lumina_64_64_32_TR1500'
+#seq_name = 'tse_3d_mte_lumina_64_64_32_TR300'
+
 # ======
 # FOV
 # ======
-fov = (160e-3, 160e-3, 8e-3)
-n = 32 
+
+#channels = Channels(ro = "x", pe1 = "y", pe2 = "z")
+fov = (160e-3, 160e-3, 160e-3)
+n = 16 
 n_enc = (n, n, 1) 
 
+# channels = Channels(ro = "y", pe1 = "z", pe2 = "x")
+# fov = (160e-3, 160e-3, 160e-3)
+# n_enc = (8, 32, 32) 
+
 write_sequence = True
-analyze_sequence = True
+analyze_sequence = False
 simulate_sequence = False
 plot_simulation = False
 
@@ -64,8 +74,8 @@ if plot_simulation:
             }, seq_filename=seq_name, system=system) 
     else:
         plot_sim(plot={
-            "phantom": False,
-            "seq": False,
+            "phantom": True,
+            "seq": True,
             "kspace": False,
             "reco": True,
             }, seq_filename=seq_name, system=system) 

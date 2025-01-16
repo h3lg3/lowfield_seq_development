@@ -11,26 +11,30 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     seq.read(seq_path + seq_filename + ".seq", detect_rf_use = True)
 # # %% Analyze sequence
 #     #Plot sequence
-    # if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900 or seq.duration()[0] > 600:
-    #     print("Analyzing only first 20% of sequence")
-    #     seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
-    # else:
-    #     seq.plot()
-    
-    # # Plot k-space trajectory
-    # k_traj_adc, k_traj = seq.calculate_kspace()[0:2]
+    # check if seq.definitions has field ['k_space_encoding2']
+    if 'k_space_encoding2' not in seq.definitions:
+        seq.definitions['k_space_encoding2'] = 1
 
-    # plt.figure()
-    # plt.title('full k-space trajectory ($k_{x}$ x $k_{y}$)')
-    # plt.plot(k_traj[0],k_traj[1])
-    # plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
-    # plt.xlabel(r'k_x [1/m]')
-    # plt.ylabel(r'k_y [1/m]')
-    # plt.show()
+    if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900 or seq.duration()[0] > 600:
+        print("Analyzing only first 20% of sequence")
+        seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
+    else:
+        seq.plot()
     
-    # # # %% Analyze waveforms: Gradient amplitude and slew rates:: 
-    # # # Combined amplitudes and slew rate for case of oblique scanning interesting
-    # # # Values should stay below system specs even for oblique scanning
+    # Plot k-space trajectory
+    k_traj_adc, k_traj = seq.calculate_kspace()[0:2]
+
+    plt.figure()
+    plt.title('full k-space trajectory ($k_{x}$ x $k_{y}$)')
+    plt.plot(k_traj[0],k_traj[1])
+    plt.plot(k_traj_adc[0],k_traj_adc[1],'.')
+    plt.xlabel(r'k_x [1/m]')
+    plt.ylabel(r'k_y [1/m]')
+    plt.show()
+    
+    # # %% Analyze waveforms: Gradient amplitude and slew rates:: 
+    # # Combined amplitudes and slew rate for case of oblique scanning interesting
+    # # Values should stay below system specs even for oblique scanning
     # wf = {}
     # if seq.definitions['k_space_encoding1']*seq.definitions['k_space_encoding2'] > 900:
     #     wf_grad = seq.waveforms(time_range = (0, round(0.2*seq.duration()[0])))
@@ -94,10 +98,10 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
 
     # plt.tight_layout()
     # plt.show()
-    # %% Sequence test report
-    # For the real TE, TR or for staying within slew-rate limits
-    rep = seq.test_report()
-    print(rep)
+    # # %% Sequence test report
+    # # For the real TE, TR or for staying within slew-rate limits
+    # rep = seq.test_report()
+    # print(rep)
     # %% Simulate slice profile
     # https://github.com/pulseq/MR-Physics-with-Pulseq/blob/main/tutorials/02_rf_pulses/notebooks/se2d_sliceprofile_exercise.ipynb
     
@@ -110,15 +114,15 @@ def analyze_seq(seq_filename: str, system:pp.Opts, seq_path: str = "./sequences/
     # # use Lumina specs
     # seq.calculate_pns(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc', do_plots=True)  
     # # %% Calculate mechanical resonances
-    asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
-    resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
-    if seq.duration()[0] > 300:
-        print("Spectral analysis for first 50% of sequence")
-        seq.calculate_gradient_spectrum(plot=True, time_range= [0, round(0.5*seq.duration()[0])], acoustic_resonances = resonances)
-    else:
-        seq.calculate_gradient_spectrum(plot=True, acoustic_resonances = resonances)
+    # asc_dict = pp.utils.siemens.readasc.readasc(r'.\data\MP_GPA_K2368_2250V_950A_GC25_Lumina.asc')
+    # resonances = pp.utils.siemens.asc_to_hw.asc_to_acoustic_resonances(asc_dict[0])
+    # if seq.duration()[0] > 300:
+    #     print("Spectral analysis for first 50% of sequence")
+    #     seq.calculate_gradient_spectrum(plot=True, time_range= [0, round(0.5*seq.duration()[0])], acoustic_resonances = resonances)
+    # else:
+    #     seq.calculate_gradient_spectrum(plot=True, acoustic_resonances = resonances)
 
-    plt.show()
+    # plt.show()
     # %%
 if __name__ == "__main__":
     analyze_seq(seq_filename = "tse_pypulseq")    
