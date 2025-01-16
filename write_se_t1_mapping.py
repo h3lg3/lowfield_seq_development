@@ -19,11 +19,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             repetition_time = 4000e-3,  
                             TI = [50e-3, 100e-3, 500e-3, 1500e-3],
                             slice_thickness = 8e-3,   
-                            ro_bandwidth = 10e3,
+                            ro_bandwidth = 10e3, # 10e3
                             ro_oversampling = 1, 
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
-                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
+                            channels = Channels(ro = "y", pe1 = "z", pe2 = "x"), # channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
                             system = system
                             )[0]
 

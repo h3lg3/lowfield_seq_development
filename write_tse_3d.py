@@ -14,11 +14,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d.constructor(
-                            echo_time = 15e-3,  # 20
-                            repetition_time = 350e-3,  #1500
-                            etl = 16, # 8, define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
-                            dummies = 5,    
-                            ro_bandwidth = 15e3, # 10
+                            echo_time = 40e-3,  # 15
+                            repetition_time = 500e-3,  #1500
+                            etl = 2, # 8, define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
+                            dummies = 0,    
+                            ro_bandwidth = 20e3, # 15
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
@@ -27,7 +27,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
-                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
+                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # Channels(ro = "y", pe1 = "z", pe2 = "x"),
                             system = system
                             )[0]
 

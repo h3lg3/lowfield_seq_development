@@ -16,10 +16,10 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
          n_enc:tuple = (64, 64, 64)
          ):
     seq = tse_3d_mte.constructor(
-                            echo_time = 15e-3, 
-                            repetition_time = 300e-3,  # 1000: but if seq gets too long, idea doesnt compile
-                            etl = 8,   # 16: but if seq gets too long, idea doesnt compile, also careful with 180° trains
-                            dummies = 2,    
+                            echo_time = 40e-3, 
+                            repetition_time = 500e-3,  # 1000: but if seq gets too long, idea doesnt compile
+                            etl = 2,   # 16: but if seq gets too long, idea doesnt compile, also careful with 180° trains
+                            dummies = 0,    
                             ro_bandwidth = 16e3,
                             ro_oversampling = 1, 
                             rf_duration = 100e-6,
@@ -28,7 +28,7 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
-                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
+                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # channels = Channels(ro = "x", pe1 = "y", pe2 = "z"),
                             system = system
                             )[0]
 
@@ -65,7 +65,11 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
             print("Plotting only the first 20% of the sequence")
             seq.plot(time_range = (0, round(0.2*seq.duration()[0])))
         else:
-            seq.plot()
+            #seq.plot()
+            seq.plot(time_range=(0, 2*seq.definitions['TR']), plot_now=False)
+            import mplcursors
+            mplcursors.cursor()
+            plt.show()
         
     # =========
     # WRITE .SEQ
