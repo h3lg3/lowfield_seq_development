@@ -138,14 +138,6 @@ def constructor(
         area=grad_ro.area,  # grad_ro_spr.area = 0 why not same as set 0 here
         duration=t_sp,
         )
-    
-    # # Calculate readout prephaser without correction timess
-    grad_ro_pre = pp.make_trapezoid(
-        channel=channels.ro,
-        system=system,
-        area=grad_ro.area / 2 + grad_ro_spr.area,
-        duration=t_spex,
-    )
      
     adc = pp.make_adc(
         system=system,
@@ -197,6 +189,14 @@ def constructor(
         channel=channels.ro, 
         times=gc_times, 
         amplitudes=gr_amp)
+    
+    # # Calculate readout prephaser without correction timess
+    grad_ro_pre = pp.make_trapezoid(
+        channel=channels.ro,
+        system=system,
+        area= gr.area/2,
+        duration=t_spex,
+    )    
 
     gp_amp = np.array([0,
                        grad_pe_1_max.amplitude,
