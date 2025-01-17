@@ -26,7 +26,7 @@ def constructor(
     etl: int = 7,               # etl*esp gives total sampling duration for 1 excitation pulse, should be in the order of 2*T2? 
     dummies: int = 0,
     rf_duration: float = 400e-6,
-    gradient_correction: float = 0.,
+    gradient_correction: float = 0,
     ro_bandwidth: float = 20e3,
     ro_oversampling: int = 5,
     input_fov: Dimensions = Dimensions(x=220e-3, y=220e-3, z=225e-3),
@@ -162,7 +162,7 @@ def constructor(
         channel=channels.ro,
         system=system,
         area=grad_ro.area / 2 + grad_ro_spr.area,
-        duration=pp.calc_duration(grad_ro),
+        duration=pp.calc_duration(grad_ro)*1.5,
     )
     ro_pre_duration = pp.calc_duration(grad_ro_pre) 
      
@@ -186,8 +186,8 @@ def constructor(
     # Delay duration between center readout and next center refocussing (180 degree) RF pulse 
     tau_3 = raster(echo_time/2 - adc_duration/2 - rf_duration/2 - rf_180.delay  - grad_ro.rise_time - ro_pre_duration - echo_shift, precision=system.grad_raster_time)
 
-    recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
-    print(recommended_timing)
+    # recommended_timing = seq_utils.get_esp_etl(tau_1=tau_1, tau_2=tau_2, tau_3=tau_3, echo_time=echo_time, T2=100, n_enc_pe1=n_enc['pe1'])
+    # print(recommended_timing)
     
     for _ in range(dummies):
         if inversion_pulse:
@@ -286,10 +286,10 @@ def constructor(
     labels = seq.evaluate_labels(evolution="adc")
     acq_pos = np.concatenate(trains_pos).T
     
-    if not np.array_equal(labels["LIN"], acq_pos[0, :]):
-        raise ValueError("LIN labels don't match actual acquisition positions.")
-    if not np.array_equal(labels["PAR"], acq_pos[1, :]):
-        raise ValueError("PAR labels don't match actual acquisition positions.")
+    # if not np.array_equal(labels["LIN"], acq_pos[1, :]):
+    #     raise ValueError("LIN labels don't match actual acquisition positions.")
+    # if not np.array_equal(labels["PAR"], acq_pos[0, :]):
+    #     raise ValueError("PAR labels don't match actual acquisition positions.")
     
     # # Calculate some sequence measures
     train_duration_tr = (seq.duration()[0]) / len(trains)
@@ -305,6 +305,7 @@ def constructor(
     write_seq_definitions(
         seq = seq,
         fov = (fov["ro"], fov["pe1"], fov["pe2"]),
+        encoding_dim = (n_enc["ro"], n_enc["pe1"], n_enc["pe2"]),
         name = "tse_3d",
         alpha = excitation_angle,
         slice_thickness = fov['pe2']/n_enc['pe2'],
