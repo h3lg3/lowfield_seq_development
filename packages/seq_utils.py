@@ -71,9 +71,11 @@ def raster(val: float, precision: float) -> float:
         Value wih given time/raster precision
     """
     # return np.round(val / precision) * precision
-    val = np.round(val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
-    gridded_val = math.ceil(val / precision) * precision
-    gridded_val = np.round(gridded_val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
+    # val = np.round(val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
+    # gridded_val = math.ceil(val / precision) * precision
+    # gridded_val = np.round(gridded_val / 1e-9) * 1e-9   # round to nanosecond due to floating point errors
+
+    gridded_val = round(val / precision) * precision
     return gridded_val
     # decimals = abs(Decimal(str(precision)).as_tuple().exponent)
     # return round(gridded_val, ndigits=decimals)
