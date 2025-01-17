@@ -5,11 +5,11 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # # ======
-# from write_tse_3d import main as write_seq
-# seq_name = "tse_3d"
+from write_tse_3d import main as write_seq
+seq_name = "tse_3d"
 
-from write_tse_3d_mte import main as write_seq
-seq_name = "tse_3d_mte"
+# from write_tse_3d_mte import main as write_seq
+# seq_name = "tse_3d_mte"
 
 # from write_se_t1_mapping import main as write_seq
 # seq_name = "se_t1_mapping"
@@ -29,7 +29,7 @@ seq_name = "tse_3d_mte"
 # ======
 # SCANNER
 # ======
-from packages.mr_systems import lumina as system
+from packages.mr_systems import low_field as system
 seq_name = seq_name + '_lowfield'
 
 #seq_name = 'tse_3d_mte_lumina_64_64_32_TR300'
@@ -39,13 +39,13 @@ seq_name = seq_name + '_lowfield'
 # ======
 
 #channels = Channels(ro = "x", pe1 = "y", pe2 = "z")
-fov = (160e-3, 160e-3, 160e-3)
-n = 16 
-n_enc = (n, n, 1) 
+# fov = (140e-3, 140e-3, 140e-3)
+# n = 32 
+# n_enc = (n, n, 1) 
 
-# channels = Channels(ro = "y", pe1 = "z", pe2 = "x")
-# fov = (160e-3, 160e-3, 160e-3)
-# n_enc = (8, 32, 32) 
+# channels = Channels(ro = "z", pe1 = "y", pe2 = "x")
+fov = (140e-3, 140e-3, 140e-3)
+n_enc = (1, 140, 140) 
 
 write_sequence = True
 analyze_sequence = False
