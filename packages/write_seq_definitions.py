@@ -12,6 +12,7 @@ custom_seq_definitons =  ('fov', 'slice_thickness', 'Name',
 def write_seq_definitions(
     seq: Sequence,
     fov: tuple,
+    encoding_dim: tuple,
     slice_thickness: float,
     name: str,
     alpha: float,
@@ -45,6 +46,7 @@ def write_seq_definitions(
         raise TypeError('Unknown sampling scheme')
 
     seq.set_definition('FOV', fov)
+    seq.set_definition('encoding_dim', encoding_dim)
     seq.set_definition('slice_thickness', slice_thickness)
     seq.set_definition('name', name)
     seq.set_definition('Flipangle', alpha)
