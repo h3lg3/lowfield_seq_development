@@ -39,13 +39,13 @@ seq_name = seq_name + '_lowfield'
 # ======
 
 #channels = Channels(ro = "x", pe1 = "y", pe2 = "z")
-# fov = (140e-3, 140e-3, 140e-3)
-# n = 32 
-# n_enc = (n, n, 1) 
+fov = (140e-3, 140e-3, 140e-3)
+n = 30 
+n_enc = (n, n, 1) 
 
 # channels = Channels(ro = "z", pe1 = "y", pe2 = "x")
-fov = (140e-3, 140e-3, 140e-3)
-n_enc = (1, 140, 140) 
+# fov = (140e-3, 140e-3, 140e-3)
+# n_enc = (1, 140, 140) 
 
 write_sequence = True
 analyze_sequence = False

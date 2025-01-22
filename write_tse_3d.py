@@ -18,17 +18,17 @@ def main(plot:bool, write_seq:bool, seq_filename:str = "tse_3d",
                             repetition_time = 500e-3,  #1500
                             etl = 5, # 8, define max sampling period (tmax = 200ms?), etl_max = round(tmax/esp), nr. of pe1 steps should be multiple of etl
                             dummies = 0,    
-                            ro_bandwidth = 40e3, # 15
+                            ro_bandwidth = 20e3, # 15
                             ro_oversampling = 1, 
                             rf_duration = 160e-6,
                             input_fov = Dimensions(x = fov[0], y = fov[1], z = fov[2]),  
                             input_enc = Dimensions(x = n_enc[0], y = n_enc[1], z = n_enc[2]),           
                             trajectory = Trajectory.INOUT,
-                            gradient_correction = 80e-6,
+                            gradient_correction = 0, # 80e-6
                             refocussing_angle = pi,  
                             excitation_phase = pi/2,
                             refocussing_phase = 0,
-                            channels = Channels(ro = "z", pe1 = "y", pe2 = "x"), # channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # Channels(ro = "z", pe1 = "y", pe2 = "x"),
+                            channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # channels = Channels(ro = "x", pe1 = "y", pe2 = "z"), # Channels(ro = "z", pe1 = "y", pe2 = "x"),
                             system = system
                             )[0]
 
