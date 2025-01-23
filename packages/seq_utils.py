@@ -276,7 +276,10 @@ def get_trains(
         trains = [trains[k*etl:(k+1)*etl] for k in range(num_trains*n_enc['pe2'])]  
         trains_pos = [trains_pos[k*etl:(k+1)*etl] for k in range(num_trains*n_enc['pe2'])]  
     else:
-        pe_order = np.array([[pe_traj[k, 0] + n_enc['pe1']/2, pe_traj[k, 1] + n_enc['pe2']/2] for k in range(len(pe_traj))])   
+        if n_enc['pe2'] == 1:  # exception if only 1 PE2 step is present
+            pe_order = np.array([[pe_traj[k, 0] + n_enc['pe1']/2, 0] for k in range(len(pe_traj))])   
+        else:
+            pe_order = np.array([[pe_traj[k, 0] + n_enc['pe1']/2, pe_traj[k, 1] + n_enc['pe2']/2] for k in range(len(pe_traj))])   
           
         num_trains = int(np.ceil(n_enc['pe1']*n_enc['pe2']/etl)) # both pe directions are divided into trains
         pe_traj[:, 0] /= fov['pe1']         # calculate the required gradient area for each k-point
