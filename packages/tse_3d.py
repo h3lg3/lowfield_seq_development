@@ -86,6 +86,7 @@ def constructor(
     """
     # Sequence options
     disable_pe = False
+    disable_spoiler = True
     
     # Create a new sequence object
     seq = pp.Sequence(system)
@@ -158,6 +159,10 @@ def constructor(
         duration=ro_duration,
         )
     ro_spr_duration = pp.calc_duration(grad_ro_spr)
+
+    if disable_spoiler:
+        grad_ro_spr.amplitude = 0   # necessary for event creation
+        grad_ro_spr.area = 0        # necessary for creating ro prewinder
     
     # # Calculate readout prephaser without correction timess
     grad_ro_pre = pp.make_trapezoid(
@@ -289,10 +294,10 @@ def constructor(
     labels = seq.evaluate_labels(evolution="adc")
     acq_pos = np.concatenate(trains_pos).T
     
-    # if not np.array_equal(labels["LIN"], acq_pos[1, :]):
-    #     raise ValueError("LIN labels don't match actual acquisition positions.")
-    # if not np.array_equal(labels["PAR"], acq_pos[0, :]):
-    #     raise ValueError("PAR labels don't match actual acquisition positions.")
+    if not np.array_equal(labels["LIN"], acq_pos[0, :]):
+        raise ValueError("LIN labels don't match actual acquisition positions.")
+    if not np.array_equal(labels["PAR"], acq_pos[1, :]):
+        raise ValueError("PAR labels don't match actual acquisition positions.")
     
     # # Calculate some sequence measures
     train_duration_tr = (seq.duration()[0]) / len(trains)
