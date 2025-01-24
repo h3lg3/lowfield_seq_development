@@ -84,7 +84,7 @@ def raster(val: float, precision: float) -> float:
 class Trajectory(Enum):
     """Trajectory type enum."""
 
-    OUTIN = 1   # sampling pattern is in fact OUTIT and should be renamed accordingly
+    OUTIN = 1
     LINEAR = 2
     INOUT = 3
     ASCENDING = 4
@@ -198,11 +198,11 @@ def get_traj(
     ) -> list:
 
     # Calculate center out trajectory
-    pe1 = np.arange(n_enc['pe1']) - n_enc['pe1']/2
+    pe1 = np.arange(n_enc['pe1']) - (n_enc['pe1']) / 2
     if n_enc['pe2'] == 1:  # exception if only 1 PE2 step is present
         pe2 = np.array([0])
     else:
-        pe2 = np.arange(n_enc['pe2']) - (n_enc['pe2']) / 2  
+        pe2 = np.arange(n_enc['pe2']) - (n_enc['pe2']   ) / 2  
         
     pe_points = np.stack([grid.flatten() for grid in np.meshgrid(pe1, pe2)], axis=-1)
 

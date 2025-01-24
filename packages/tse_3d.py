@@ -19,6 +19,7 @@ from packages.seq_utils import Channels
 from packages.seq_utils import raster
 from packages.mr_systems import low_field as default_system
 from packages.write_seq_definitions import write_seq_definitions
+import warnings
 
 def constructor(
     echo_time: float = 15e-3,   # should be named echo spacing (esp), sequence should calculate effective TE (sampling of k-space center)
@@ -161,6 +162,7 @@ def constructor(
     ro_spr_duration = pp.calc_duration(grad_ro_spr)
 
     if disable_spoiler:
+        warnings.warn('Spoiler are disabled')
         grad_ro_spr.amplitude = 0   # necessary for event creation
         grad_ro_spr.area = 0        # necessary for creating ro prewinder
     
@@ -234,6 +236,7 @@ def constructor(
         for echo, pe_indices in zip(train, position):
             pe_1, pe_2 = echo
             if disable_pe:
+                warnings.warn('Phase encoding is disabled')
                 pe_1 = 0
                 pe_2 = 0
             
