@@ -60,7 +60,9 @@ def simulate_seq(save: bool,
     seq.read(seq_file, detect_rf_use = True)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    print(f"Selected phantom: {sel_phantom}")
+
     if sel_phantom == 'simbrain' and n_enc[2] > 1:
         print('3D simulation is not supported for simbrain phantom - change to invivo phantom')
         sel_phantom = "invivo"
@@ -95,9 +97,7 @@ def simulate_seq(save: bool,
             range_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
             obj_p = obj_p.slices(range_slices)      # select slices within the range
             obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])      # interpolate
-            obj_p.size[0] = 0.22
-            obj_p.size[1] = 0.22
-            obj_p.size[2] = 0.032
+
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
@@ -130,37 +130,32 @@ def simulate_seq(save: bool,
         def fft_2d(x):
             return np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(x, axes=(-2, -1)), axes=(-2, -1)), axes=(-2, -1))
 
-        # kspace = np.reshape(signal, (n_enc[2], n_enc[1], ro_oversampling*(n_enc[0])))
-        # kspace = kspace[:, :, 0:ro_oversampling*(n_enc[0])]
+        kspace = np.reshape(signal, (n_enc[2], n_enc[1], ro_oversampling*(n_enc[0])))
+        kspace = kspace[:, :, 0:ro_oversampling*(n_enc[0])]
 
-        # reco = np.zeros((n_enc[2], n_enc[1], n_enc[0]), dtype=np.complex128)
-        # for i in range(n_enc[2]):
-        #     reco[i, :, :] = fft_2d(np.squeeze(kspace[i, :, :]))
-        # reco = np.transpose(reco, (1, 2, 0))        
-
-        kspace = np.reshape(signal, (n_enc[2], n_enc[1], n_enc[0]))
-
-        reco = np.zeros((n_enc[0], n_enc[1], n_enc[2]), dtype=np.complex128)
+        reco = np.zeros((n_enc[2], n_enc[1], n_enc[0]), dtype=np.complex128)
         for i in range(n_enc[2]):
-            reco[:, :, i] = fft_2d(np.squeeze(kspace[i, :, :]))
-
+            reco[i, :, :] = fft_2d(np.squeeze(kspace[i, :, :]))
+        reco = np.transpose(reco, (1, 2, 0))        
 
     else:
         reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
 
 
-    # kk = signal[0:4096]
-    # kk_r = np.reshape(kk, (64, 64))
+    # Quick plots for debugging
+    # n = 32
+    # kk = signal[0:n*n]
+    # kk_r = np.reshape(kk, (n, n))
     # rr = fft_2d(kk_r)
 
     # import matplotlib.pyplot as plt
 
     # # # Plot the first slice of the input
-    # # plt.imshow(np.abs(obj_p.PD[:, :, 3]), cmap='gray')
-    # # plt.title('Reconstructed Image - First Slice')
-    # # plt.colorbar()
-    # # plt.show()
-    # # plt.pause(0.1)
+    # plt.imshow(np.abs(obj_p.PD[:, :, 32]), cmap='gray')
+    # plt.title('Reconstructed Image - First Slice')
+    # plt.colorbar()
+    # plt.show()
+    # plt.pause(0.1)
 
     # # Plot the first slice of the reconstructed image
     # plt.imshow(np.abs(rr), cmap='gray')
@@ -179,7 +174,7 @@ def simulate_seq(save: bool,
     # # plt.show()
 
     # # Plot the first slice of the reconstructed image
-    # plt.imshow(np.abs(reco[:, :, 0]), cmap='gray')
+    # plt.imshow(np.abs(reco[:, :, 3]), cmap='gray')
     # plt.title('Reconstructed Image - First Slice')
     # plt.colorbar()
     # plt.show()
