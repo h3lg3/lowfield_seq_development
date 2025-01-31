@@ -25,10 +25,18 @@ def simulate_seq(save: bool,
         seq.definitions['k_space_encoding2'] = 1
     if 'ro_oversampling' not in seq.definitions:
         seq.definitions['ro_oversampling'] = 1
+    if 'name' not in seq.definitions:
+        if 'Name' in seq.definitions:
+            seq.definitions['name'] = seq.definitions['Name']
+        else:
+            seq.definitions['name'] = ''
 
-    n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
-    n_enc = tuple(map(int, n_enc))
-
+    try:
+        n_enc = (seq.definitions['number_of_readouts'], seq.definitions['k_space_encoding1'], seq.definitions['k_space_encoding2'])
+        n_enc = tuple(map(int, n_enc))
+    except KeyError:
+        n_enc = tuple(map(int,seq.definitions['encoding_dim']))
+    
     if seq.definitions['name'] == 'tse_3d_mte':
         n_echo = int(seq.definitions['etl'])
 
@@ -87,6 +95,9 @@ def simulate_seq(save: bool,
             range_slices = tuple(np.linspace(40, 90, n_enc[2], dtype=int))
             obj_p = obj_p.slices(range_slices)      # select slices within the range
             obj_p = obj_p.interpolate(n_enc[0], n_enc[1], n_enc[2])      # interpolate
+            obj_p.size[0] = 0.22
+            obj_p.size[1] = 0.22
+            obj_p.size[2] = 0.032
     else:
         print('Select proper phantom')
     obj_sim = obj_p.build()
@@ -98,6 +109,11 @@ def simulate_seq(save: bool,
         signal = signal + 1e-6 * np.random.randn(signal.shape[0], 2).view(np.complex128)
 
 # check if field seq.definitions['name'] contains 'multi_echo' or 'tse_3d_mte'
+    if 'name' not in seq.definitions:
+        if 'Name' in seq.definitions:
+            seq.definitions['name'] = seq.definitions['Name']
+        else:
+            seq.definitions['name'] = ''
     if 'tse_3d_mte' in seq.definitions['name']:
         # 3D FFT
         def fft_3d(x):
@@ -109,9 +125,65 @@ def simulate_seq(save: bool,
         reco = fft_3d(kspace)
         reco = reco[:, :, :, round(ro_oversampling*n_enc[0]/2 - n_enc[0]/2) : round(ro_oversampling*n_enc[0]/2 + n_enc[0]/2)]
         reco = np.transpose(reco, (3, 1, 0, 2))
+    if 'gre_cartesian' in seq.definitions['name']:        
+        # 2D FFT
+        def fft_2d(x):
+            return np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(x, axes=(-2, -1)), axes=(-2, -1)), axes=(-2, -1))
+
+        # kspace = np.reshape(signal, (n_enc[2], n_enc[1], ro_oversampling*(n_enc[0])))
+        # kspace = kspace[:, :, 0:ro_oversampling*(n_enc[0])]
+
+        # reco = np.zeros((n_enc[2], n_enc[1], n_enc[0]), dtype=np.complex128)
+        # for i in range(n_enc[2]):
+        #     reco[i, :, :] = fft_2d(np.squeeze(kspace[i, :, :]))
+        # reco = np.transpose(reco, (1, 2, 0))        
+
+        kspace = np.reshape(signal, (n_enc[2], n_enc[1], n_enc[0]))
+
+        reco = np.zeros((n_enc[0], n_enc[1], n_enc[2]), dtype=np.complex128)
+        for i in range(n_enc[2]):
+            reco[:, :, i] = fft_2d(np.squeeze(kspace[i, :, :]))
+
 
     else:
         reco = mr0.reco_adjoint(signal, seq0.get_kspace(), resolution=n_enc, FOV=fov) # Recommended: RECO has same Reso and FOV as sequence
+
+
+    # kk = signal[0:4096]
+    # kk_r = np.reshape(kk, (64, 64))
+    # rr = fft_2d(kk_r)
+
+    # import matplotlib.pyplot as plt
+
+    # # # Plot the first slice of the input
+    # # plt.imshow(np.abs(obj_p.PD[:, :, 3]), cmap='gray')
+    # # plt.title('Reconstructed Image - First Slice')
+    # # plt.colorbar()
+    # # plt.show()
+    # # plt.pause(0.1)
+
+    # # Plot the first slice of the reconstructed image
+    # plt.imshow(np.abs(rr), cmap='gray')
+    # plt.title('Reconstructed Image - First Slice')
+    # plt.colorbar()
+    # plt.show()
+    # plt.pause(0.1)
+
+    # # # Plot the absolute value of the signal
+    # # plt.figure()
+    # # plt.plot(np.abs(signal))
+    # # plt.title('Absolute Value of Signal')
+    # # plt.xlabel('Time')
+    # # plt.ylabel('Signal Amplitude')
+    # # plt.grid(True)
+    # # plt.show()
+
+    # # Plot the first slice of the reconstructed image
+    # plt.imshow(np.abs(reco[:, :, 0]), cmap='gray')
+    # plt.title('Reconstructed Image - First Slice')
+    # plt.colorbar()
+    # plt.show()
+    # plt.pause(0.1)
 
     # %% save results
     if save:
