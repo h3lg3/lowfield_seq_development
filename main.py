@@ -8,6 +8,9 @@ from packages.analyze_seq import analyze_seq
 from write_tse_3d import main as write_seq
 seq_name = "tse_3d"
 
+# from write_tse_3d_ptb_untouched import main as write_seq
+# seq_name = "tse_3d_ptb_untouched"
+
 # from write_tse_3d_mte import main as write_seq
 # seq_name = "tse_3d_mte"
 
@@ -20,9 +23,6 @@ seq_name = "tse_3d"
 # from write_tse_3d_demo import main as write_seq 
 # seq_name = "tse_3d_demo"
 
-# from write_tse_3d_ptb_untouched import main as write_seq
-# seq_name = "tse_3d_ptb_untouched"
-
 # from write_MPRAGE import main as write_seq
 # seq_name = "mprage"
 
@@ -32,7 +32,7 @@ seq_name = "tse_3d"
 from packages.mr_systems import low_field as system
 seq_name = seq_name + '_lowfield'
 
-#seq_name = 'tse_3d_mte_lumina_64_64_32_TR300'
+# seq_name = 'gre_cartesian'
 
 # ======
 # FOV
@@ -40,7 +40,7 @@ seq_name = seq_name + '_lowfield'
 
 #channels = Channels(ro = "x", pe1 = "y", pe2 = "z")
 fov = (140e-3, 140e-3, 140e-3)
-n_enc = (16, 16, 8) 
+n_enc = (16, 16, 1) 
 
 # channels = Channels(ro = "z", pe1 = "y", pe2 = "x")
 # fov = (140e-3, 140e-3, 140e-3)
@@ -73,7 +73,7 @@ if plot_simulation:
             }, seq_filename=seq_name, system=system) 
     else:
         plot_sim(plot={
-            "phantom": True,
+            "phantom": False,
             "seq": True,
             "kspace": False,
             "reco": True,
