@@ -293,6 +293,7 @@ def constructor(
     write_seq_definitions(
         seq = seq,
         fov = (fov["ro"], fov["pe1"], fov["pe2"]),
+        encoding_dim = (n_enc["ro"], n_enc["pe1"], n_enc["pe2"]),
         name = "tse_3d_mte",
         alpha = excitation_angle,
         slice_thickness = fov['pe2']/n_enc['pe2'],
