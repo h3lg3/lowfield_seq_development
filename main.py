@@ -5,8 +5,11 @@ from packages.analyze_seq import analyze_seq
 # ======
 # SEQUENCE
 # # ======
-from write_tse_3d import main as write_seq
-seq_name = "tse_3d"
+# from write_tse_3d import main as write_seq
+# seq_name = "tse_3d"
+
+from write_tse_3d_qmri import main as write_seq
+seq_name = "tse_3d_qmri"
 
 # from write_tse_3d_ptb_untouched import main as write_seq
 # seq_name = "tse_3d_ptb_untouched"
@@ -32,24 +35,20 @@ seq_name = "tse_3d"
 from packages.mr_systems import low_field as system
 seq_name = seq_name + '_lowfield'
 
-# seq_name = 'gre_cartesian'
 
 # ======
 # FOV
 # ======
 
 #channels = Channels(ro = "x", pe1 = "y", pe2 = "z")
-fov = (140e-3, 140e-3, 140e-3)
-n_enc = (16, 16, 1) 
+fov = (256e-3, 256e-3, 256e-3)
+n_enc = (64, 64, 1) 
 
-# channels = Channels(ro = "z", pe1 = "y", pe2 = "x")
-# fov = (140e-3, 140e-3, 140e-3)
-# n_enc = (1, 32, 32) 
 
 write_sequence = True
 analyze_sequence = False
-simulate_sequence = False
-plot_simulation = False
+simulate_sequence = True
+plot_simulation = True
 
 if write_sequence:
     if plot_simulation or analyze_sequence:
@@ -74,7 +73,7 @@ if plot_simulation:
     else:
         plot_sim(plot={
             "phantom": False,
-            "seq": True,
+            "seq": False,
             "kspace": False,
             "reco": True,
             }, seq_filename=seq_name, system=system) 

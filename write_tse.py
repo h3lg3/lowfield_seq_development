@@ -301,4 +301,4 @@ def main(plot: bool, write_seq: bool, seq_filename: str = 'tse_pypulseq.seq'):
     pp.SAR.SAR_calc.calc_SAR(seq)
 
 if __name__ == '__main__':
-    main(plot=False, write_seq=True)
+    main(plot=True, write_seq=True)

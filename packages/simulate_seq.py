@@ -60,7 +60,7 @@ def simulate_seq(save: bool,
     seq.read(seq_file, detect_rf_use = True)
 
     # Setup spin system/object on which we can run the MR sequence
-    sel_phantom = "invivo" # select phantom type: invivo, simbrain, pixel
+    sel_phantom = "simbrain" # select phantom type: invivo, simbrain, pixel
     print(f"Selected phantom: {sel_phantom}")
 
     if sel_phantom == 'simbrain' and n_enc[2] > 1:

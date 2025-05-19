@@ -439,12 +439,12 @@ def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np
 
 
 def plot_3d(data: np.ndarray):
-    if isinstance(data, np.ndarray):
-            data = torch.from_numpy(data)
-    assert isinstance(data, torch.Tensor), "input data must be type torch.Tensor or np.ndarray"
+    data = data.numpy()
+    # if isinstance(data, np.ndarray):
+    #         data = torch.from_numpy(data)
+    # assert isinstance(data, torch.Tensor), "input data must be type torch.Tensor or np.ndarray"
 
-
-    if data.dim() == 4:
+    if data.ndim == 4:
         # Create a figure and axis
         fig, ax = plt.subplots()
         plt.subplots_adjust(left=0.25, bottom=0.35)
@@ -452,7 +452,7 @@ def plot_3d(data: np.ndarray):
         # Initial plot
         slice_index_3d = 0
         slice_index_4d = 0
-        img = ax.imshow(data[:, :, slice_index_3d, slice_index_4d].abs(), cmap='viridis', origin="lower")
+        img = ax.imshow(np.abs(data[:, :, slice_index_3d, slice_index_4d]), cmap='viridis', origin="lower")
         ax.set_title(f'Slice {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
         plt.colorbar(img, ax=ax)
 
@@ -470,14 +470,14 @@ def plot_3d(data: np.ndarray):
         def update(val):
             slice_index_3d = int(slider_3d.val)
             slice_index_4d = int(slider_4d.val)
-            img.set_data(data[:, :, slice_index_3d, slice_index_4d].abs())
+            img.set_data(np.abs(data[:, :, slice_index_3d, slice_index_4d]))
             ax.set_title(f'Slice {slice_index_3d + 1}, Slice 4D {slice_index_4d + 1}')
             fig.canvas.draw_idle()
 
         # Update function for the contrast slider
         def update_contrast(val):
             contrast = contrast_slider.val
-            img.set_clim(vmin = 0, vmax = data[:, :, slice_index_3d, slice_index_4d].abs().max() * contrast)
+            img.set_clim(vmin = 0, vmax = np.max(np.abs(data[:, :, slice_index_3d, slice_index_4d])) * contrast)
             fig.canvas.draw_idle()
 
         # Attach the update functions to the sliders
@@ -486,14 +486,14 @@ def plot_3d(data: np.ndarray):
         contrast_slider.on_changed(update_contrast)
         plt.show()
 
-    elif data.dim() == 3:
+    elif data.ndim == 3:
         # Create a figure and axis
         fig, ax = plt.subplots()
         plt.subplots_adjust(left=0.25, bottom=0.25)
 
         # Initial plot
         slice_index = 0
-        img = ax.imshow(data[:, :, slice_index].abs(), cmap='viridis', origin="lower")
+        img = ax.imshow(np.abs(data[:, :, slice_index]), cmap='viridis', origin="lower")
         ax.set_title(f'Slice {slice_index + 1}')
         plt.colorbar(img, ax=ax)
 
@@ -504,7 +504,7 @@ def plot_3d(data: np.ndarray):
         # Update function for the slider
         def update(val):
             slice_index = int(slider.val)
-            img.set_data(data[:, :, slice_index].abs())
+            img.set_data(np.abs(data[:, :, slice_index]))
             ax.set_title(f'Slice {slice_index + 1}')
             fig.canvas.draw_idle()
 
@@ -517,7 +517,7 @@ def plot_3d(data: np.ndarray):
         # Update function for the contrast slider
         def update_contrast(val):
             contrast = contrast_slider.val
-            img.set_clim(vmin=0, vmax=data[:, :, slice_index].abs().max() * contrast)
+            img.set_clim(vmin=0, vmax=np.max(np.abs(data[:, :, slice_index])) * contrast)
             fig.canvas.draw_idle()
 
         # Attach the update function to the contrast slider
@@ -530,7 +530,7 @@ def plot_3d(data: np.ndarray):
         plt.subplots_adjust(left=0.25, bottom=0.25)
 
         # Initial plots
-        img1 = ax1.imshow(data[:, :, 0].abs(), origin="lower")
+        img1 = ax1.imshow(np.abs(data[:, :, 0]), origin="lower")
         ax1.set_title("Magnitude")
         plt.colorbar(img1, ax=ax1)
 
@@ -545,7 +545,7 @@ def plot_3d(data: np.ndarray):
         # Update function for the contrast slider
         def update_contrast(val):
             contrast = contrast_slider.val
-            img1.set_clim(vmin=0, vmax=data[:, :, 0].abs().max() * contrast)
+            img1.set_clim(vmin=0, vmax=np.max(np.abs(data[:, :, 0])) * contrast)
             img2.set_clim(vmin=-np.pi * contrast, vmax=np.pi * contrast)
             fig.canvas.draw_idle()
 

@@ -22,27 +22,42 @@ lumina = Opts(
 )
 
 low_field = Opts(
-    max_grad = 300e3/GAMMA*1e3,
-    grad_unit = "mT/m",
-
-    # Set maximum slew rate
-    max_slew = 50,
-    slew_unit = "T/m/s",
-
-    # time delay at the beginning of RF event, SETS RF DELAY!
-    rf_dead_time=20.e-6,
-
+    rf_dead_time=20e-6,  # dead time at the beginning of RF event, covered by rf_delay.
+    rf_ringdown_time=30e-6,  # Time delay at the end of an RF event
     # Set raster times to spectrum card frequency (timing checks)
     grad_raster_time=1e-6,
     rf_raster_time=1e-6,
     block_duration_raster=1e-6,
     adc_raster_time=1e-6,
-
-    # Time delay at the end of an RF event
-    rf_ringdown_time=0, # 2e-3
-    
-    # Time delay at the BEGINNING/END of ADC event, at beginning it is usually covered by delay
-    #adc_dead_time=200e-6,
-    
-    B0=50.e-3
+    # Set maximum gradient amplitude
+    max_grad=250e3 / GAMMA * 1e3,  # ~5.9 mT/m
+    grad_unit='mT/m',
+    # Set maximum slew rate
+    max_slew=100,
+    slew_unit='T/m/s',
+    B0=50e-3,
 )
+
+    # max_grad = 300e3/GAMMA*1e3,
+    # grad_unit = "mT/m",
+
+    # # Set maximum slew rate
+    # max_slew = 50,
+    # slew_unit = "T/m/s",
+
+    # # time delay at the beginning of RF event, SETS RF DELAY!
+    # rf_dead_time=20.e-6,
+
+    # # Set raster times to spectrum card frequency (timing checks)
+    # grad_raster_time=1e-6,
+    # rf_raster_time=1e-6,
+    # block_duration_raster=1e-6,
+    # adc_raster_time=1e-6,
+
+    # # Time delay at the end of an RF event
+    # rf_ringdown_time=0, # 2e-3
+    
+    # # Time delay at the BEGINNING/END of ADC event, at beginning it is usually covered by delay
+    # #adc_dead_time=200e-6,
+    
+    # B0=50.e-3

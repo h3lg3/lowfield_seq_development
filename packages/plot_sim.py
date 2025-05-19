@@ -8,10 +8,9 @@ import MRzeroCore as mr0
 
 def plot_sim(plot: dict, seq_filename: str, system:pp.Opts, sim_path: str = "./simulation/"):
     sim_name = 'sim_' + seq_filename
-
+    seq = pp.Sequence(system=system)
+    seq.read(sim_path + sim_name + '_seq.seq', detect_rf_use = True)
     if plot["seq"]:
-        seq = pp.Sequence(system=system)
-        seq.read(sim_path + sim_name + '_seq.seq', detect_rf_use = True)
         try:
             signal = np.load(sim_path + sim_name + '_signal.npy')
             sp_adc, t_adc = mr0.util.pulseq_plot(seq=seq,signal=signal)
