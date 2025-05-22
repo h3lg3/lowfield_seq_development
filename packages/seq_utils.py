@@ -439,7 +439,8 @@ def sort_kspace(raw_data: np.ndarray, trajectory: np.ndarray, kdims: list) -> np
 
 
 def plot_3d(data: np.ndarray):
-    data = data.numpy()
+    if not isinstance(data, np.ndarray):
+        data = data.numpy()
     # if isinstance(data, np.ndarray):
     #         data = torch.from_numpy(data)
     # assert isinstance(data, torch.Tensor), "input data must be type torch.Tensor or np.ndarray"
@@ -517,7 +518,7 @@ def plot_3d(data: np.ndarray):
         # Update function for the contrast slider
         def update_contrast(val):
             contrast = contrast_slider.val
-            img.set_clim(vmin=0, vmax=np.max(np.abs(data[:, :, slice_index])) * contrast)
+            img.set_clim(vmin=0, vmax=np.max(np.max(np.abs(data[:, :, slice_index]), axis=())) * contrast)
             fig.canvas.draw_idle()
 
         # Attach the update function to the contrast slider
